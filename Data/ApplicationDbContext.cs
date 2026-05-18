@@ -1,0 +1,81 @@
+using GolfAssociationCommunity.Models;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
+
+namespace GolfAssociationCommunity.Data
+{
+    public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
+    {
+        public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
+            : base(options)
+        {
+        }
+
+        public DbSet<GolfAssociation> GolfAssociations { get; set; } = null!;
+        public DbSet<Tournament> Tournaments { get; set; } = null!;
+        public DbSet<Registration> Registrations { get; set; } = null!;
+        public DbSet<PlayerScore> PlayerScores { get; set; } = null!;
+        public DbSet<Leaderboard> Leaderboards { get; set; } = null!;
+
+        protected override void OnModelCreating(ModelBuilder builder)
+        {
+            base.OnModelCreating(builder);
+
+            builder.Entity<GolfAssociation>()
+                .HasMany(ga => ga.Members)
+                .WithOne(u => u.GolfAssociation)
+                .HasForeignKey(u => u.GolfAssociationId)
+                .OnDelete(DeleteBehavior.SetNull);
+
+            builder.Entity<GolfAssociation>()
+                .HasMany(ga => ga.Tournaments)
+                .WithOne(t => t.GolfAssociation)
+                .HasForeignKey(t => t.GolfAssociationId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            builder.Entity<Tournament>()
+                .HasMany(t => t.Registrations)
+                .WithOne(r => r.Tournament)
+                .HasForeignKey(r => r.TournamentId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            builder.Entity<Tournament>()
+                .Property(t => t.EntryFee)
+                .HasPrecision(18, 2);
+
+            builder.Entity<Tournament>()
+                .HasMany(t => t.PlayerScores)
+                .WithOne(ps => ps.Tournament)
+                .HasForeignKey(ps => ps.TournamentId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            builder.Entity<Registration>()
+                .Property(r => r.RegistrationFee)
+                .HasPrecision(18, 2);
+
+            builder.Entity<Registration>()
+                .HasOne(r => r.Player)
+                .WithMany()
+                .HasForeignKey(r => r.PlayerId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            builder.Entity<PlayerScore>()
+                .HasOne(ps => ps.Player)
+                .WithMany()
+                .HasForeignKey(ps => ps.PlayerId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            builder.Entity<Leaderboard>()
+                .HasOne(l => l.Player)
+                .WithMany()
+                .HasForeignKey(l => l.PlayerId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            builder.Entity<Leaderboard>()
+                .HasOne(l => l.Tournament)
+                .WithMany()
+                .HasForeignKey(l => l.TournamentId)
+                .OnDelete(DeleteBehavior.Cascade);
+        }
+    }
+}
