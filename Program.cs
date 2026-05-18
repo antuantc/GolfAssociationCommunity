@@ -1,3 +1,5 @@
+using System.Net;
+using System.Net.Sockets;
 using GolfAssociationCommunity.Data;
 using GolfAssociationCommunity.Models;
 using GolfAssociationCommunity.Services;
@@ -6,6 +8,17 @@ using Microsoft.EntityFrameworkCore;
 using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
+
+var urlsFromEnv = builder.Configuration["ASPNETCORE_URLS"];
+if (string.IsNullOrWhiteSpace(urlsFromEnv))
+{
+    var (httpPort, httpsPort) = GetAvailablePortPair(5000, 5010, 5001, 5011);
+    builder.WebHost.UseUrls($"http://127.0.0.1:{httpPort}", $"https://127.0.0.1:{httpsPort}");
+    builder.Services.Configure<Microsoft.AspNetCore.HttpsPolicy.HttpsRedirectionOptions>(options =>
+    {
+        options.HttpsPort = httpsPort;
+    });
+}
 
 // Configure Serilog
 Log.Logger = new LoggerConfiguration()
@@ -80,6 +93,13 @@ app.UseCors("AllowAll");
 app.UseAuthentication();
 app.UseAuthorization();
 
+app.MapGet("/", () => Results.Ok(new
+{
+    message = "Golf Association Community API",
+    description = "Use /api/[controller] to access endpoints.",
+    swagger = app.Environment.IsDevelopment() ? "/swagger" : null
+}));
+
 app.MapControllers();
 
 // Run migrations on startup
@@ -103,4 +123,41 @@ catch (Exception ex)
 finally
 {
     await Log.CloseAndFlushAsync();
+}
+
+static (int HttpPort, int HttpsPort) GetAvailablePortPair(int httpFirstPort, int httpLastPort, int httpsFirstPort, int httpsLastPort)
+{
+    for (var httpPort = httpFirstPort; httpPort <= httpLastPort; httpPort++)
+    {
+        if (!IsPortAvailable(httpPort))
+        {
+            continue;
+        }
+
+        for (var httpsPort = httpsFirstPort; httpsPort <= httpsLastPort; httpsPort++)
+        {
+            if (!IsPortAvailable(httpsPort))
+            {
+                continue;
+            }
+
+            return (httpPort, httpsPort);
+        }
+    }
+
+    throw new InvalidOperationException($"No available HTTP/HTTPS port pair found in ranges {httpFirstPort}-{httpLastPort} and {httpsFirstPort}-{httpsLastPort}.");
+}
+
+static bool IsPortAvailable(int port)
+{
+    try
+    {
+        using var listener = new TcpListener(IPAddress.Loopback, port);
+        listener.Start();
+        return true;
+    }
+    catch (SocketException)
+    {
+        return false;
+    }
 }
