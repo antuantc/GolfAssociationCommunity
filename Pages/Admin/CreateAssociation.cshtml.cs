@@ -4,6 +4,7 @@ using GolfAssociationCommunity.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.Extensions.Logging;
 
 namespace GolfAssociationCommunity.Pages.Admin
 {
@@ -11,10 +12,14 @@ namespace GolfAssociationCommunity.Pages.Admin
     public class CreateAssociationModel : PageModel
     {
         private readonly IAssociationService _associationService;
+        private readonly ILogger<CreateAssociationModel> _logger;
 
-        public CreateAssociationModel(IAssociationService associationService)
+        public CreateAssociationModel(
+            IAssociationService associationService,
+            ILogger<CreateAssociationModel> logger)
         {
             _associationService = associationService;
+            _logger = logger;
         }
 
         [BindProperty]
@@ -51,11 +56,9 @@ namespace GolfAssociationCommunity.Pages.Admin
             [StringLength(100)]
             public string? Country { get; set; }
 
-            [Url]
             [StringLength(300)]
             public string? Website { get; set; }
 
-            [Url]
             [StringLength(300)]
             public string? LogoUrl { get; set; }
         }
@@ -66,6 +69,9 @@ namespace GolfAssociationCommunity.Pages.Admin
 
         public async Task<IActionResult> OnPostAsync()
         {
+            Input.Website = NormalizeOptionalUrl(Input.Website, nameof(Input.Website));
+            Input.LogoUrl = NormalizeOptionalUrl(Input.LogoUrl, nameof(Input.LogoUrl));
+
             if (!ModelState.IsValid)
             {
                 return Page();
@@ -86,9 +92,39 @@ namespace GolfAssociationCommunity.Pages.Admin
                 LogoUrl = Input.LogoUrl
             };
 
-            var created = await _associationService.CreateAssociationAsync(association);
-            TempData["SuccessMessage"] = $"Association '{created.Name}' created successfully.";
-            return RedirectToPage("/Associations/Details", new { id = created.Id });
+            try
+            {
+                var created = await _associationService.CreateAssociationAsync(association);
+                TempData["SuccessMessage"] = $"Association '{created.Name}' created successfully.";
+                return RedirectToPage("/Associations/Details", new { id = created.Id });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to create association {AssociationName}", association.Name);
+                ModelState.AddModelError(string.Empty, "Create association failed. Check the values and try again.");
+                return Page();
+            }
+        }
+
+        private string? NormalizeOptionalUrl(string? value, string fieldName)
+        {
+            if (string.IsNullOrWhiteSpace(value))
+            {
+                return null;
+            }
+
+            var trimmed = value.Trim();
+            if (!trimmed.Contains("://", StringComparison.Ordinal))
+            {
+                trimmed = $"https://{trimmed}";
+            }
+
+            if (!Uri.TryCreate(trimmed, UriKind.Absolute, out _))
+            {
+                ModelState.AddModelError(fieldName, "Enter a valid URL.");
+            }
+
+            return trimmed;
         }
     }
 }
