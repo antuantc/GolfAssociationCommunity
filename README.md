@@ -179,6 +179,61 @@ dotnet ef database update
 
 If your local schema gets out of sync during development, delete `golfassociation.db` and run `dotnet ef database update` again.
 
+## Troubleshooting
+
+### Error: SQLite Error 1: no such table: GolfAssociations
+
+Cause:
+- The database file exists, but schema migrations have not been applied.
+
+Fix:
+
+```bash
+dotnet ef database update
+```
+
+If `dotnet ef` is not recognized:
+
+```bash
+dotnet tool install --global dotnet-ef
+```
+
+### Error: No migrations were applied. The database is already up to date, but tables are missing
+
+Cause:
+- No migration files exist in the project (nothing to apply).
+
+Fix:
+
+```bash
+dotnet ef migrations add InitialCreate
+dotnet ef database update
+```
+
+Commit the generated files in the `Migrations/` folder so other environments can build the schema.
+
+### Error: Build failed when running dotnet ef commands
+
+Cause:
+- EF CLI always builds the project first.
+
+Fix:
+
+```bash
+dotnet build
+```
+
+Resolve compile errors, then re-run your EF command.
+
+### Reset local development database
+
+Use only for local development when you can discard data:
+
+```bash
+dotnet ef database drop --force
+dotnet ef database update
+```
+
 ## Database Schema
 
 ### Key Entities
