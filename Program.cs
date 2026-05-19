@@ -50,6 +50,30 @@ builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
     .AddDefaultTokenProviders()
     .AddDefaultUI();
 
+var authBuilder = builder.Services.AddAuthentication();
+
+var googleClientId = builder.Configuration["Authentication:Google:ClientId"];
+var googleClientSecret = builder.Configuration["Authentication:Google:ClientSecret"];
+if (!string.IsNullOrWhiteSpace(googleClientId) && !string.IsNullOrWhiteSpace(googleClientSecret))
+{
+    authBuilder.AddGoogle(options =>
+    {
+        options.ClientId = googleClientId;
+        options.ClientSecret = googleClientSecret;
+    });
+}
+
+var microsoftClientId = builder.Configuration["Authentication:Microsoft:ClientId"];
+var microsoftClientSecret = builder.Configuration["Authentication:Microsoft:ClientSecret"];
+if (!string.IsNullOrWhiteSpace(microsoftClientId) && !string.IsNullOrWhiteSpace(microsoftClientSecret))
+{
+    authBuilder.AddMicrosoftAccount(options =>
+    {
+        options.ClientId = microsoftClientId;
+        options.ClientSecret = microsoftClientSecret;
+    });
+}
+
 // Add custom services
 builder.Services.AddScoped<IAuthorizeNetPaymentService, AuthorizeNetPaymentService>();
 builder.Services.AddScoped<IAssociationService, AssociationService>();
