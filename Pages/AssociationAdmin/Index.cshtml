@@ -1,0 +1,40 @@
+@page
+@model GolfAssociationCommunity.Pages.AssociationAdmin.IndexModel
+@{
+    ViewData["Title"] = "Association Dashboard";
+}
+
+<div class="hero">
+    <div class="hero-copy">
+        <h1>@ViewData["AssociationName"]</h1>
+        <p>Your dedicated association administration portal.</p>
+    </div>
+</div>
+
+<section class="section-panel">
+    <h2>Portal Snapshot</h2>
+    <div class="card-grid">
+        <article class="card">
+            <h3>@Model.TournamentCount</h3>
+            <p>Total Tournaments</p>
+        </article>
+        <article class="card">
+            <h3>@Model.UpcomingTournamentCount</h3>
+            <p>Upcoming Tournaments</p>
+        </article>
+        <article class="card">
+            <h3>@Model.RegistrationCount</h3>
+            <p>Registrations</p>
+        </article>
+        <article class="card">
+            <h3>@Model.MemberCount</h3>
+            <p>Members</p>
+        </article>
+    </div>
+</section>
+
+<section class="section-panel">
+    <h2>Quick Actions</h2>
+    <a class="btn" href="~/AssociationAdmin/Tournaments">Manage Tournaments</a>
+    <a class="btn btn-secondary" href="~/AssociationAdmin/Registrations">Manage Registrations</a>
+</section>

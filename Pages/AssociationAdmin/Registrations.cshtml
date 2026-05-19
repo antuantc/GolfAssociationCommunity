@@ -1,0 +1,74 @@
+@page "{id:int?}"
+@using GolfAssociationCommunity.Models
+@model GolfAssociationCommunity.Pages.AssociationAdmin.RegistrationsModel
+@{
+    ViewData["Title"] = "Manage Registrations";
+}
+
+<section class="section-panel">
+    <h1>Manage Registrations</h1>
+    @if (TempData["SuccessMessage"] is string success)
+    {
+        <div class="message success">@success</div>
+    }
+
+    <div class="card-grid">
+        <article class="card">
+            <h3>Filter by Tournament</h3>
+            <a class="card-link" href="~/AssociationAdmin/Registrations">All registrations</a>
+            @foreach (var tournament in Model.Tournaments)
+            {
+                <a class="card-link" href="~/AssociationAdmin/Registrations/@tournament.Id">@tournament.Name</a>
+            }
+        </article>
+    </div>
+</section>
+
+<section class="section-panel">
+    @if (Model.Registrations.Count == 0)
+    {
+        <p>No registrations found for this association.</p>
+    }
+    else
+    {
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Tournament</th>
+                    <th>Player</th>
+                    <th>Status</th>
+                    <th>Payment</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+            @foreach (var registration in Model.Registrations)
+            {
+                <tr>
+                    <td>@registration.Tournament?.Name</td>
+                    <td>@registration.Player?.Email</td>
+                    <td>@registration.Status</td>
+                    <td>@(registration.PaymentConfirmed ? "Confirmed" : "Pending")</td>
+                    <td>
+                        @if (!registration.PaymentConfirmed)
+                        {
+                            <form method="post" asp-page-handler="ConfirmPayment" asp-route-registrationId="@registration.Id" asp-route-id="@Model.SelectedTournamentId" class="inline-form">
+                                <button type="submit" class="link-button">Confirm Payment</button>
+                            </form>
+                        }
+                        <form method="post" asp-page-handler="SetStatus" asp-route-registrationId="@registration.Id" asp-route-status="@RegistrationStatus.Registered" asp-route-id="@Model.SelectedTournamentId" class="inline-form">
+                            <button type="submit" class="link-button">Set Registered</button>
+                        </form>
+                        <form method="post" asp-page-handler="SetStatus" asp-route-registrationId="@registration.Id" asp-route-status="@RegistrationStatus.Cancelled" asp-route-id="@Model.SelectedTournamentId" class="inline-form">
+                            <button type="submit" class="link-button">Set Cancelled</button>
+                        </form>
+                        <form method="post" asp-page-handler="Withdraw" asp-route-registrationId="@registration.Id" asp-route-id="@Model.SelectedTournamentId" class="inline-form" onsubmit="return confirm('Withdraw this registration?');">
+                            <button type="submit" class="link-button">Withdraw</button>
+                        </form>
+                    </td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    }
+</section>

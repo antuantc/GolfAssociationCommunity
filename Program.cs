@@ -134,6 +134,41 @@ app.UseSession();
 app.UseAuthentication();
 app.UseAuthorization();
 
+app.Use(async (context, next) =>
+{
+    if (context.User.Identity?.IsAuthenticated == true &&
+        context.User.IsInRole("AssociationAdmin") &&
+        !context.User.IsInRole("Admin"))
+    {
+        var path = context.Request.Path;
+        var isAssociationPortal = path.StartsWithSegments("/AssociationAdmin", StringComparison.OrdinalIgnoreCase);
+        var isIdentityPath = path.StartsWithSegments("/Identity", StringComparison.OrdinalIgnoreCase);
+
+        if (!isAssociationPortal && !isIdentityPath)
+        {
+            context.Response.Redirect("/AssociationAdmin");
+            return;
+        }
+    }
+
+    await next();
+});
+
+app.Use(async (context, next) =>
+{
+    await next();
+
+    if (context.User.Identity?.IsAuthenticated == true &&
+        context.User.IsInRole("AssociationAdmin") &&
+        !context.User.IsInRole("Admin") &&
+        HttpMethods.IsPost(context.Request.Method) &&
+        context.Request.Path.StartsWithSegments("/Identity/Account/Login", StringComparison.OrdinalIgnoreCase) &&
+        (context.Response.StatusCode == StatusCodes.Status302Found || context.Response.StatusCode == StatusCodes.Status303SeeOther))
+    {
+        context.Response.Headers.Location = "/AssociationAdmin";
+    }
+});
+
 app.MapRazorPages();
 app.MapControllers();
 
@@ -141,8 +176,76 @@ app.MapControllers();
 using (var scope = app.Services.CreateScope())
 {
     var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+    var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
+    var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
     await dbContext.Database.MigrateAsync();
     Log.Information("Database migrations completed successfully");
+
+    var requiredRoles = new[] { "Admin", "AssociationAdmin" };
+    foreach (var role in requiredRoles)
+    {
+        if (!await roleManager.RoleExistsAsync(role))
+        {
+            var roleCreateResult = await roleManager.CreateAsync(new IdentityRole(role));
+            if (!roleCreateResult.Succeeded)
+            {
+                Log.Error("Failed to create role {Role}: {Errors}", role, string.Join("; ", roleCreateResult.Errors.Select(e => e.Description)));
+            }
+            else
+            {
+                Log.Information("Role {Role} created", role);
+            }
+        }
+    }
+
+    var adminEmail = app.Configuration["AdminSeed:Email"];
+    var adminPassword = app.Configuration["AdminSeed:Password"];
+
+    if (!string.IsNullOrWhiteSpace(adminEmail) && !string.IsNullOrWhiteSpace(adminPassword))
+    {
+        const string adminRole = "Admin";
+
+        var adminUser = await userManager.FindByEmailAsync(adminEmail);
+        if (adminUser is null)
+        {
+            adminUser = new ApplicationUser
+            {
+                UserName = adminEmail,
+                Email = adminEmail,
+                EmailConfirmed = true,
+                FirstName = app.Configuration["AdminSeed:FirstName"],
+                LastName = app.Configuration["AdminSeed:LastName"],
+                UpdatedAt = DateTime.UtcNow
+            };
+
+            var createUserResult = await userManager.CreateAsync(adminUser, adminPassword);
+            if (!createUserResult.Succeeded)
+            {
+                Log.Error("Failed to create seeded admin user {Email}: {Errors}", adminEmail, string.Join("; ", createUserResult.Errors.Select(e => e.Description)));
+            }
+            else
+            {
+                Log.Information("Seeded admin user created for {Email}", adminEmail);
+            }
+        }
+
+        if (adminUser is not null && !await userManager.IsInRoleAsync(adminUser, adminRole))
+        {
+            var addRoleResult = await userManager.AddToRoleAsync(adminUser, adminRole);
+            if (!addRoleResult.Succeeded)
+            {
+                Log.Error("Failed to assign Admin role to {Email}: {Errors}", adminEmail, string.Join("; ", addRoleResult.Errors.Select(e => e.Description)));
+            }
+            else
+            {
+                Log.Information("Admin role assigned to {Email}", adminEmail);
+            }
+        }
+    }
+    else
+    {
+        Log.Information("AdminSeed configuration not set. Skipping default admin seeding.");
+    }
 }
 
 Log.Information("Golf Association Community application starting...");

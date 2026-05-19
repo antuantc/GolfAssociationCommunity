@@ -1,0 +1,83 @@
+@page "{id:int}"
+@model GolfAssociationCommunity.Pages.Admin.EditAssociationModel
+@{
+    ViewData["Title"] = "Edit Association";
+}
+
+<section class="section-panel">
+    <h1>Edit Association</h1>
+    <form method="post">
+        <div asp-validation-summary="ModelOnly" class="message error"></div>
+
+        <div class="card-grid">
+            <div>
+                <label asp-for="Input.Name"></label>
+                <input asp-for="Input.Name" class="form-control" />
+                <span asp-validation-for="Input.Name" class="text-danger"></span>
+            </div>
+            <div>
+                <label asp-for="Input.ContactEmail"></label>
+                <input asp-for="Input.ContactEmail" class="form-control" />
+                <span asp-validation-for="Input.ContactEmail" class="text-danger"></span>
+            </div>
+            <div>
+                <label asp-for="Input.ContactPhone"></label>
+                <input asp-for="Input.ContactPhone" class="form-control" />
+                <span asp-validation-for="Input.ContactPhone" class="text-danger"></span>
+            </div>
+            <div>
+                <label asp-for="Input.AdminUserId"></label>
+                <input asp-for="Input.AdminUserId" class="form-control" />
+                <span asp-validation-for="Input.AdminUserId" class="text-danger"></span>
+            </div>
+            <div>
+                <label asp-for="Input.Street"></label>
+                <input asp-for="Input.Street" class="form-control" />
+                <span asp-validation-for="Input.Street" class="text-danger"></span>
+            </div>
+            <div>
+                <label asp-for="Input.City"></label>
+                <input asp-for="Input.City" class="form-control" />
+                <span asp-validation-for="Input.City" class="text-danger"></span>
+            </div>
+            <div>
+                <label asp-for="Input.State"></label>
+                <input asp-for="Input.State" class="form-control" />
+                <span asp-validation-for="Input.State" class="text-danger"></span>
+            </div>
+            <div>
+                <label asp-for="Input.ZipCode"></label>
+                <input asp-for="Input.ZipCode" class="form-control" />
+                <span asp-validation-for="Input.ZipCode" class="text-danger"></span>
+            </div>
+            <div>
+                <label asp-for="Input.Country"></label>
+                <input asp-for="Input.Country" class="form-control" />
+                <span asp-validation-for="Input.Country" class="text-danger"></span>
+            </div>
+            <div>
+                <label asp-for="Input.Website"></label>
+                <input asp-for="Input.Website" class="form-control" />
+                <span asp-validation-for="Input.Website" class="text-danger"></span>
+            </div>
+            <div>
+                <label asp-for="Input.LogoUrl"></label>
+                <input asp-for="Input.LogoUrl" class="form-control" />
+                <span asp-validation-for="Input.LogoUrl" class="text-danger"></span>
+            </div>
+        </div>
+
+        <div class="mb-3">
+            <label asp-for="Input.Description"></label>
+            <textarea asp-for="Input.Description" class="form-control" rows="4"></textarea>
+            <span asp-validation-for="Input.Description" class="text-danger"></span>
+        </div>
+
+        <button type="submit" class="btn">Save Changes</button>
+        <a class="btn btn-secondary" href="~/Admin/Associations">Back to Associations</a>
+    </form>
+</section>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

@@ -1,0 +1,56 @@
+@page
+@model GolfAssociationCommunity.Pages.Admin.IndexModel
+@{
+    ViewData["Title"] = "Admin Dashboard";
+}
+
+<div class="hero">
+    <div class="hero-copy">
+        <h1>Admin Dashboard</h1>
+        <p>Monitor platform activity and quickly access administrative areas.</p>
+    </div>
+</div>
+
+<section class="section-panel">
+    <h2>Platform Snapshot</h2>
+    <div class="card-grid">
+        <article class="card">
+            <h3>@Model.AssociationCount</h3>
+            <p>Associations</p>
+        </article>
+        <article class="card">
+            <h3>@Model.TournamentCount</h3>
+            <p>Tournaments</p>
+        </article>
+        <article class="card">
+            <h3>@Model.RegistrationCount</h3>
+            <p>Registrations</p>
+        </article>
+        <article class="card">
+            <h3>@Model.UserCount</h3>
+            <p>Users</p>
+        </article>
+    </div>
+</section>
+
+<section class="section-panel">
+    <h2>Admin Actions</h2>
+    <div class="card-grid">
+        <article class="card">
+            <h3>Associations</h3>
+            <p>Review and manage associations in the community.</p>
+            <a class="card-link" href="~/Admin/Associations">Manage associations</a>
+            <a class="card-link" href="~/Admin/CreateAssociation">Create association</a>
+        </article>
+        <article class="card">
+            <h3>Tournaments</h3>
+            <p>Inspect upcoming events and tournament lifecycle status.</p>
+            <a class="card-link" href="~/Tournaments">Manage tournaments</a>
+        </article>
+        <article class="card">
+            <h3>API</h3>
+            <p>Access API surface and operational endpoints documentation.</p>
+            <a class="card-link" href="~/swagger">Open API docs</a>
+        </article>
+    </div>
+</section>

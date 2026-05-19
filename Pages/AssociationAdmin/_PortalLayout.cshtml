@@ -1,0 +1,38 @@
+@using GolfAssociationCommunity.Models
+@using Microsoft.AspNetCore.Identity
+@inject UserManager<ApplicationUser> UserManager
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - Association Admin</title>
+    <link rel="stylesheet" href="~/css/site.css" />
+</head>
+<body>
+    <header class="site-header">
+        <div class="container">
+            <span class="brand">Association Admin Portal - @(ViewData["AssociationName"] ?? "Association")</span>
+            <nav class="site-nav">
+                <a href="~/AssociationAdmin">Dashboard</a>
+                <a href="~/AssociationAdmin/Tournaments">Tournaments</a>
+                <a href="~/AssociationAdmin/Registrations">Registrations</a>
+                <a href="~/Identity/Account/Manage">My Account</a>
+                <form method="post" action="~/Identity/Account/Logout" class="inline-form">
+                    @Html.AntiForgeryToken()
+                    <button type="submit" class="link-button">Logout</button>
+                </form>
+            </nav>
+        </div>
+    </header>
+    <main class="container">
+        @RenderBody()
+    </main>
+    <footer class="site-footer">
+        <div class="container">
+            <p>Association Admin Portal &copy; @DateTime.UtcNow.Year</p>
+        </div>
+    </footer>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

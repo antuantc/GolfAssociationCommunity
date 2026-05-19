@@ -1,0 +1,73 @@
+@page "{id:int}"
+@using GolfAssociationCommunity.Models
+@model GolfAssociationCommunity.Pages.AssociationAdmin.EditTournamentModel
+@{
+    ViewData["Title"] = "Edit Tournament";
+}
+
+<section class="section-panel">
+    <h1>Edit Tournament</h1>
+    @if (TempData["SuccessMessage"] is string success)
+    {
+        <div class="message success">@success</div>
+    }
+
+    <form method="post">
+        <div asp-validation-summary="ModelOnly" class="message error"></div>
+
+        <div class="card-grid">
+            <div>
+                <label asp-for="Input.Name"></label>
+                <input asp-for="Input.Name" class="form-control" />
+            </div>
+            <div>
+                <label asp-for="Input.Format"></label>
+                <select asp-for="Input.Format" asp-items="Html.GetEnumSelectList<TournamentFormat>()" class="form-control"></select>
+            </div>
+            <div>
+                <label asp-for="Input.StartDate"></label>
+                <input asp-for="Input.StartDate" class="form-control" />
+            </div>
+            <div>
+                <label asp-for="Input.EndDate"></label>
+                <input asp-for="Input.EndDate" class="form-control" />
+            </div>
+            <div>
+                <label asp-for="Input.RegistrationDeadline"></label>
+                <input asp-for="Input.RegistrationDeadline" class="form-control" />
+            </div>
+            <div>
+                <label asp-for="Input.Location"></label>
+                <input asp-for="Input.Location" class="form-control" />
+            </div>
+            <div>
+                <label asp-for="Input.GolfCourse"></label>
+                <input asp-for="Input.GolfCourse" class="form-control" />
+            </div>
+            <div>
+                <label asp-for="Input.EntryFee"></label>
+                <input asp-for="Input.EntryFee" class="form-control" />
+            </div>
+            <div>
+                <label asp-for="Input.MaxPlayers"></label>
+                <input asp-for="Input.MaxPlayers" class="form-control" />
+            </div>
+            <div>
+                <label asp-for="Input.Status"></label>
+                <select asp-for="Input.Status" asp-items="Html.GetEnumSelectList<TournamentStatus>()" class="form-control"></select>
+            </div>
+        </div>
+
+        <div class="mb-3">
+            <label asp-for="Input.Description"></label>
+            <textarea asp-for="Input.Description" class="form-control" rows="4"></textarea>
+        </div>
+
+        <button type="submit" class="btn">Save Changes</button>
+        <a class="btn btn-secondary" href="~/AssociationAdmin/Tournaments">Back</a>
+    </form>
+</section>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

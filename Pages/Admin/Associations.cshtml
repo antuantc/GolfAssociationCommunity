@@ -1,0 +1,51 @@
+@page
+@model GolfAssociationCommunity.Pages.Admin.AssociationsModel
+@{
+    ViewData["Title"] = "Manage Associations";
+}
+
+<section class="section-panel">
+    <h1>Manage Associations</h1>
+    @if (TempData["SuccessMessage"] is string message)
+    {
+        <div class="message success">@message</div>
+    }
+
+    <a class="btn" href="~/Admin/CreateAssociation">Create Association</a>
+
+    @if (Model.Associations.Count == 0)
+    {
+        <p>No active associations found.</p>
+    }
+    else
+    {
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Location</th>
+                    <th>Contact</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+            @foreach (var association in Model.Associations)
+            {
+                <tr>
+                    <td>@association.Name</td>
+                    <td>@association.City, @association.State</td>
+                    <td>@association.ContactEmail</td>
+                    <td>
+                        <a class="card-link" href="~/Associations/Details/@association.Id">View</a>
+                        <a class="card-link" href="~/Admin/EditAssociation/@association.Id">Edit</a>
+                        <a class="card-link" href="~/Admin/AssociationMembers/@association.Id">Members</a>
+                        <form method="post" asp-page-handler="Delete" asp-route-id="@association.Id" class="inline-form" onsubmit="return confirm('Delete this association?');">
+                            <button type="submit" class="link-button">Delete</button>
+                        </form>
+                    </td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    }
+</section>

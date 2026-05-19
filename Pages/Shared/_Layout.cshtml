@@ -21,6 +21,14 @@
                 @if (SignInManager.IsSignedIn(User))
                 {
                     <a href="~/MyRegistrations">My Registrations</a>
+                    @if (User.IsInRole("AssociationAdmin"))
+                    {
+                        <a href="~/AssociationAdmin">Association Portal</a>
+                    }
+                    @if (User.IsInRole("Admin"))
+                    {
+                        <a href="~/Admin">Admin Dashboard</a>
+                    }
                     <a href="~/Identity/Account/Manage">My Account</a>
                     <form method="post" action="~/Identity/Account/Logout" class="inline-form">
                         @Html.AntiForgeryToken()

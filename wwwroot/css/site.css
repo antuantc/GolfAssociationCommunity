@@ -47,9 +47,21 @@ body {
 
 .site-nav a,
 .link-button {
-    color: white;
+    color: #2a76d2;
     text-decoration: none;
     font-weight: 600;
+}
+
+.site-nav a,
+.site-nav .link-button {
+    color: white;
+}
+
+.site-nav .link-button {
+    background: transparent;
+    border: 0;
+    padding: 0;
+    cursor: pointer;
 }
 
 .inline-form {
@@ -65,6 +77,26 @@ body {
     border-radius: 0.4rem;
     text-decoration: none;
     color: white;
+}
+
+.card-link {
+    background: #2a76d2;
+}
+
+.table .card-link,
+.section-panel .card-link {
+    margin-top: 0.35rem;
+    margin-right: 0.35rem;
+}
+
+.table .link-button,
+.section-panel .link-button {
+    background: transparent;
+    border: 0;
+    color: #2a76d2;
+    cursor: pointer;
+    font-weight: 600;
+    padding: 0;
 }
 
 .btn {

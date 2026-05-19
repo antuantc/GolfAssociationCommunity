@@ -1,0 +1,49 @@
+@page
+@model GolfAssociationCommunity.Pages.AssociationAdmin.TournamentsModel
+@{
+    ViewData["Title"] = "Manage Tournaments";
+}
+
+<section class="section-panel">
+    <h1>Manage Tournaments</h1>
+    @if (TempData["SuccessMessage"] is string success)
+    {
+        <div class="message success">@success</div>
+    }
+    <a class="btn" href="~/AssociationAdmin/CreateTournament">Create Tournament</a>
+
+    @if (Model.Tournaments.Count == 0)
+    {
+        <p>No tournaments created yet.</p>
+    }
+    else
+    {
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Dates</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+            @foreach (var tournament in Model.Tournaments)
+            {
+                <tr>
+                    <td>@tournament.Name</td>
+                    <td>@tournament.StartDate.ToString("MMM d, yyyy") - @tournament.EndDate.ToString("MMM d, yyyy")</td>
+                    <td>@tournament.Status</td>
+                    <td>
+                        <a class="card-link" href="~/AssociationAdmin/EditTournament/@tournament.Id">Edit</a>
+                        <a class="card-link" href="~/AssociationAdmin/Registrations/@tournament.Id">Registrations</a>
+                        <form method="post" asp-page-handler="Delete" asp-route-id="@tournament.Id" class="inline-form" onsubmit="return confirm('Delete this tournament?');">
+                            <button type="submit" class="link-button">Delete</button>
+                        </form>
+                    </td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    }
+</section>
