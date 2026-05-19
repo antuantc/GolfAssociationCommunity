@@ -60,6 +60,9 @@ builder.Services.AddScoped<ILeaderboardService, LeaderboardService>();
 // Add Controllers
 builder.Services.AddControllers();
 
+// Add Razor Pages
+builder.Services.AddRazorPages();
+
 // Add CORS
 builder.Services.AddCors(options =>
 {
@@ -69,6 +72,14 @@ builder.Services.AddCors(options =>
             .AllowAnyMethod()
             .AllowAnyHeader();
     });
+});
+
+// Add Session
+builder.Services.AddSession(options =>
+{
+    options.IdleTimeout = TimeSpan.FromMinutes(30);
+    options.Cookie.HttpOnly = true;
+    options.Cookie.IsEssential = true;
 });
 
 // Add Swagger
@@ -86,17 +97,23 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
+app.UseStaticFiles();
+
 app.UseRouting();
 
 app.UseCors("AllowAll");
 
+app.UseSession();
+
 app.UseAuthentication();
 app.UseAuthorization();
 
+app.MapRazorPages();
+
 app.MapGet("/", () => Results.Ok(new
 {
-    message = "Golf Association Community API",
-    description = "Use /api/[controller] to access endpoints.",
+    message = "Golf Association Community API & Web Application",
+    description = "Use /api/[controller] to access API endpoints or visit the web application at the root URL.",
     swagger = app.Environment.IsDevelopment() ? "/swagger" : null
 }));
 
