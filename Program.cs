@@ -47,7 +47,8 @@ builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
         options.SignIn.RequireConfirmedEmail = false;
     })
     .AddEntityFrameworkStores<ApplicationDbContext>()
-    .AddDefaultTokenProviders();
+    .AddDefaultTokenProviders()
+    .AddDefaultUI();
 
 // Add custom services
 builder.Services.AddScoped<IAuthorizeNetPaymentService, AuthorizeNetPaymentService>();
@@ -109,14 +110,6 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapRazorPages();
-
-app.MapGet("/", () => Results.Ok(new
-{
-    message = "Golf Association Community API & Web Application",
-    description = "Use /api/[controller] to access API endpoints or visit the web application at the root URL.",
-    swagger = app.Environment.IsDevelopment() ? "/swagger" : null
-}));
-
 app.MapControllers();
 
 // Run migrations on startup

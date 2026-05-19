@@ -1,0 +1,109 @@
+@page "{id:int}"
+@model GolfAssociationCommunity.Pages.Tournaments.DetailsModel
+@{
+    ViewData["Title"] = Model.Tournament?.Name ?? "Tournament Details";
+}
+<section class="section-panel">
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="message success">@TempData["SuccessMessage"]</div>
+    }
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="message error">@TempData["ErrorMessage"]</div>
+    }
+
+    @if (Model.Tournament == null)
+    {
+        <h1>Tournament not found</h1>
+        <p>The tournament you requested does not exist.</p>
+        <a class="btn btn-secondary" href="~/Tournaments">Browse tournaments</a>
+    }
+    else
+    {
+        <div class="association-header">
+            <h1>@Model.Tournament.Name</h1>
+            <p>@Model.Tournament.Description</p>
+            <div class="details-list">
+                <dt>Association</dt>
+                <dd>@Model.Tournament.GolfAssociation?.Name</dd>
+                <dt>Dates</dt>
+                <dd>@Model.Tournament.StartDate.ToString("MMM d, yyyy") - @Model.Tournament.EndDate.ToString("MMM d, yyyy")</dd>
+                <dt>Format</dt>
+                <dd>@Model.Tournament.Format</dd>
+                <dt>Location</dt>
+                <dd>@Model.Tournament.Location</dd>
+                <dt>Entry Fee</dt>
+                <dd>@Model.Tournament.EntryFee:C</dd>
+                <dt>Registration</dt>
+                <dd>@Model.RegistrationCount / @Model.Tournament.MaxPlayers registered</dd>
+                <dt>Status</dt>
+                <dd>@Model.Tournament.Status</dd>
+            </div>
+        </div>
+
+        <div class="section-panel">
+            <h2>Registration</h2>
+            @if (Model.IsSignedIn)
+            {
+                @if (Model.CurrentRegistration != null)
+                {
+                    <p>You are already registered for this tournament. Status: <strong>@Model.CurrentRegistration.Status</strong></p>
+                    @if (Model.CurrentRegistration.Status == GolfAssociationCommunity.Models.RegistrationStatus.Registered)
+                    {
+                        <form method="post" asp-page-handler="Withdraw" class="inline-form">
+                            <input type="hidden" name="registrationId" value="@Model.CurrentRegistration.Id" />
+                            <input type="hidden" name="reason" value="User requested withdrawal" />
+                            <button type="submit" class="btn btn-secondary">Withdraw Registration</button>
+                        </form>
+                    }
+                }
+                else if (Model.CanRegister)
+                {
+                    <form method="post" asp-page-handler="Register">
+                        <input type="hidden" name="tournamentId" value="@Model.Tournament.Id" />
+                        <button type="submit" class="btn">Register for Tournament</button>
+                    </form>
+                }
+                else
+                {
+                    <p>Registration is not available for this tournament.</p>
+                }
+            }
+            else
+            {
+                <p>You must <a href="~/Identity/Account/Login">log in</a> to register.</p>
+            }
+        </div>
+
+        @if (Model.Leaderboard.Any())
+        {
+            <div class="section-panel">
+                <h2>Leaderboard</h2>
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Position</th>
+                            <th>Player</th>
+                            <th>Total Score</th>
+                            <th>Stableford</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var entry in Model.Leaderboard)
+                        {
+                            <tr>
+                                <td>@entry.Position</td>
+                                <td>@entry.Player?.UserName</td>
+                                <td>@entry.TotalScore</td>
+                                <td>@entry.StablefordPoints</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+
+        <a class="btn btn-secondary" href="~/Tournaments">Back to tournaments</a>
+    }
+</section>

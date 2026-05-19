@@ -1,0 +1,59 @@
+@page "{id:int}"
+@model GolfAssociationCommunity.Pages.Associations.DetailsModel
+@{
+    ViewData["Title"] = Model.Association?.Name ?? "Association Details";
+}
+<section class="section-panel">
+    @if (Model.Association == null)
+    {
+        <h1>Association not found</h1>
+        <p>The association you requested does not exist or is not active.</p>
+        <a href="~/Associations" class="btn btn-secondary">Back to associations</a>
+    }
+    else
+    {
+        <div class="association-header">
+            <div>
+                <h1>@Model.Association.Name</h1>
+                <p>@Model.Association.Description</p>
+                <dl class="details-list">
+                    <dt>Location</dt>
+                    <dd>@Model.Association.City, @Model.Association.State</dd>
+                    <dt>Contact</dt>
+                    <dd>@Model.Association.ContactEmail</dd>
+                    <dt>Active Members</dt>
+                    <dd>@Model.MemberCount</dd>
+                    <dt>Website</dt>
+                    <dd><a href="@Model.Association.Website" target="_blank">@Model.Association.Website</a></dd>
+                </dl>
+            </div>
+        </div>
+
+        <div class="section-panel">
+            <h2>Tournaments</h2>
+            @if (Model.Association.Tournaments == null || Model.Association.Tournaments.Count == 0)
+            {
+                <p>No tournaments are currently associated with this association.</p>
+            }
+            else
+            {
+                <div class="card-grid">
+                    @foreach (var tournament in Model.Association.Tournaments.OrderBy(t => t.StartDate))
+                    {
+                        <article class="card">
+                            <h3>@tournament.Name</h3>
+                            <p>@tournament.Description</p>
+                            <div class="card-meta">
+                                <span>@tournament.StartDate.ToString("MMM d, yyyy") - @tournament.EndDate.ToString("MMM d, yyyy")</span>
+                                <span>Status: @tournament.Status</span>
+                            </div>
+                            <a class="card-link" href="~/Tournaments/Details/@tournament.Id">View tournament</a>
+                        </article>
+                    }
+                </div>
+            }
+        </div>
+
+        <a href="~/Associations" class="btn btn-secondary">Back to associations</a>
+    }
+</section>

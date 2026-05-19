@@ -13,6 +13,8 @@ namespace GolfAssociationCommunity.Services
         Task<IEnumerable<Tournament>> GetAssociationTournamentsAsync(int associationId);
         Task<IEnumerable<Tournament>> GetUpcomingTournamentsAsync(int associationId);
         Task<IEnumerable<Tournament>> GetCompletedTournamentsAsync(int associationId);
+        Task<IEnumerable<Tournament>> GetAllUpcomingTournamentsAsync();
+        Task<IEnumerable<Tournament>> GetAllCompletedTournamentsAsync();
         Task<Tournament> CreateTournamentAsync(Tournament tournament);
         Task<Tournament?> UpdateTournamentAsync(int id, Tournament tournament);
         Task<bool> UpdateTournamentStatusAsync(int id, TournamentStatus newStatus);
@@ -92,6 +94,40 @@ namespace GolfAssociationCommunity.Services
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error retrieving completed tournaments for association ID: {AssociationId}", associationId);
+                throw;
+            }
+        }
+
+        public async Task<IEnumerable<Tournament>> GetAllUpcomingTournamentsAsync()
+        {
+            try
+            {
+                return await _context.Tournaments
+                    .Include(t => t.GolfAssociation)
+                    .Where(t => t.StartDate > DateTime.UtcNow)
+                    .OrderBy(t => t.StartDate)
+                    .ToListAsync();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error retrieving all upcoming tournaments");
+                throw;
+            }
+        }
+
+        public async Task<IEnumerable<Tournament>> GetAllCompletedTournamentsAsync()
+        {
+            try
+            {
+                return await _context.Tournaments
+                    .Include(t => t.GolfAssociation)
+                    .Where(t => t.Status == TournamentStatus.Completed || t.Status == TournamentStatus.Cancelled)
+                    .OrderByDescending(t => t.EndDate)
+                    .ToListAsync();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error retrieving all completed tournaments");
                 throw;
             }
         }

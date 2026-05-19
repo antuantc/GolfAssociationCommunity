@@ -1,0 +1,53 @@
+@page
+@model GolfAssociationCommunity.Pages.Tournaments.IndexModel
+@{
+    ViewData["Title"] = "Tournaments";
+}
+<section class="section-panel">
+    <h1>Upcoming Tournaments</h1>
+    @if (Model.UpcomingTournaments.Count == 0)
+    {
+        <p>No upcoming tournaments are available at the moment.</p>
+    }
+    else
+    {
+        <div class="card-grid">
+            @foreach (var tournament in Model.UpcomingTournaments)
+            {
+                <article class="card">
+                    <h2>@tournament.Name</h2>
+                    <p>@tournament.Description</p>
+                    <div class="card-meta">
+                        <span>@tournament.StartDate.ToString("MMM d, yyyy")</span>
+                        <span>@tournament.GolfAssociation?.Name</span>
+                    </div>
+                    <a class="card-link" href="~/Tournaments/Details/@tournament.Id">View details</a>
+                </article>
+            }
+        </div>
+    }
+</section>
+<section class="section-panel">
+    <h1>Completed Tournaments</h1>
+    @if (Model.CompletedTournaments.Count == 0)
+    {
+        <p>No completed tournaments are available right now.</p>
+    }
+    else
+    {
+        <div class="card-grid">
+            @foreach (var tournament in Model.CompletedTournaments)
+            {
+                <article class="card">
+                    <h2>@tournament.Name</h2>
+                    <p>@tournament.Description</p>
+                    <div class="card-meta">
+                        <span>@tournament.EndDate.ToString("MMM d, yyyy")</span>
+                        <span>@tournament.GolfAssociation?.Name</span>
+                    </div>
+                    <a class="card-link" href="~/Tournaments/Details/@tournament.Id">View details</a>
+                </article>
+            }
+        </div>
+    }
+</section>

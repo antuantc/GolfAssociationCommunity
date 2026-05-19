@@ -1,0 +1,57 @@
+@page
+@model IndexModel
+@{
+    ViewData["Title"] = "Home";
+}
+<div class="hero">
+    <div class="hero-copy">
+        <h1>Welcome to Golf Association Community</h1>
+        <p>Explore active golf associations, upcoming tournaments, and the community behind the game.</p>
+        <a class="btn" href="~/Associations">Browse Associations</a>
+    </div>
+</div>
+<section class="section-panel">
+    <h2>Featured Associations</h2>
+    @if (Model.Associations.Count == 0)
+    {
+        <p>No active associations are available right now.</p>
+    }
+    else
+    {
+        <div class="card-grid">
+            @foreach (var association in Model.Associations.Take(6))
+            {
+                <article class="card">
+                    <h3>@association.Name</h3>
+                    <p>@association.Description</p>
+                    <a class="card-link" href="~/Associations/Details/@association.Id">View details</a>
+                </article>
+            }
+        </div>
+    }
+</section>
+<section class="section-panel">
+    <h2>Upcoming Tournaments</h2>
+    @if (Model.UpcomingTournaments.Count == 0)
+    {
+        <p>No upcoming tournaments have been scheduled yet.</p>
+    }
+    else
+    {
+        <div class="card-grid">
+            @foreach (var tournament in Model.UpcomingTournaments)
+            {
+                <article class="card">
+                    <h3>@tournament.Name</h3>
+                    <p>@tournament.Description</p>
+                    <div class="card-meta">
+                        <span>@tournament.StartDate.ToString("MMM d, yyyy")</span>
+                        <span>@tournament.GolfAssociation?.Name</span>
+                    </div>
+                    <a class="card-link" href="~/Tournaments/Details/@tournament.Id">View details</a>
+                </article>
+            }
+        </div>
+    }
+    <a class="btn btn-secondary" href="~/Tournaments">Browse all tournaments</a>
+</section>
