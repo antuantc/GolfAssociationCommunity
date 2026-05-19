@@ -54,7 +54,7 @@ A comprehensive ASP.NET Core web application for managing golf associations, tou
 ## Technology Stack
 
 - **Framework**: ASP.NET Core 8.0
-- **Database**: SQL Server with Entity Framework Core
+- **Database**: SQLite with Entity Framework Core
 - **Authentication**: ASP.NET Identity
 - **Payment Processing**: Authorize.Net
 - **Logging**: Serilog
@@ -90,7 +90,7 @@ GolfAssociationCommunity/
 
 ### Prerequisites
 - .NET 8.0 SDK
-- SQL Server (LocalDB or full SQL Server)
+- SQLite (file-based, created automatically)
 - Authorize.Net merchant account
 
 ### Installation
@@ -106,7 +106,7 @@ GolfAssociationCommunity/
    Update `appsettings.json`:
    ```json
    "ConnectionStrings": {
-     "DefaultConnection": "Server=YOUR_SERVER;Database=GolfAssociationCommunity;Trusted_Connection=true;"
+       "DefaultConnection": "Data Source=golfassociation.db"
    }
    ```
 
@@ -121,9 +121,8 @@ GolfAssociationCommunity/
    }
    ```
 
-4. **Create and apply database migrations**
+4. **Apply database schema**
    ```bash
-   dotnet ef migrations add InitialCreate
    dotnet ef database update
    ```
 
@@ -134,6 +133,51 @@ GolfAssociationCommunity/
    ```
 
    The application will be available at `https://localhost:5001`
+
+## Database Migrations
+
+Use these commands whenever your EF Core model changes.
+
+### One-time setup for EF CLI
+
+Install the EF CLI tool if `dotnet ef` is not available:
+
+```bash
+dotnet tool install --global dotnet-ef
+```
+
+### First run on a fresh clone
+
+If migrations already exist in the repo:
+
+```bash
+dotnet ef database update
+```
+
+This creates the SQLite database file and all tables.
+
+### After changing models
+
+1. Create a new migration:
+
+```bash
+dotnet ef migrations add <DescriptiveMigrationName>
+```
+
+2. Apply it:
+
+```bash
+dotnet ef database update
+```
+
+### Useful checks
+
+```bash
+dotnet ef migrations list
+dotnet ef database update
+```
+
+If your local schema gets out of sync during development, delete `golfassociation.db` and run `dotnet ef database update` again.
 
 ## Database Schema
 

@@ -175,7 +175,7 @@ namespace GolfAssociationCommunity.Services
             }
         }
 
-        public async Task<int> CalculateStablefordPointsAsync(int holeScore, int holePar, int handicapStrokes)
+        public Task<int> CalculateStablefordPointsAsync(int holeScore, int holePar, int handicapStrokes)
         {
             try
             {
@@ -188,7 +188,7 @@ namespace GolfAssociationCommunity.Services
                 int points = 2 + diff;
 
                 // Minimum points is 0
-                return Math.Max(0, points);
+                return Task.FromResult(Math.Max(0, points));
             }
             catch (Exception ex)
             {
