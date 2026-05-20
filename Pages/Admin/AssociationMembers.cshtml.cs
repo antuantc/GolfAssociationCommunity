@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.Extensions.Logging;
 
 namespace GolfAssociationCommunity.Pages.Admin
 {
@@ -16,17 +17,20 @@ namespace GolfAssociationCommunity.Pages.Admin
         private readonly ApplicationDbContext _context;
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly RoleManager<IdentityRole> _roleManager;
+        private readonly IAdminAuditService _adminAuditService;
 
         public AssociationMembersModel(
             IAssociationService associationService,
             ApplicationDbContext context,
             UserManager<ApplicationUser> userManager,
-            RoleManager<IdentityRole> roleManager)
+            RoleManager<IdentityRole> roleManager,
+            IAdminAuditService adminAuditService)
         {
             _associationService = associationService;
             _context = context;
             _userManager = userManager;
             _roleManager = roleManager;
+            _adminAuditService = adminAuditService;
         }
 
         public GolfAssociation? Association { get; private set; }
@@ -60,6 +64,15 @@ namespace GolfAssociationCommunity.Pages.Admin
                 ? "Member added successfully."
                 : "Association or user not found.";
 
+            await _adminAuditService.WriteAsync(
+                added ? "Added association member" : "Failed to add association member",
+                User?.Identity?.Name ?? "anonymous",
+                new Dictionary<string, string?>
+                {
+                    ["AssociationId"] = id.ToString(),
+                    ["TargetUserId"] = Input.UserId.Trim()
+                });
+
             return RedirectToPage(new { id });
         }
 
@@ -88,6 +101,15 @@ namespace GolfAssociationCommunity.Pages.Admin
                 ? "Member removed successfully."
                 : "Member could not be removed.";
 
+            await _adminAuditService.WriteAsync(
+                removed ? "Removed association member" : "Failed to remove association member",
+                User?.Identity?.Name ?? "anonymous",
+                new Dictionary<string, string?>
+                {
+                    ["AssociationId"] = id.ToString(),
+                    ["TargetUserId"] = userId
+                });
+
             return RedirectToPage(new { id });
         }
 
@@ -103,6 +125,14 @@ namespace GolfAssociationCommunity.Pages.Admin
             if (user is null)
             {
                 TempData["SuccessMessage"] = "User not found.";
+                await _adminAuditService.WriteAsync(
+                    "Failed to assign association admin",
+                    User?.Identity?.Name ?? "anonymous",
+                    new Dictionary<string, string?>
+                    {
+                        ["AssociationId"] = id.ToString(),
+                        ["TargetUserId"] = userId
+                    });
                 return RedirectToPage(new { id });
             }
 
@@ -128,6 +158,14 @@ namespace GolfAssociationCommunity.Pages.Admin
             await _context.SaveChangesAsync();
 
             TempData["SuccessMessage"] = $"{user.Email} is now the association admin.";
+            await _adminAuditService.WriteAsync(
+                "Assigned association admin",
+                User?.Identity?.Name ?? "anonymous",
+                new Dictionary<string, string?>
+                {
+                    ["AssociationId"] = id.ToString(),
+                    ["TargetUserId"] = userId
+                });
             return RedirectToPage(new { id });
         }
 

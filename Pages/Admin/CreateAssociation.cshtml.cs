@@ -12,13 +12,16 @@ namespace GolfAssociationCommunity.Pages.Admin
     public class CreateAssociationModel : PageModel
     {
         private readonly IAssociationService _associationService;
+        private readonly IAdminAuditService _adminAuditService;
         private readonly ILogger<CreateAssociationModel> _logger;
 
         public CreateAssociationModel(
             IAssociationService associationService,
+            IAdminAuditService adminAuditService,
             ILogger<CreateAssociationModel> logger)
         {
             _associationService = associationService;
+            _adminAuditService = adminAuditService;
             _logger = logger;
         }
 
@@ -95,11 +98,20 @@ namespace GolfAssociationCommunity.Pages.Admin
             try
             {
                 var created = await _associationService.CreateAssociationAsync(association);
+                await _adminAuditService.WriteAsync("Created association", User?.Identity?.Name ?? "anonymous", new Dictionary<string, string?>
+                {
+                    ["AssociationId"] = created.Id.ToString(),
+                    ["AssociationName"] = created.Name
+                });
                 TempData["SuccessMessage"] = $"Association '{created.Name}' created successfully.";
                 return RedirectToPage("/Associations/Details", new { id = created.Id });
             }
             catch (Exception ex)
             {
+                await _adminAuditService.WriteAsync("Failed to create association", User?.Identity?.Name ?? "anonymous", new Dictionary<string, string?>
+                {
+                    ["AssociationName"] = association.Name
+                });
                 _logger.LogError(ex, "Failed to create association {AssociationName}", association.Name);
                 ModelState.AddModelError(string.Empty, "Create association failed. Check the values and try again.");
                 return Page();

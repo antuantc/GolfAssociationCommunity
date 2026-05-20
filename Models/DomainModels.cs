@@ -34,6 +34,7 @@ namespace GolfAssociationCommunity.Models
         public int? GolfAssociationId { get; set; }
         public GolfAssociation? GolfAssociation { get; set; }
         public DateTime? UpdatedAt { get; set; }
+        public bool RequirePasswordChange { get; set; }
     }
 
     public class GolfAssociation
@@ -127,5 +128,14 @@ namespace GolfAssociationCommunity.Models
         public int StablefordPoints { get; set; }
         public int ScoreDifferential { get; set; }
         public DateTime UpdatedAt { get; set; }
+    }
+
+    public class AdminAuditEvent
+    {
+        public int Id { get; set; }
+        public string Action { get; set; } = string.Empty;
+        public string Actor { get; set; } = string.Empty;
+        public string Details { get; set; } = string.Empty;
+        public DateTime AtUtc { get; set; }
     }
 }

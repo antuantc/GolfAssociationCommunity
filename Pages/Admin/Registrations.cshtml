@@ -1,0 +1,128 @@
+@page
+@using GolfAssociationCommunity.Models
+@model GolfAssociationCommunity.Pages.Admin.RegistrationsModel
+@{
+    ViewData["Title"] = "Manage Registrations";
+}
+
+<section class="section-panel">
+    <h1>Manage Registrations</h1>
+    <p>Manage tournament registrations and payment confirmations across the platform.</p>
+
+    <form method="get" class="card-grid">
+        <div>
+            <label for="search">Search</label>
+            <input id="search" name="Search" value="@Model.Search" class="form-control" placeholder="Player, tournament, association" />
+        </div>
+        <div>
+            <label for="statusFilter">Status</label>
+            <select id="statusFilter" name="StatusFilter" class="form-control">
+                <option value="">All</option>
+                @foreach (var status in Enum.GetValues<RegistrationStatus>())
+                {
+                    <option value="@status" selected="@(Model.StatusFilter == status)">@status</option>
+                }
+            </select>
+        </div>
+        <div>
+            <label for="paymentFilter">Payment</label>
+            <select id="paymentFilter" name="PaymentFilter" class="form-control">
+                <option value="">All</option>
+                <option value="Confirmed" selected="@(Model.PaymentFilter == "Confirmed")">Confirmed</option>
+                <option value="Pending" selected="@(Model.PaymentFilter == "Pending")">Pending</option>
+            </select>
+        </div>
+        <div>
+            <label>&nbsp;</label>
+            <div>
+                <button type="submit" class="btn">Apply Filters</button>
+                <a class="btn btn-secondary" href="~/Admin/Registrations">Reset</a>
+            </div>
+        </div>
+    </form>
+
+    @if (TempData["SuccessMessage"] is string message)
+    {
+        <div class="message success">@message</div>
+    }
+
+    @if (Model.Registrations.Count == 0)
+    {
+        <p>No registrations found.</p>
+    }
+    else
+    {
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Player</th>
+                    <th>Tournament</th>
+                    <th>Association</th>
+                    <th>Registered On</th>
+                    <th>Status</th>
+                    <th>Payment</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+            @foreach (var registration in Model.Registrations)
+            {
+                <tr>
+                    <td>@registration.PlayerEmail</td>
+                    <td>@registration.TournamentName</td>
+                    <td>@registration.AssociationName</td>
+                    <td>@registration.RegistrationDate.ToString("MMM d, yyyy")</td>
+                    <td>@registration.Status</td>
+                    <td>@(registration.PaymentConfirmed ? "Confirmed" : "Pending")</td>
+                    <td>
+                        <form method="post" asp-page-handler="SetStatus" asp-route-id="@registration.Id" class="inline-form">
+                            <input type="hidden" name="Search" value="@Model.Search" />
+                            <input type="hidden" name="StatusFilter" value="@Model.StatusFilter" />
+                            <input type="hidden" name="PaymentFilter" value="@Model.PaymentFilter" />
+                            <input type="hidden" name="CurrentPage" value="@Model.PageNumber" />
+                            <select name="status" class="form-control" aria-label="Registration status">
+                                @foreach (var status in Enum.GetValues<RegistrationStatus>())
+                                {
+                                    <option value="@status" selected="@(status == registration.Status)">@status</option>
+                                }
+                            </select>
+                            <button type="submit" class="link-button">Update</button>
+                        </form>
+                        @if (!registration.PaymentConfirmed)
+                        {
+                            <form method="post" asp-page-handler="ConfirmPayment" asp-route-id="@registration.Id" class="inline-form">
+                                <input type="hidden" name="Search" value="@Model.Search" />
+                                <input type="hidden" name="StatusFilter" value="@Model.StatusFilter" />
+                                <input type="hidden" name="PaymentFilter" value="@Model.PaymentFilter" />
+                                <input type="hidden" name="CurrentPage" value="@Model.PageNumber" />
+                                <button type="submit" class="link-button">Confirm Payment</button>
+                            </form>
+                        }
+                        <form method="post" asp-page-handler="Withdraw" asp-route-id="@registration.Id" class="inline-form">
+                            <input type="hidden" name="Search" value="@Model.Search" />
+                            <input type="hidden" name="StatusFilter" value="@Model.StatusFilter" />
+                            <input type="hidden" name="PaymentFilter" value="@Model.PaymentFilter" />
+                            <input type="hidden" name="CurrentPage" value="@Model.PageNumber" />
+                            <button type="submit" class="link-button">Withdraw</button>
+                        </form>
+                    </td>
+                </tr>
+            }
+            </tbody>
+        </table>
+
+        <div>
+            <span>Page @Model.PageNumber of @Model.TotalPages</span>
+            @if (Model.PageNumber > 1)
+            {
+                <a class="btn btn-secondary" asp-page="/Admin/Registrations" asp-route-Search="@Model.Search" asp-route-StatusFilter="@Model.StatusFilter" asp-route-PaymentFilter="@Model.PaymentFilter" asp-route-CurrentPage="@(Model.PageNumber - 1)">Previous</a>
+            }
+            @if (Model.PageNumber < Model.TotalPages)
+            {
+                <a class="btn btn-secondary" asp-page="/Admin/Registrations" asp-route-Search="@Model.Search" asp-route-StatusFilter="@Model.StatusFilter" asp-route-PaymentFilter="@Model.PaymentFilter" asp-route-CurrentPage="@(Model.PageNumber + 1)">Next</a>
+            }
+        </div>
+    }
+
+    <a class="btn btn-secondary" href="~/Admin">Back to Dashboard</a>
+</section>

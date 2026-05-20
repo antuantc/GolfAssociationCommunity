@@ -16,6 +16,7 @@ namespace GolfAssociationCommunity.Data
         public DbSet<Registration> Registrations { get; set; } = null!;
         public DbSet<PlayerScore> PlayerScores { get; set; } = null!;
         public DbSet<Leaderboard> Leaderboards { get; set; } = null!;
+        public DbSet<AdminAuditEvent> AdminAuditEvents { get; set; } = null!;
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
@@ -76,6 +77,20 @@ namespace GolfAssociationCommunity.Data
                 .WithMany()
                 .HasForeignKey(l => l.TournamentId)
                 .OnDelete(DeleteBehavior.Cascade);
+
+            builder.Entity<AdminAuditEvent>()
+                .Property(a => a.Action)
+                .HasMaxLength(200);
+
+            builder.Entity<AdminAuditEvent>()
+                .Property(a => a.Actor)
+                .HasMaxLength(256);
+
+            builder.Entity<AdminAuditEvent>()
+                .HasIndex(a => a.AtUtc);
+
+            builder.Entity<AdminAuditEvent>()
+                .HasIndex(a => a.Action);
         }
     }
 }

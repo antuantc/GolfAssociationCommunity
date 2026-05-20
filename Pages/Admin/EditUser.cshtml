@@ -1,0 +1,64 @@
+@page "{id}"
+@model GolfAssociationCommunity.Pages.Admin.EditUserModel
+@{
+    ViewData["Title"] = "Edit User";
+}
+
+<section class="section-panel">
+    <h1>Edit User</h1>
+    <p>Update user name, email, and optionally reset the password.</p>
+
+    <form method="post">
+        <div asp-validation-summary="ModelOnly" class="message error"></div>
+
+        <div class="card-grid">
+            <div>
+                <label asp-for="Input.Email"></label>
+                <input asp-for="Input.Email" class="form-control" />
+                <span asp-validation-for="Input.Email" class="text-danger"></span>
+            </div>
+
+            <div>
+                <label asp-for="Input.FirstName"></label>
+                <input asp-for="Input.FirstName" class="form-control" />
+                <span asp-validation-for="Input.FirstName" class="text-danger"></span>
+            </div>
+
+            <div>
+                <label asp-for="Input.LastName"></label>
+                <input asp-for="Input.LastName" class="form-control" />
+                <span asp-validation-for="Input.LastName" class="text-danger"></span>
+            </div>
+
+            <div>
+                <label>
+                    <input asp-for="Input.RequirePasswordChangeOnNextLogin" /> Require password change on next login
+                </label>
+            </div>
+        </div>
+
+        <h2>Password</h2>
+        <p>Leave password fields blank if you do not want to change it.</p>
+
+        <div class="card-grid">
+            <div>
+                <label asp-for="Input.NewPassword"></label>
+                <input asp-for="Input.NewPassword" class="form-control" />
+                <span asp-validation-for="Input.NewPassword" class="text-danger"></span>
+            </div>
+
+            <div>
+                <label asp-for="Input.ConfirmPassword"></label>
+                <input asp-for="Input.ConfirmPassword" class="form-control" />
+                <span asp-validation-for="Input.ConfirmPassword" class="text-danger"></span>
+            </div>
+        </div>
+
+        <button type="submit" class="btn">Save Changes</button>
+        <a class="btn btn-secondary" href="~/Admin/Users">Back to Users</a>
+    </form>
+</section>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

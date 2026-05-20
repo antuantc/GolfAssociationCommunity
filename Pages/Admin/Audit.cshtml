@@ -1,0 +1,90 @@
+@page
+@model GolfAssociationCommunity.Pages.Admin.AuditModel
+@{
+    ViewData["Title"] = "Admin Audit Log";
+}
+
+<section class="section-panel">
+    <h1>Admin Audit Log</h1>
+    <p>Review admin actions recorded in the database audit trail.</p>
+
+    <form method="get" class="card-grid">
+        <div>
+            <label for="search">Search</label>
+            <input id="search" name="Search" value="@Model.Search" class="form-control" placeholder="Action, actor, details" />
+        </div>
+        <div>
+            <label for="actorFilter">Actor</label>
+            <input id="actorFilter" name="ActorFilter" value="@Model.ActorFilter" class="form-control" placeholder="admin@email.com" />
+        </div>
+        <div>
+            <label for="actionFilter">Action</label>
+            <select id="actionFilter" name="ActionFilter" class="form-control">
+                <option value="">All</option>
+                @foreach (var action in Model.AvailableActions)
+                {
+                    <option value="@action" selected="@(string.Equals(Model.ActionFilter, action, StringComparison.OrdinalIgnoreCase))">@action</option>
+                }
+            </select>
+        </div>
+        <div>
+            <label for="dateFrom">Date From</label>
+            <input id="dateFrom" name="DateFrom" type="date" value="@Model.DateFrom" class="form-control" />
+        </div>
+        <div>
+            <label for="dateTo">Date To</label>
+            <input id="dateTo" name="DateTo" type="date" value="@Model.DateTo" class="form-control" />
+        </div>
+        <div>
+            <label>&nbsp;</label>
+            <div>
+                <button type="submit" class="btn">Apply Filters</button>
+                <a class="btn btn-secondary" href="~/Admin/Audit">Reset</a>
+                <a class="btn btn-secondary" asp-page="/Admin/Audit" asp-page-handler="ExportCsv" asp-route-Search="@Model.Search" asp-route-ActorFilter="@Model.ActorFilter" asp-route-ActionFilter="@Model.ActionFilter" asp-route-DateFrom="@Model.DateFrom" asp-route-DateTo="@Model.DateTo">Export CSV</a>
+            </div>
+        </div>
+    </form>
+
+    @if (Model.Entries.Count == 0)
+    {
+        <p>No audit records found for the selected filters.</p>
+    }
+    else
+    {
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Timestamp</th>
+                    <th>Action</th>
+                    <th>Actor</th>
+                    <th>Details</th>
+                </tr>
+            </thead>
+            <tbody>
+            @foreach (var entry in Model.Entries)
+            {
+                <tr>
+                    <td>@entry.AtUtc.ToLocalTime().ToString("yyyy-MM-dd HH:mm:ss zzz")</td>
+                    <td>@entry.Action</td>
+                    <td>@entry.Actor</td>
+                    <td>@entry.Details</td>
+                </tr>
+            }
+            </tbody>
+        </table>
+
+        <div>
+            <span>Page @Model.PageNumber of @Model.TotalPages</span>
+            @if (Model.PageNumber > 1)
+            {
+                <a class="btn btn-secondary" asp-page="/Admin/Audit" asp-route-Search="@Model.Search" asp-route-ActorFilter="@Model.ActorFilter" asp-route-ActionFilter="@Model.ActionFilter" asp-route-DateFrom="@Model.DateFrom" asp-route-DateTo="@Model.DateTo" asp-route-CurrentPage="@(Model.PageNumber - 1)">Previous</a>
+            }
+            @if (Model.PageNumber < Model.TotalPages)
+            {
+                <a class="btn btn-secondary" asp-page="/Admin/Audit" asp-route-Search="@Model.Search" asp-route-ActorFilter="@Model.ActorFilter" asp-route-ActionFilter="@Model.ActionFilter" asp-route-DateFrom="@Model.DateFrom" asp-route-DateTo="@Model.DateTo" asp-route-CurrentPage="@(Model.PageNumber + 1)">Next</a>
+            }
+        </div>
+    }
+
+    <a class="btn btn-secondary" href="~/Admin">Back to Dashboard</a>
+</section>

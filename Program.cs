@@ -3,6 +3,7 @@ using System.Net.Sockets;
 using GolfAssociationCommunity.Data;
 using GolfAssociationCommunity.Models;
 using GolfAssociationCommunity.Services;
+using Microsoft.Data.Sqlite;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Serilog;
@@ -33,8 +34,20 @@ Log.Logger = new LoggerConfiguration()
 builder.Host.UseSerilog();
 
 // Add services to the container
+var defaultConnection = builder.Configuration.GetConnectionString("DefaultConnection")
+    ?? throw new InvalidOperationException("Connection string 'DefaultConnection' was not found.");
+
+var sqliteConnectionBuilder = new SqliteConnectionStringBuilder(defaultConnection);
+if (!string.IsNullOrWhiteSpace(sqliteConnectionBuilder.DataSource) &&
+    !Path.IsPathRooted(sqliteConnectionBuilder.DataSource))
+{
+    sqliteConnectionBuilder.DataSource = Path.Combine(builder.Environment.ContentRootPath, sqliteConnectionBuilder.DataSource);
+}
+
+var resolvedConnectionString = sqliteConnectionBuilder.ToString();
+
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection")));
+    options.UseSqlite(resolvedConnectionString));
 
 // Add Identity
 builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
@@ -81,6 +94,7 @@ builder.Services.AddScoped<ITournamentService, TournamentService>();
 builder.Services.AddScoped<IRegistrationService, RegistrationService>();
 builder.Services.AddScoped<IScoreService, ScoreService>();
 builder.Services.AddScoped<ILeaderboardService, LeaderboardService>();
+builder.Services.AddScoped<IAdminAuditService, AdminAuditService>();
 
 // Add Controllers
 builder.Services.AddControllers();
@@ -136,6 +150,51 @@ app.UseAuthorization();
 
 app.Use(async (context, next) =>
 {
+    if (IsBlockedIdentityPath(context.Request.Path))
+    {
+        var redirectPath = context.User.Identity?.IsAuthenticated == true
+            ? "/Identity/Account/Manage"
+            : "/Identity/Account/Login";
+
+        context.Response.Redirect(redirectPath);
+        return;
+    }
+
+    await next();
+});
+
+app.Use(async (context, next) =>
+{
+    if (context.User.Identity?.IsAuthenticated == true)
+    {
+        var path = context.Request.Path;
+        var isAllowedPath =
+            path.StartsWithSegments("/ForcePasswordChange", StringComparison.OrdinalIgnoreCase) ||
+            path.StartsWithSegments("/Identity/Account/Logout", StringComparison.OrdinalIgnoreCase) ||
+            path.StartsWithSegments("/Identity/Account/AccessDenied", StringComparison.OrdinalIgnoreCase) ||
+            path.StartsWithSegments("/css", StringComparison.OrdinalIgnoreCase) ||
+            path.StartsWithSegments("/js", StringComparison.OrdinalIgnoreCase) ||
+            path.StartsWithSegments("/lib", StringComparison.OrdinalIgnoreCase) ||
+            path.StartsWithSegments("/images", StringComparison.OrdinalIgnoreCase) ||
+            path.StartsWithSegments("/favicon.ico", StringComparison.OrdinalIgnoreCase);
+
+        if (!isAllowedPath)
+        {
+            var userManager = context.RequestServices.GetRequiredService<UserManager<ApplicationUser>>();
+            var user = await userManager.GetUserAsync(context.User);
+            if (user != null && user.RequirePasswordChange)
+            {
+                context.Response.Redirect("/ForcePasswordChange");
+                return;
+            }
+        }
+    }
+
+    await next();
+});
+
+app.Use(async (context, next) =>
+{
     if (context.User.Identity?.IsAuthenticated == true &&
         context.User.IsInRole("AssociationAdmin") &&
         !context.User.IsInRole("Admin"))
@@ -179,7 +238,26 @@ using (var scope = app.Services.CreateScope())
     var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
     var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
     await dbContext.Database.MigrateAsync();
+
+    // Self-heal corrupt SQLite schema states where migration history exists but core tables are missing.
+    if (!await TableExistsAsync(dbContext, "GolfAssociations") || !await TableExistsAsync(dbContext, "AspNetUsers"))
+    {
+        Log.Warning("Detected missing core tables after migration. Recreating SQLite schema.");
+        await dbContext.Database.EnsureDeletedAsync();
+        await dbContext.Database.MigrateAsync();
+        Log.Information("Database schema recreated successfully");
+    }
+
     Log.Information("Database migrations completed successfully");
+
+    var (disabledCount, removedTokenCount) = await DisableTwoFactorAndClearTokensAsync(userManager, dbContext);
+    if (disabledCount > 0 || removedTokenCount > 0)
+    {
+        Log.Information(
+            "Two-factor cleanup completed. Disabled users: {DisabledCount}, removed token records: {RemovedTokenCount}",
+            disabledCount,
+            removedTokenCount);
+    }
 
     var requiredRoles = new[] { "Admin", "AssociationAdmin" };
     foreach (var role in requiredRoles)
@@ -298,4 +376,65 @@ static bool IsPortAvailable(int port)
     {
         return false;
     }
+}
+
+static bool IsBlockedIdentityPath(PathString path)
+{
+    return path.StartsWithSegments("/Identity/Account/Manage/TwoFactorAuthentication", StringComparison.OrdinalIgnoreCase)
+        || path.StartsWithSegments("/Identity/Account/Manage/EnableAuthenticator", StringComparison.OrdinalIgnoreCase)
+        || path.StartsWithSegments("/Identity/Account/Manage/ResetAuthenticator", StringComparison.OrdinalIgnoreCase)
+        || path.StartsWithSegments("/Identity/Account/Manage/GenerateRecoveryCodes", StringComparison.OrdinalIgnoreCase)
+        || path.StartsWithSegments("/Identity/Account/Manage/ShowRecoveryCodes", StringComparison.OrdinalIgnoreCase)
+        || path.StartsWithSegments("/Identity/Account/Manage/PersonalData", StringComparison.OrdinalIgnoreCase)
+        || path.StartsWithSegments("/Identity/Account/Manage/DownloadPersonalData", StringComparison.OrdinalIgnoreCase)
+        || path.StartsWithSegments("/Identity/Account/Manage/DeletePersonalData", StringComparison.OrdinalIgnoreCase)
+        || path.StartsWithSegments("/Identity/Account/LoginWith2fa", StringComparison.OrdinalIgnoreCase)
+        || path.StartsWithSegments("/Identity/Account/LoginWithRecoveryCode", StringComparison.OrdinalIgnoreCase);
+}
+
+static async Task<(int DisabledCount, int RemovedTokenCount)> DisableTwoFactorAndClearTokensAsync(
+    UserManager<ApplicationUser> userManager,
+    ApplicationDbContext dbContext)
+{
+    var twoFactorUsers = await userManager.Users
+        .Where(u => u.TwoFactorEnabled)
+        .ToListAsync();
+
+    foreach (var user in twoFactorUsers)
+    {
+        await userManager.SetTwoFactorEnabledAsync(user, false);
+    }
+
+    var tokenSet = dbContext.Set<IdentityUserToken<string>>();
+    var tokensToRemove = await tokenSet
+        .Where(t => t.Name == "AuthenticatorKey" || t.Name == "RecoveryCodes")
+        .ToListAsync();
+
+    if (tokensToRemove.Count > 0)
+    {
+        tokenSet.RemoveRange(tokensToRemove);
+        await dbContext.SaveChangesAsync();
+    }
+
+    return (twoFactorUsers.Count, tokensToRemove.Count);
+}
+
+static async Task<bool> TableExistsAsync(ApplicationDbContext dbContext, string tableName)
+{
+    var connection = dbContext.Database.GetDbConnection();
+    if (connection.State != System.Data.ConnectionState.Open)
+    {
+        await connection.OpenAsync();
+    }
+
+    await using var command = connection.CreateCommand();
+    command.CommandText = "SELECT COUNT(*) FROM sqlite_master WHERE type = 'table' AND name = $name;";
+
+    var parameter = command.CreateParameter();
+    parameter.ParameterName = "$name";
+    parameter.Value = tableName;
+    command.Parameters.Add(parameter);
+
+    var result = await command.ExecuteScalarAsync();
+    return Convert.ToInt32(result) > 0;
 }

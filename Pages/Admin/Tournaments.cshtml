@@ -1,0 +1,106 @@
+@page
+@using GolfAssociationCommunity.Models
+@model GolfAssociationCommunity.Pages.Admin.TournamentsModel
+@{
+    ViewData["Title"] = "Manage Tournaments";
+}
+
+<section class="section-panel">
+    <h1>Manage Tournaments</h1>
+    <p>Review all tournaments across associations, change status, or delete when needed.</p>
+
+    <form method="get" class="card-grid">
+        <div>
+            <label for="search">Search</label>
+            <input id="search" name="Search" value="@Model.Search" class="form-control" placeholder="Tournament or association" />
+        </div>
+        <div>
+            <label for="statusFilter">Status</label>
+            <select id="statusFilter" name="StatusFilter" class="form-control">
+                <option value="">All</option>
+                @foreach (var status in Enum.GetValues<TournamentStatus>())
+                {
+                    <option value="@status" selected="@(Model.StatusFilter == status)">@status</option>
+                }
+            </select>
+        </div>
+        <div>
+            <label>&nbsp;</label>
+            <div>
+                <button type="submit" class="btn">Apply Filters</button>
+                <a class="btn btn-secondary" href="~/Admin/Tournaments">Reset</a>
+            </div>
+        </div>
+    </form>
+
+    @if (TempData["SuccessMessage"] is string message)
+    {
+        <div class="message success">@message</div>
+    }
+
+    @if (Model.Tournaments.Count == 0)
+    {
+        <p>No tournaments found.</p>
+    }
+    else
+    {
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Association</th>
+                    <th>Start Date</th>
+                    <th>Status</th>
+                    <th>Registered</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+            @foreach (var tournament in Model.Tournaments)
+            {
+                <tr>
+                    <td>@tournament.Name</td>
+                    <td>@tournament.AssociationName</td>
+                    <td>@tournament.StartDate.ToString("MMM d, yyyy")</td>
+                    <td>@tournament.Status</td>
+                    <td>@tournament.RegisteredCount</td>
+                    <td>
+                        <form method="post" asp-page-handler="SetStatus" asp-route-id="@tournament.Id" class="inline-form">
+                            <input type="hidden" name="Search" value="@Model.Search" />
+                            <input type="hidden" name="StatusFilter" value="@Model.StatusFilter" />
+                            <input type="hidden" name="CurrentPage" value="@Model.PageNumber" />
+                            <select name="status" class="form-control" aria-label="Tournament status">
+                                @foreach (var status in Enum.GetValues<TournamentStatus>())
+                                {
+                                    <option value="@status" selected="@(status == tournament.Status)">@status</option>
+                                }
+                            </select>
+                            <button type="submit" class="link-button">Update</button>
+                        </form>
+                        <form method="post" asp-page-handler="Delete" asp-route-id="@tournament.Id" class="inline-form" onsubmit="return confirm('Delete this tournament?');">
+                            <input type="hidden" name="Search" value="@Model.Search" />
+                            <input type="hidden" name="StatusFilter" value="@Model.StatusFilter" />
+                            <input type="hidden" name="CurrentPage" value="@Model.PageNumber" />
+                            <button type="submit" class="link-button">Delete</button>
+                        </form>
+                    </td>
+                </tr>
+            }
+            </tbody>
+        </table>
+
+        <div>
+            <span>Page @Model.PageNumber of @Model.TotalPages</span>
+            @if (Model.PageNumber > 1)
+            {
+                <a class="btn btn-secondary" asp-page="/Admin/Tournaments" asp-route-Search="@Model.Search" asp-route-StatusFilter="@Model.StatusFilter" asp-route-CurrentPage="@(Model.PageNumber - 1)">Previous</a>
+            }
+            @if (Model.PageNumber < Model.TotalPages)
+            {
+                <a class="btn btn-secondary" asp-page="/Admin/Tournaments" asp-route-Search="@Model.Search" asp-route-StatusFilter="@Model.StatusFilter" asp-route-CurrentPage="@(Model.PageNumber + 1)">Next</a>
+            }
+        </div>
+    }
+
+    <a class="btn btn-secondary" href="~/Admin">Back to Dashboard</a>
+</section>

@@ -10,10 +10,12 @@ namespace GolfAssociationCommunity.Pages.Admin
     public class AssociationsModel : PageModel
     {
         private readonly IAssociationService _associationService;
+        private readonly IAdminAuditService _adminAuditService;
 
-        public AssociationsModel(IAssociationService associationService)
+        public AssociationsModel(IAssociationService associationService, IAdminAuditService adminAuditService)
         {
             _associationService = associationService;
+            _adminAuditService = adminAuditService;
         }
 
         public List<GolfAssociation> Associations { get; private set; } = new();
@@ -29,6 +31,14 @@ namespace GolfAssociationCommunity.Pages.Admin
             TempData["SuccessMessage"] = deleted
                 ? "Association deleted successfully."
                 : "Association not found.";
+
+            await _adminAuditService.WriteAsync(
+                deleted ? "Deleted association" : "Failed to delete association",
+                User?.Identity?.Name ?? "anonymous",
+                new Dictionary<string, string?>
+                {
+                    ["AssociationId"] = id.ToString()
+                });
 
             return RedirectToPage();
         }

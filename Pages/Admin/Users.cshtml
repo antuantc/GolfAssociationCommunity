@@ -1,0 +1,137 @@
+@page
+@model GolfAssociationCommunity.Pages.Admin.UsersModel
+@{
+    ViewData["Title"] = "Manage Users";
+}
+
+<section class="section-panel">
+    <h1>Manage Users</h1>
+    <p>Control roles, lockout state, and view association assignments for all users.</p>
+
+    <form method="get" class="card-grid">
+        <div>
+            <label for="search">Search</label>
+            <input id="search" name="Search" value="@Model.Search" class="form-control" placeholder="Email, name, association" />
+        </div>
+        <div>
+            <label for="roleFilter">Role</label>
+            <select id="roleFilter" name="RoleFilter" class="form-control">
+                <option value="">All</option>
+                <option value="Admin" selected="@(Model.RoleFilter == "Admin")">Admin</option>
+                <option value="AssociationAdmin" selected="@(Model.RoleFilter == "AssociationAdmin")">Association Admin</option>
+                <option value="Member" selected="@(Model.RoleFilter == "Member")">Member</option>
+            </select>
+        </div>
+        <div>
+            <label for="statusFilter">Status</label>
+            <select id="statusFilter" name="StatusFilter" class="form-control">
+                <option value="">All</option>
+                <option value="Active" selected="@(Model.StatusFilter == "Active")">Active</option>
+                <option value="Locked" selected="@(Model.StatusFilter == "Locked")">Locked</option>
+            </select>
+        </div>
+        <div>
+            <label>&nbsp;</label>
+            <div>
+                <button type="submit" class="btn">Apply Filters</button>
+                <a class="btn btn-secondary" href="~/Admin/Users">Reset</a>
+            </div>
+        </div>
+    </form>
+
+    @if (TempData["SuccessMessage"] is string message)
+    {
+        <div class="message success">@message</div>
+    }
+
+    @if (Model.Users.Count == 0)
+    {
+        <p>No users found.</p>
+    }
+    else
+    {
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Email</th>
+                    <th>Association</th>
+                    <th>Roles</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+            @foreach (var user in Model.Users)
+            {
+                <tr>
+                    <td>@(string.IsNullOrWhiteSpace(user.DisplayName) ? "-" : user.DisplayName)</td>
+                    <td>@user.Email</td>
+                    <td>@user.AssociationName</td>
+                    <td>
+                        @(user.IsAdmin ? "Admin " : "")
+                        @(user.IsAssociationAdmin ? "AssociationAdmin" : "")
+                        @(!user.IsAdmin && !user.IsAssociationAdmin ? "Member" : "")
+                    </td>
+                    <td>@(user.IsLockedOut ? "Locked" : "Active")</td>
+                    <td>
+                        <a class="card-link" href="~/Admin/EditUser/@user.Id">Edit User</a>
+                        <form method="post" asp-page-handler="ToggleAdmin" asp-route-userId="@user.Id" class="inline-form">
+                            <input type="hidden" name="Search" value="@Model.Search" />
+                            <input type="hidden" name="RoleFilter" value="@Model.RoleFilter" />
+                            <input type="hidden" name="StatusFilter" value="@Model.StatusFilter" />
+                            <input type="hidden" name="CurrentPage" value="@Model.PageNumber" />
+                            <button type="submit" class="link-button">@(user.IsAdmin ? "Remove Admin" : "Make Admin")</button>
+                        </form>
+                        @if (user.IsAdmin)
+                        {
+                            <span class="text-muted">Association admin: N/A for Admin</span>
+                        }
+                        else
+                        {
+                            <form method="post" asp-page-handler="ToggleAssociationAdmin" asp-route-userId="@user.Id" class="inline-form">
+                                <input type="hidden" name="Search" value="@Model.Search" />
+                                <input type="hidden" name="RoleFilter" value="@Model.RoleFilter" />
+                                <input type="hidden" name="StatusFilter" value="@Model.StatusFilter" />
+                                <input type="hidden" name="CurrentPage" value="@Model.PageNumber" />
+                                @if (!user.IsAssociationAdmin)
+                                {
+                                    <select name="associationId" class="form-control" aria-label="Association">
+                                        <option value="">Select association</option>
+                                        @foreach (var association in Model.Associations)
+                                        {
+                                            <option value="@association.Id">@association.Name</option>
+                                        }
+                                    </select>
+                                }
+                                <button type="submit" class="link-button">@(user.IsAssociationAdmin ? "Remove Assoc Admin" : "Make Assoc Admin")</button>
+                            </form>
+                        }
+                        <form method="post" asp-page-handler="ToggleLockout" asp-route-userId="@user.Id" class="inline-form">
+                            <input type="hidden" name="Search" value="@Model.Search" />
+                            <input type="hidden" name="RoleFilter" value="@Model.RoleFilter" />
+                            <input type="hidden" name="StatusFilter" value="@Model.StatusFilter" />
+                            <input type="hidden" name="CurrentPage" value="@Model.PageNumber" />
+                            <button type="submit" class="link-button">@(user.IsLockedOut ? "Unlock" : "Lock")</button>
+                        </form>
+                    </td>
+                </tr>
+            }
+            </tbody>
+        </table>
+
+        <div>
+            <span>Page @Model.PageNumber of @Model.TotalPages</span>
+            @if (Model.PageNumber > 1)
+            {
+                <a class="btn btn-secondary" asp-page="/Admin/Users" asp-route-Search="@Model.Search" asp-route-RoleFilter="@Model.RoleFilter" asp-route-StatusFilter="@Model.StatusFilter" asp-route-CurrentPage="@(Model.PageNumber - 1)">Previous</a>
+            }
+            @if (Model.PageNumber < Model.TotalPages)
+            {
+                <a class="btn btn-secondary" asp-page="/Admin/Users" asp-route-Search="@Model.Search" asp-route-RoleFilter="@Model.RoleFilter" asp-route-StatusFilter="@Model.StatusFilter" asp-route-CurrentPage="@(Model.PageNumber + 1)">Next</a>
+            }
+        </div>
+    }
+
+    <a class="btn btn-secondary" href="~/Admin">Back to Dashboard</a>
+</section>

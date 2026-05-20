@@ -4,6 +4,7 @@ using GolfAssociationCommunity.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.Extensions.Logging;
 
 namespace GolfAssociationCommunity.Pages.Admin
 {
@@ -11,10 +12,12 @@ namespace GolfAssociationCommunity.Pages.Admin
     public class EditAssociationModel : PageModel
     {
         private readonly IAssociationService _associationService;
+        private readonly IAdminAuditService _adminAuditService;
 
-        public EditAssociationModel(IAssociationService associationService)
+        public EditAssociationModel(IAssociationService associationService, IAdminAuditService adminAuditService)
         {
             _associationService = associationService;
+            _adminAuditService = adminAuditService;
         }
 
         [BindProperty]
@@ -120,8 +123,18 @@ namespace GolfAssociationCommunity.Pages.Admin
             var result = await _associationService.UpdateAssociationAsync(id, updatedAssociation);
             if (result is null)
             {
+                await _adminAuditService.WriteAsync("Failed to update association", User?.Identity?.Name ?? "anonymous", new Dictionary<string, string?>
+                {
+                    ["AssociationId"] = id.ToString()
+                });
                 return NotFound();
             }
+
+            await _adminAuditService.WriteAsync("Updated association", User?.Identity?.Name ?? "anonymous", new Dictionary<string, string?>
+            {
+                ["AssociationId"] = id.ToString(),
+                ["AssociationName"] = result.Name
+            });
 
             TempData["SuccessMessage"] = "Association updated successfully.";
             return RedirectToPage("/Admin/Associations");
