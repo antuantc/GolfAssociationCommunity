@@ -15,11 +15,22 @@ var urlsFromEnv = builder.Configuration["ASPNETCORE_URLS"];
 if (string.IsNullOrWhiteSpace(urlsFromEnv))
 {
     var (httpPort, httpsPort) = GetAvailablePortPair(5000, 5010, 5001, 5011);
-    builder.WebHost.UseUrls($"http://127.0.0.1:{httpPort}", $"https://127.0.0.1:{httpsPort}");
+    builder.WebHost.UseUrls($"http://localhost:{httpPort}", $"https://localhost:{httpsPort}");
     builder.Services.Configure<Microsoft.AspNetCore.HttpsPolicy.HttpsRedirectionOptions>(options =>
     {
         options.HttpsPort = httpsPort;
     });
+}
+else
+{
+    var httpsPortSetting = builder.Configuration["ASPNETCORE_HTTPS_PORT"];
+    if (int.TryParse(httpsPortSetting, out var configuredHttpsPort))
+    {
+        builder.Services.Configure<Microsoft.AspNetCore.HttpsPolicy.HttpsRedirectionOptions>(options =>
+        {
+            options.HttpsPort = configuredHttpsPort;
+        });
+    }
 }
 
 // Configure Serilog
@@ -114,6 +125,21 @@ if (enableSwagger)
     app.UseSwagger();
     app.UseSwaggerUI();
 }
+
+app.Use(async (context, next) =>
+{
+    if (context.Request.Host.Host == "127.0.0.1" || context.Request.Host.Host == "::1")
+    {
+        var host = context.Request.Host.Port.HasValue
+            ? new HostString("localhost", context.Request.Host.Port.Value)
+            : new HostString("localhost");
+        var redirectUrl = $"{context.Request.Scheme}://{host}{context.Request.PathBase}{context.Request.Path}{context.Request.QueryString}";
+        context.Response.Redirect(redirectUrl, permanent: false);
+        return;
+    }
+
+    await next();
+});
 
 app.UseHttpsRedirection();
 

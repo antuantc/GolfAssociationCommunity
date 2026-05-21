@@ -14,15 +14,10 @@ namespace GolfAssociationCommunity.Pages
         }
 
         public List<GolfAssociation> Associations { get; set; } = new();
-        public Dictionary<int, int> MemberCounts { get; set; } = new();
 
         public async Task OnGetAsync()
         {
             Associations = (await _associationService.GetAllActiveAssociationsAsync()).ToList();
-            foreach (var association in Associations)
-            {
-                MemberCounts[association.Id] = await _associationService.GetMemberCountAsync(association.Id);
-            }
         }
     }
 }

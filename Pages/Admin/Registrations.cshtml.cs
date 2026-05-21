@@ -51,6 +51,7 @@ namespace GolfAssociationCommunity.Pages.Admin
             public DateTime RegistrationDate { get; set; }
             public RegistrationStatus Status { get; set; }
             public bool PaymentConfirmed { get; set; }
+            public string? CardLast4 { get; set; }
         }
 
         public async Task OnGetAsync()
@@ -128,7 +129,8 @@ namespace GolfAssociationCommunity.Pages.Admin
                         : "-",
                     RegistrationDate = r.RegistrationDate,
                     Status = r.Status,
-                    PaymentConfirmed = r.PaymentConfirmed
+                    PaymentConfirmed = r.PaymentConfirmed,
+                    CardLast4 = r.CardLast4
                 })
                 .AsQueryable();
 

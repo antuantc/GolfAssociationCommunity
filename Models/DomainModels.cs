@@ -96,6 +96,12 @@ namespace GolfAssociationCommunity.Models
         public RegistrationStatus Status { get; set; } = RegistrationStatus.Pending;
         public bool PaymentConfirmed { get; set; }
         public string? AuthorizeNetTransactionId { get; set; }
+        public string? CardLast4 { get; set; }
+        public string BillingAddressLine1 { get; set; } = string.Empty;
+        public string BillingCity { get; set; } = string.Empty;
+        public string BillingState { get; set; } = string.Empty;
+        public string BillingZipCode { get; set; } = string.Empty;
+        public string BillingCountry { get; set; } = string.Empty;
         public DateTime? PaymentDate { get; set; }
         public string? WithdrawalReason { get; set; }
         public DateTime? WithdrawalDate { get; set; }

@@ -15,7 +15,6 @@ namespace GolfAssociationCommunity.Pages.AssociationAdmin
         public int TournamentCount { get; private set; }
         public int UpcomingTournamentCount { get; private set; }
         public int RegistrationCount { get; private set; }
-        public int MemberCount { get; private set; }
 
         public async Task<Microsoft.AspNetCore.Mvc.IActionResult> OnGetAsync()
         {
@@ -29,7 +28,6 @@ namespace GolfAssociationCommunity.Pages.AssociationAdmin
             TournamentCount = await Context.Tournaments.CountAsync(t => t.GolfAssociationId == associationId);
             UpcomingTournamentCount = await Context.Tournaments.CountAsync(t => t.GolfAssociationId == associationId && t.StartDate > DateTime.UtcNow);
             RegistrationCount = await Context.Registrations.CountAsync(r => r.Tournament != null && r.Tournament.GolfAssociationId == associationId);
-            MemberCount = await Context.Users.CountAsync(u => u.GolfAssociationId == associationId);
 
             return Page();
         }

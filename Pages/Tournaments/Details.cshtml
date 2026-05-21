@@ -53,22 +53,68 @@
             <h2>Registration</h2>
             @if (Model.CanRegister)
             {
-                <form method="post" asp-page-handler="Register">
+                <form method="post" asp-page-handler="Register" autocomplete="on">
                     <input type="hidden" name="tournamentId" value="@Model.Tournament.Id" />
                     <input type="hidden" name="associationId" value="@Model.AssociationId" />
+                    <div asp-validation-summary="ModelOnly" class="message error"></div>
                     <div class="card-grid">
                         <div>
                             <label asp-for="Input.GuestName">Full Name</label>
-                            <input asp-for="Input.GuestName" class="form-control" />
+                            <input asp-for="Input.GuestName" class="form-control" autocomplete="name" />
                             <span asp-validation-for="Input.GuestName" class="text-danger"></span>
                         </div>
                         <div>
                             <label asp-for="Input.GuestEmail">Email</label>
-                            <input asp-for="Input.GuestEmail" class="form-control" />
+                            <input asp-for="Input.GuestEmail" class="form-control" autocomplete="email" />
                             <span asp-validation-for="Input.GuestEmail" class="text-danger"></span>
                         </div>
+                        <div>
+                            <label asp-for="Input.CardholderName">Cardholder Name</label>
+                            <input asp-for="Input.CardholderName" class="form-control" autocomplete="cc-name" />
+                            <span asp-validation-for="Input.CardholderName" class="text-danger"></span>
+                        </div>
+                        <div>
+                            <label asp-for="Input.CardNumber">Card Number</label>
+                            <input asp-for="Input.CardNumber" class="form-control" inputmode="numeric" autocomplete="cc-number" />
+                            <span asp-validation-for="Input.CardNumber" class="text-danger"></span>
+                        </div>
+                        <div>
+                            <label asp-for="Input.CardExpiry">Expiry (MM/YY)</label>
+                            <input asp-for="Input.CardExpiry" class="form-control" inputmode="numeric" autocomplete="cc-exp" placeholder="MM/YY" />
+                            <span asp-validation-for="Input.CardExpiry" class="text-danger"></span>
+                        </div>
+                        <div>
+                            <label asp-for="Input.Cvv">CVV</label>
+                            <input asp-for="Input.Cvv" type="password" class="form-control" inputmode="numeric" autocomplete="cc-csc" />
+                            <span asp-validation-for="Input.Cvv" class="text-danger"></span>
+                        </div>
+                        <div>
+                            <label asp-for="Input.BillingAddressLine1">Billing Address</label>
+                            <input asp-for="Input.BillingAddressLine1" class="form-control" autocomplete="billing address-line1" />
+                            <span asp-validation-for="Input.BillingAddressLine1" class="text-danger"></span>
+                        </div>
+                        <div>
+                            <label asp-for="Input.BillingCity">City</label>
+                            <input asp-for="Input.BillingCity" class="form-control" autocomplete="billing address-level2" />
+                            <span asp-validation-for="Input.BillingCity" class="text-danger"></span>
+                        </div>
+                        <div>
+                            <label asp-for="Input.BillingState">State/Province</label>
+                            <input asp-for="Input.BillingState" class="form-control" autocomplete="billing address-level1" />
+                            <span asp-validation-for="Input.BillingState" class="text-danger"></span>
+                        </div>
+                        <div>
+                            <label asp-for="Input.BillingZipCode">Postal Code</label>
+                            <input asp-for="Input.BillingZipCode" class="form-control" autocomplete="billing postal-code" />
+                            <span asp-validation-for="Input.BillingZipCode" class="text-danger"></span>
+                        </div>
+                        <div>
+                            <label asp-for="Input.BillingCountry">Country</label>
+                            <input asp-for="Input.BillingCountry" class="form-control" autocomplete="billing country" />
+                            <span asp-validation-for="Input.BillingCountry" class="text-danger"></span>
+                        </div>
                     </div>
-                    <button type="submit" class="btn">Register for Tournament</button>
+                    <button type="submit" class="btn">Pay and Register</button>
                 </form>
             }
             else
@@ -118,4 +164,34 @@
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
+    <script>
+        (function () {
+            var cardNumberInput = document.getElementById('Input_CardNumber');
+            var cardExpiryInput = document.getElementById('Input_CardExpiry');
+
+            if (cardNumberInput) {
+                cardNumberInput.addEventListener('input', function (event) {
+                    var digits = event.target.value.replace(/\D/g, '').slice(0, 19);
+                    event.target.value = digits.replace(/(.{4})/g, '$1 ').trim();
+                });
+            }
+
+            if (cardExpiryInput) {
+                cardExpiryInput.addEventListener('input', function (event) {
+                    var digits = event.target.value.replace(/\D/g, '').slice(0, 6);
+                    if (digits.length <= 2) {
+                        event.target.value = digits;
+                        return;
+                    }
+
+                    if (digits.length <= 4) {
+                        event.target.value = digits.slice(0, 2) + '/' + digits.slice(2);
+                        return;
+                    }
+
+                    event.target.value = digits.slice(0, 2) + '/' + digits.slice(2);
+                });
+            }
+        })();
+    </script>
 }

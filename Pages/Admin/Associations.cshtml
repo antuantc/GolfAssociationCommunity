@@ -38,7 +38,6 @@
                     <td>
                         <a class="card-link" href="~/Associations/Details/@association.Id">View</a>
                         <a class="card-link" href="~/Admin/EditAssociation/@association.Id">Edit</a>
-                        <a class="card-link" href="~/Admin/AssociationMembers/@association.Id">Members</a>
                         <form method="post" asp-page-handler="Delete" asp-route-id="@association.Id" class="inline-form" onsubmit="return confirm('Delete this association?');">
                             <button type="submit" class="link-button">Delete</button>
                         </form>

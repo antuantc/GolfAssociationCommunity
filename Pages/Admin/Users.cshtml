@@ -27,7 +27,7 @@
                 <option value="">All</option>
                 <option value="Admin" selected="@(Model.RoleFilter == "Admin")">Admin</option>
                 <option value="AssociationAdmin" selected="@(Model.RoleFilter == "AssociationAdmin")">Association Admin</option>
-                <option value="Member" selected="@(Model.RoleFilter == "Member")">Member</option>
+                <option value="Member" selected="@(Model.RoleFilter == "Member")">Standard User</option>
             </select>
         </div>
         <div>
@@ -79,7 +79,7 @@
                     <td>
                         @(user.IsAdmin ? "Admin " : "")
                         @(user.IsAssociationAdmin ? "AssociationAdmin" : "")
-                        @(!user.IsAdmin && !user.IsAssociationAdmin ? "Member" : "")
+                        @(!user.IsAdmin && !user.IsAssociationAdmin ? "Standard User" : "")
                     </td>
                     <td>@(user.IsLockedOut ? "Locked" : "Active")</td>
                     <td>

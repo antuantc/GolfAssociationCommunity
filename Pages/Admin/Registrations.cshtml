@@ -73,7 +73,13 @@
                     <td>@registration.AssociationName</td>
                     <td>@registration.RegistrationDate.ToString("MMM d, yyyy")</td>
                     <td>@registration.Status</td>
-                    <td>@(registration.PaymentConfirmed ? "Confirmed" : "Pending")</td>
+                    <td>
+                        @(registration.PaymentConfirmed ? "Confirmed" : "Pending")
+                        @if (registration.PaymentConfirmed && !string.IsNullOrWhiteSpace(registration.CardLast4))
+                        {
+                            <span> (**** @registration.CardLast4)</span>
+                        }
+                    </td>
                     <td>
                         <form method="post" asp-page-handler="SetStatus" asp-route-id="@registration.Id" class="inline-form">
                             <input type="hidden" name="Search" value="@Model.Search" />

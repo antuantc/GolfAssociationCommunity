@@ -16,8 +16,6 @@ namespace GolfAssociationCommunity.Pages.Associations
 
         public GolfAssociation? Association { get; set; }
 
-        public int MemberCount { get; set; }
-
         public async Task<IActionResult> OnGetAsync(int id)
         {
             Association = await _associationService.GetAssociationByIdAsync(id);
@@ -28,7 +26,6 @@ namespace GolfAssociationCommunity.Pages.Associations
 
             ViewData["PublicAssociationId"] = Association.Id;
             ViewData["PublicAssociationName"] = Association.Name;
-            MemberCount = await _associationService.GetMemberCountAsync(id);
             return Page();
         }
     }
