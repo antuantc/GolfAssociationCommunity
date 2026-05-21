@@ -3,6 +3,7 @@ using System.Net.Sockets;
 using GolfAssociationCommunity.Data;
 using GolfAssociationCommunity.Models;
 using GolfAssociationCommunity.Services;
+using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.Data.Sqlite;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -57,35 +58,14 @@ builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
         options.Password.RequireLowercase = true;
         options.Password.RequireUppercase = true;
         options.Password.RequireNonAlphanumeric = false;
-        options.SignIn.RequireConfirmedEmail = false;
+        options.SignIn.RequireConfirmedEmail = true;
+        options.SignIn.RequireConfirmedAccount = true;
     })
     .AddEntityFrameworkStores<ApplicationDbContext>()
     .AddDefaultTokenProviders()
     .AddDefaultUI();
 
-var authBuilder = builder.Services.AddAuthentication();
-
-var googleClientId = builder.Configuration["Authentication:Google:ClientId"];
-var googleClientSecret = builder.Configuration["Authentication:Google:ClientSecret"];
-if (!string.IsNullOrWhiteSpace(googleClientId) && !string.IsNullOrWhiteSpace(googleClientSecret))
-{
-    authBuilder.AddGoogle(options =>
-    {
-        options.ClientId = googleClientId;
-        options.ClientSecret = googleClientSecret;
-    });
-}
-
-var microsoftClientId = builder.Configuration["Authentication:Microsoft:ClientId"];
-var microsoftClientSecret = builder.Configuration["Authentication:Microsoft:ClientSecret"];
-if (!string.IsNullOrWhiteSpace(microsoftClientId) && !string.IsNullOrWhiteSpace(microsoftClientSecret))
-{
-    authBuilder.AddMicrosoftAccount(options =>
-    {
-        options.ClientId = microsoftClientId;
-        options.ClientSecret = microsoftClientSecret;
-    });
-}
+builder.Services.AddTransient<IEmailSender, SmtpEmailSender>();
 
 // Add custom services
 builder.Services.AddScoped<IAuthorizeNetPaymentService, AuthorizeNetPaymentService>();
