@@ -9,7 +9,7 @@ using GolfAssociationCommunity.Services;
 
 namespace GolfAssociationCommunity.Pages.Admin
 {
-    [Authorize(Roles = "Admin")]
+    [Authorize(Roles = "Admin,AssociationAdmin")]
     public class UsersModel : PageModel
     {
         private readonly ApplicationDbContext _context;
@@ -34,6 +34,9 @@ namespace GolfAssociationCommunity.Pages.Admin
         public int PageSize { get; } = 20;
         public int PageNumber { get; private set; } = 1;
         public int TotalPages { get; private set; }
+        public bool CanManageRolesAndLockout { get; private set; }
+        public bool CanDeleteUsers { get; private set; }
+        public bool IsAssociationAdminOnly => CanDeleteUsers && !CanManageRolesAndLockout;
 
         [BindProperty(SupportsGet = true)]
         public string? Search { get; set; }
@@ -66,11 +69,19 @@ namespace GolfAssociationCommunity.Pages.Admin
 
         public async Task OnGetAsync()
         {
+            await LoadActorPermissionsAsync();
             await LoadAsync();
         }
 
         public async Task<IActionResult> OnPostToggleAdminAsync(string userId)
         {
+            await LoadActorPermissionsAsync();
+            if (!CanManageRolesAndLockout)
+            {
+                TempData["SuccessMessage"] = "You are not authorized to manage roles.";
+                return RedirectToPage(GetStateRouteValues());
+            }
+
             var user = await _userManager.FindByIdAsync(userId);
             if (user is null)
             {
@@ -129,6 +140,13 @@ namespace GolfAssociationCommunity.Pages.Admin
 
         public async Task<IActionResult> OnPostToggleAssociationAdminAsync(string userId, int? associationId)
         {
+            await LoadActorPermissionsAsync();
+            if (!CanManageRolesAndLockout)
+            {
+                TempData["SuccessMessage"] = "You are not authorized to manage association admin roles.";
+                return RedirectToPage(GetStateRouteValues());
+            }
+
             var user = await _userManager.FindByIdAsync(userId);
             if (user is null)
             {
@@ -224,6 +242,13 @@ namespace GolfAssociationCommunity.Pages.Admin
 
         public async Task<IActionResult> OnPostToggleLockoutAsync(string userId)
         {
+            await LoadActorPermissionsAsync();
+            if (!CanManageRolesAndLockout)
+            {
+                TempData["SuccessMessage"] = "You are not authorized to change lockout state.";
+                return RedirectToPage(GetStateRouteValues());
+            }
+
             var user = await _userManager.FindByIdAsync(userId);
             if (user is null)
             {
@@ -261,12 +286,123 @@ namespace GolfAssociationCommunity.Pages.Admin
             return RedirectToPage(GetStateRouteValues());
         }
 
+        public async Task<IActionResult> OnPostDeleteUserAsync(string userId)
+        {
+            await LoadActorPermissionsAsync();
+            if (!CanDeleteUsers)
+            {
+                TempData["SuccessMessage"] = "You are not authorized to delete users.";
+                return RedirectToPage(GetStateRouteValues());
+            }
+
+            var actor = await _userManager.GetUserAsync(User);
+            if (actor is null)
+            {
+                TempData["SuccessMessage"] = "Current user not found.";
+                return RedirectToPage(GetStateRouteValues());
+            }
+
+            var target = await _userManager.FindByIdAsync(userId);
+            if (target is null)
+            {
+                TempData["SuccessMessage"] = "User not found.";
+                return RedirectToPage(GetStateRouteValues());
+            }
+
+            if (actor.Id == target.Id)
+            {
+                TempData["SuccessMessage"] = "You cannot delete your own account.";
+                await AuditAsync("Prevented self-delete", target);
+                return RedirectToPage(GetStateRouteValues());
+            }
+
+            var actorIsAdmin = await _userManager.IsInRoleAsync(actor, "Admin");
+            if (!actorIsAdmin)
+            {
+                if (!actor.GolfAssociationId.HasValue)
+                {
+                    TempData["SuccessMessage"] = "Association admin is not assigned to an association.";
+                    return RedirectToPage(GetStateRouteValues());
+                }
+
+                if (target.GolfAssociationId != actor.GolfAssociationId)
+                {
+                    TempData["SuccessMessage"] = "Association admins can only delete users in their own association.";
+                    await AuditAsync("Prevented cross-association user deletion", target, new Dictionary<string, string?>
+                    {
+                        ["ActorAssociationId"] = actor.GolfAssociationId?.ToString(),
+                        ["TargetAssociationId"] = target.GolfAssociationId?.ToString()
+                    });
+                    return RedirectToPage(GetStateRouteValues());
+                }
+            }
+
+            if (await _userManager.IsInRoleAsync(target, "Admin"))
+            {
+                var adminCount = await _userManager.GetUsersInRoleAsync("Admin");
+                if (adminCount.Count <= 1)
+                {
+                    TempData["SuccessMessage"] = "Cannot delete the last Admin account.";
+                    await AuditAsync("Prevented delete of last admin", target);
+                    return RedirectToPage(GetStateRouteValues());
+                }
+            }
+
+            var managedAssociations = await _context.GolfAssociations
+                .Where(a => a.AdminUserId == target.Id)
+                .ToListAsync();
+
+            foreach (var association in managedAssociations)
+            {
+                association.AdminUserId = null;
+                association.UpdatedAt = DateTime.UtcNow;
+            }
+
+            await _context.SaveChangesAsync();
+
+            var deleteResult = await _userManager.DeleteAsync(target);
+            if (!deleteResult.Succeeded)
+            {
+                TempData["SuccessMessage"] = $"Unable to delete user {target.Email}.";
+                await AuditAsync("Failed user deletion", target, new Dictionary<string, string?>
+                {
+                    ["Errors"] = string.Join("; ", deleteResult.Errors.Select(e => e.Description))
+                });
+                return RedirectToPage(GetStateRouteValues());
+            }
+
+            TempData["SuccessMessage"] = $"User deleted: {target.Email}.";
+            await AuditAsync("Deleted user", target, new Dictionary<string, string?>
+            {
+                ["ManagedAssociationIds"] = string.Join(',', managedAssociations.Select(a => a.Id))
+            });
+
+            return RedirectToPage(GetStateRouteValues());
+        }
+
         private async Task LoadAsync()
         {
+            var actor = await _userManager.GetUserAsync(User);
+            var actorAssociationId = actor?.GolfAssociationId;
+
             var users = await _context.Users
                 .AsNoTracking()
                 .OrderBy(u => u.Email)
                 .ToListAsync();
+
+            if (IsAssociationAdminOnly)
+            {
+                if (actorAssociationId.HasValue)
+                {
+                    users = users
+                        .Where(u => u.GolfAssociationId == actorAssociationId.Value)
+                        .ToList();
+                }
+                else
+                {
+                    users = new List<ApplicationUser>();
+                }
+            }
 
             var associationNames = await _context.GolfAssociations
                 .AsNoTracking()
@@ -373,6 +509,21 @@ namespace GolfAssociationCommunity.Pages.Admin
                 StatusFilter = statusFilter,
                 CurrentPage = pageValue
             };
+        }
+
+        private async Task LoadActorPermissionsAsync()
+        {
+            var actor = await _userManager.GetUserAsync(User);
+            if (actor is null)
+            {
+                CanManageRolesAndLockout = false;
+                CanDeleteUsers = false;
+                return;
+            }
+
+            CanManageRolesAndLockout = await _userManager.IsInRoleAsync(actor, "Admin");
+            var isAssociationAdmin = await _userManager.IsInRoleAsync(actor, "AssociationAdmin");
+            CanDeleteUsers = CanManageRolesAndLockout || isAssociationAdmin;
         }
 
         private async Task AuditAsync(string action, ApplicationUser target, IDictionary<string, string?>? extraDetails = null)

@@ -6,7 +6,14 @@
 
 <section class="section-panel">
     <h1>Manage Users</h1>
-    <p>Control roles, lockout state, and view association assignments for all users.</p>
+    @if (Model.CanManageRolesAndLockout)
+    {
+        <p>Control roles, lockout state, and delete users across all associations.</p>
+    }
+    else
+    {
+        <p>Delete users within your own association.</p>
+    }
 
     <form method="get" class="card-grid">
         <div>
@@ -75,44 +82,55 @@
                     </td>
                     <td>@(user.IsLockedOut ? "Locked" : "Active")</td>
                     <td>
-                        <a class="card-link" href="~/Admin/EditUser/@user.Id">Edit User</a>
-                        <form method="post" asp-page-handler="ToggleAdmin" asp-route-userId="@user.Id" class="inline-form">
-                            <input type="hidden" name="Search" value="@Model.Search" />
-                            <input type="hidden" name="RoleFilter" value="@Model.RoleFilter" />
-                            <input type="hidden" name="StatusFilter" value="@Model.StatusFilter" />
-                            <input type="hidden" name="CurrentPage" value="@Model.PageNumber" />
-                            <button type="submit" class="link-button">@(user.IsAdmin ? "Remove Admin" : "Make Admin")</button>
-                        </form>
-                        @if (user.IsAdmin)
+                        @if (Model.CanManageRolesAndLockout)
                         {
-                            <span class="text-muted">Association admin: N/A for Admin</span>
-                        }
-                        else
-                        {
-                            <form method="post" asp-page-handler="ToggleAssociationAdmin" asp-route-userId="@user.Id" class="inline-form">
+                            <a class="card-link" href="~/Admin/EditUser/@user.Id">Edit User</a>
+                            <form method="post" asp-page-handler="ToggleAdmin" asp-route-userId="@user.Id" class="inline-form">
                                 <input type="hidden" name="Search" value="@Model.Search" />
                                 <input type="hidden" name="RoleFilter" value="@Model.RoleFilter" />
                                 <input type="hidden" name="StatusFilter" value="@Model.StatusFilter" />
                                 <input type="hidden" name="CurrentPage" value="@Model.PageNumber" />
-                                @if (!user.IsAssociationAdmin)
-                                {
-                                    <select name="associationId" class="form-control" aria-label="Association">
-                                        <option value="">Select association</option>
-                                        @foreach (var association in Model.Associations)
-                                        {
-                                            <option value="@association.Id">@association.Name</option>
-                                        }
-                                    </select>
-                                }
-                                <button type="submit" class="link-button">@(user.IsAssociationAdmin ? "Remove Assoc Admin" : "Make Assoc Admin")</button>
+                                <button type="submit" class="link-button">@(user.IsAdmin ? "Remove Admin" : "Make Admin")</button>
+                            </form>
+                            @if (user.IsAdmin)
+                            {
+                                <span class="text-muted">Association admin: N/A for Admin</span>
+                            }
+                            else
+                            {
+                                <form method="post" asp-page-handler="ToggleAssociationAdmin" asp-route-userId="@user.Id" class="inline-form">
+                                    <input type="hidden" name="Search" value="@Model.Search" />
+                                    <input type="hidden" name="RoleFilter" value="@Model.RoleFilter" />
+                                    <input type="hidden" name="StatusFilter" value="@Model.StatusFilter" />
+                                    <input type="hidden" name="CurrentPage" value="@Model.PageNumber" />
+                                    @if (!user.IsAssociationAdmin)
+                                    {
+                                        <select name="associationId" class="form-control" aria-label="Association">
+                                            <option value="">Select association</option>
+                                            @foreach (var association in Model.Associations)
+                                            {
+                                                <option value="@association.Id">@association.Name</option>
+                                            }
+                                        </select>
+                                    }
+                                    <button type="submit" class="link-button">@(user.IsAssociationAdmin ? "Remove Assoc Admin" : "Make Assoc Admin")</button>
+                                </form>
+                            }
+                            <form method="post" asp-page-handler="ToggleLockout" asp-route-userId="@user.Id" class="inline-form">
+                                <input type="hidden" name="Search" value="@Model.Search" />
+                                <input type="hidden" name="RoleFilter" value="@Model.RoleFilter" />
+                                <input type="hidden" name="StatusFilter" value="@Model.StatusFilter" />
+                                <input type="hidden" name="CurrentPage" value="@Model.PageNumber" />
+                                <button type="submit" class="link-button">@(user.IsLockedOut ? "Unlock" : "Lock")</button>
                             </form>
                         }
-                        <form method="post" asp-page-handler="ToggleLockout" asp-route-userId="@user.Id" class="inline-form">
+
+                        <form method="post" asp-page-handler="DeleteUser" asp-route-userId="@user.Id" class="inline-form" onsubmit="return confirm('Delete @user.Email? This cannot be undone.');">
                             <input type="hidden" name="Search" value="@Model.Search" />
                             <input type="hidden" name="RoleFilter" value="@Model.RoleFilter" />
                             <input type="hidden" name="StatusFilter" value="@Model.StatusFilter" />
                             <input type="hidden" name="CurrentPage" value="@Model.PageNumber" />
-                            <button type="submit" class="link-button">@(user.IsLockedOut ? "Unlock" : "Lock")</button>
+                            <button type="submit" class="link-button">Delete</button>
                         </form>
                     </td>
                 </tr>
@@ -133,5 +151,12 @@
         </div>
     }
 
-    <a class="btn btn-secondary" href="~/Admin">Back to Dashboard</a>
+    @if (Model.CanManageRolesAndLockout)
+    {
+        <a class="btn btn-secondary" href="~/Admin">Back to Dashboard</a>
+    }
+    else
+    {
+        <a class="btn btn-secondary" href="~/AssociationAdmin">Back to Association Portal</a>
+    }
 </section>

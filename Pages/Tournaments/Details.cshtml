@@ -44,35 +44,28 @@
 
         <div class="section-panel">
             <h2>Registration</h2>
-            @if (Model.IsSignedIn)
+            @if (Model.CanRegister)
             {
-                @if (Model.CurrentRegistration != null)
-                {
-                    <p>You are already registered for this tournament. Status: <strong>@Model.CurrentRegistration.Status</strong></p>
-                    @if (Model.CurrentRegistration.Status == GolfAssociationCommunity.Models.RegistrationStatus.Registered)
-                    {
-                        <form method="post" asp-page-handler="Withdraw" class="inline-form">
-                            <input type="hidden" name="registrationId" value="@Model.CurrentRegistration.Id" />
-                            <input type="hidden" name="reason" value="User requested withdrawal" />
-                            <button type="submit" class="btn btn-secondary">Withdraw Registration</button>
-                        </form>
-                    }
-                }
-                else if (Model.CanRegister)
-                {
-                    <form method="post" asp-page-handler="Register">
-                        <input type="hidden" name="tournamentId" value="@Model.Tournament.Id" />
-                        <button type="submit" class="btn">Register for Tournament</button>
-                    </form>
-                }
-                else
-                {
-                    <p>Registration is not available for this tournament.</p>
-                }
+                <form method="post" asp-page-handler="Register">
+                    <input type="hidden" name="tournamentId" value="@Model.Tournament.Id" />
+                    <div class="card-grid">
+                        <div>
+                            <label asp-for="Input.GuestName">Full Name</label>
+                            <input asp-for="Input.GuestName" class="form-control" />
+                            <span asp-validation-for="Input.GuestName" class="text-danger"></span>
+                        </div>
+                        <div>
+                            <label asp-for="Input.GuestEmail">Email</label>
+                            <input asp-for="Input.GuestEmail" class="form-control" />
+                            <span asp-validation-for="Input.GuestEmail" class="text-danger"></span>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn">Register for Tournament</button>
+                </form>
             }
             else
             {
-                <p>You must <a href="~/Identity/Account/Login">log in</a> to register.</p>
+                <p>Registration is not available for this tournament.</p>
             }
         </div>
 
@@ -107,3 +100,7 @@
         <a class="btn btn-secondary" href="~/Tournaments">Back to tournaments</a>
     }
 </section>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

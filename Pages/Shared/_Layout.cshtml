@@ -19,7 +19,6 @@
                 <a href="~/Tournaments">Tournaments</a>
                 @if (SignInManager.IsSignedIn(User))
                 {
-                    <a href="~/MyRegistrations">My Registrations</a>
                     @if (User.IsInRole("AssociationAdmin"))
                     {
                         <a href="~/AssociationAdmin">Association Portal</a>
@@ -36,8 +35,7 @@
                 }
                 else
                 {
-                    <a href="~/Identity/Account/Login">Login</a>
-                    <a href="~/Identity/Account/Register">Register</a>
+                    <a href="~/Identity/Account/Login">Admin Login</a>
                 }
             </nav>
         </div>

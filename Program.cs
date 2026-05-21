@@ -361,6 +361,8 @@ static bool IsPortAvailable(int port)
 static bool IsBlockedIdentityPath(PathString path)
 {
     return path.StartsWithSegments("/Identity/Account/Manage/TwoFactorAuthentication", StringComparison.OrdinalIgnoreCase)
+        || path.StartsWithSegments("/Identity/Account/Register", StringComparison.OrdinalIgnoreCase)
+        || path.StartsWithSegments("/Identity/Account/RegisterConfirmation", StringComparison.OrdinalIgnoreCase)
         || path.StartsWithSegments("/Identity/Account/Manage/EnableAuthenticator", StringComparison.OrdinalIgnoreCase)
         || path.StartsWithSegments("/Identity/Account/Manage/ResetAuthenticator", StringComparison.OrdinalIgnoreCase)
         || path.StartsWithSegments("/Identity/Account/Manage/GenerateRecoveryCodes", StringComparison.OrdinalIgnoreCase)

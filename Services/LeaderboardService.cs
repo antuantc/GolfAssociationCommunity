@@ -80,7 +80,7 @@ namespace GolfAssociationCommunity.Services
 
                 // Get all players registered for the tournament
                 var registrations = await _context.Registrations
-                    .Where(r => r.TournamentId == tournamentId && r.Status == RegistrationStatus.Registered)
+                    .Where(r => r.TournamentId == tournamentId && r.Status == RegistrationStatus.Registered && r.PlayerId != null)
                     .Include(r => r.Player)
                     .ToListAsync();
 
@@ -102,7 +102,7 @@ namespace GolfAssociationCommunity.Services
                         totalStablefordPoints = playerScores.Sum(ps => ps.StablefordPoints);
                     }
 
-                    leaderboardData.Add((registration.PlayerId, totalScore, totalStablefordPoints));
+                    leaderboardData.Add((registration.PlayerId!, totalScore, totalStablefordPoints));
                 }
 
                 // Sort by Stableford points (descending) or total score (ascending) depending on format

@@ -12,11 +12,13 @@ namespace GolfAssociationCommunity.Areas.Identity.Pages.Account;
 public class LoginModel : PageModel
 {
     private readonly SignInManager<ApplicationUser> _signInManager;
+    private readonly UserManager<ApplicationUser> _userManager;
     private readonly ILogger<LoginModel> _logger;
 
-    public LoginModel(SignInManager<ApplicationUser> signInManager, ILogger<LoginModel> logger)
+    public LoginModel(SignInManager<ApplicationUser> signInManager, UserManager<ApplicationUser> userManager, ILogger<LoginModel> logger)
     {
         _signInManager = signInManager;
+        _userManager = userManager;
         _logger = logger;
     }
 
@@ -75,6 +77,23 @@ public class LoginModel : PageModel
 
             if (result.Succeeded)
             {
+                var user = await _userManager.FindByEmailAsync(Input.Email);
+                if (user == null)
+                {
+                    await _signInManager.SignOutAsync();
+                    ModelState.AddModelError(string.Empty, "Invalid login attempt.");
+                    return Page();
+                }
+
+                var isAdmin = await _userManager.IsInRoleAsync(user, "Admin");
+                var isAssociationAdmin = await _userManager.IsInRoleAsync(user, "AssociationAdmin");
+                if (!isAdmin && !isAssociationAdmin)
+                {
+                    await _signInManager.SignOutAsync();
+                    ModelState.AddModelError(string.Empty, "Login is restricted to admin accounts.");
+                    return Page();
+                }
+
                 _logger.LogInformation("User logged in.");
                 return LocalRedirect(returnUrl);
             }

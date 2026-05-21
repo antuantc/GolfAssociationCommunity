@@ -86,8 +86,10 @@ namespace GolfAssociationCommunity.Models
         public int Id { get; set; }
         public int TournamentId { get; set; }
         public Tournament? Tournament { get; set; }
-        public string PlayerId { get; set; } = string.Empty;
+        public string? PlayerId { get; set; }
         public ApplicationUser? Player { get; set; }
+        public string GuestName { get; set; } = string.Empty;
+        public string GuestEmail { get; set; } = string.Empty;
         public DateTime RegistrationDate { get; set; }
         public DateTime? UpdatedAt { get; set; }
         public decimal RegistrationFee { get; set; }

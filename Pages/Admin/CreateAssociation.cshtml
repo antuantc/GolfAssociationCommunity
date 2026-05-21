@@ -84,6 +84,35 @@
             <span asp-validation-for="Input.Description" class="text-danger"></span>
         </div>
 
+        <h2>Association Admin (Optional)</h2>
+        <p>Provide these fields to create and assign an association admin account now.</p>
+
+        <div class="card-grid">
+            <div>
+                <label asp-for="Input.AssociationAdminEmail"></label>
+                <input asp-for="Input.AssociationAdminEmail" class="form-control" />
+                <span asp-validation-for="Input.AssociationAdminEmail" class="text-danger"></span>
+            </div>
+
+            <div>
+                <label asp-for="Input.AssociationAdminPassword"></label>
+                <input asp-for="Input.AssociationAdminPassword" class="form-control" />
+                <span asp-validation-for="Input.AssociationAdminPassword" class="text-danger"></span>
+            </div>
+
+            <div>
+                <label asp-for="Input.AssociationAdminFirstName"></label>
+                <input asp-for="Input.AssociationAdminFirstName" class="form-control" />
+                <span asp-validation-for="Input.AssociationAdminFirstName" class="text-danger"></span>
+            </div>
+
+            <div>
+                <label asp-for="Input.AssociationAdminLastName"></label>
+                <input asp-for="Input.AssociationAdminLastName" class="form-control" />
+                <span asp-validation-for="Input.AssociationAdminLastName" class="text-danger"></span>
+            </div>
+        </div>
+
         <button type="submit" class="btn">Create Association</button>
         <a href="~/Admin" class="btn btn-secondary">Back to Admin</a>
     </form>

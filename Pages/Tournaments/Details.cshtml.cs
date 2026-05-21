@@ -1,7 +1,6 @@
 using GolfAssociationCommunity.Models;
 using GolfAssociationCommunity.Services;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Identity;
+using System.ComponentModel.DataAnnotations;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 
@@ -12,26 +11,36 @@ namespace GolfAssociationCommunity.Pages.Tournaments
         private readonly ITournamentService _tournamentService;
         private readonly IRegistrationService _registrationService;
         private readonly ILeaderboardService _leaderboardService;
-        private readonly UserManager<ApplicationUser> _userManager;
 
         public DetailsModel(
             ITournamentService tournamentService,
             IRegistrationService registrationService,
-            ILeaderboardService leaderboardService,
-            UserManager<ApplicationUser> userManager)
+            ILeaderboardService leaderboardService)
         {
             _tournamentService = tournamentService;
             _registrationService = registrationService;
             _leaderboardService = leaderboardService;
-            _userManager = userManager;
         }
 
         public Tournament? Tournament { get; set; }
         public int RegistrationCount { get; set; }
         public bool CanRegister { get; set; }
-        public bool IsSignedIn { get; set; }
-        public Registration? CurrentRegistration { get; set; }
         public List<Leaderboard> Leaderboard { get; set; } = new();
+
+        [BindProperty]
+        public GuestRegistrationInput Input { get; set; } = new();
+
+        public class GuestRegistrationInput
+        {
+            [Required]
+            [StringLength(120)]
+            public string GuestName { get; set; } = string.Empty;
+
+            [Required]
+            [EmailAddress]
+            [StringLength(256)]
+            public string GuestEmail { get; set; } = string.Empty;
+        }
 
         public async Task<IActionResult> OnGetAsync(int id)
         {
@@ -43,50 +52,41 @@ namespace GolfAssociationCommunity.Pages.Tournaments
 
             RegistrationCount = await _registrationService.GetRegistrationCountAsync(id, RegistrationStatus.Registered);
             Leaderboard = (await _leaderboardService.GetTournamentLeaderboardAsync(id)).ToList();
-            IsSignedIn = User.Identity?.IsAuthenticated ?? false;
-
-            if (IsSignedIn)
-            {
-                var user = await _userManager.GetUserAsync(User);
-                if (user != null)
-                {
-                    CurrentRegistration = await _registrationService.GetPlayerTournamentRegistrationAsync(id, user.Id);
-                    CanRegister = await _registrationService.CanPlayerRegisterAsync(id, user.Id);
-                }
-            }
+            CanRegister = (!Tournament.RegistrationDeadline.HasValue || Tournament.RegistrationDeadline.Value >= DateTime.UtcNow)
+                && RegistrationCount < Tournament.MaxPlayers;
 
             return Page();
         }
 
         public async Task<IActionResult> OnPostRegisterAsync(int tournamentId)
         {
-            if (!(User.Identity?.IsAuthenticated ?? false))
-            {
-                return Challenge();
-            }
-
-            var user = await _userManager.GetUserAsync(User);
-            if (user == null)
-            {
-                return Challenge();
-            }
-
             var tournament = await _tournamentService.GetTournamentByIdAsync(tournamentId);
             if (tournament == null)
             {
                 return NotFound();
             }
 
-            if (!await _registrationService.CanPlayerRegisterAsync(tournamentId, user.Id))
+            if (!ModelState.IsValid)
             {
-                TempData["ErrorMessage"] = "Registration is not available for this tournament.";
+                Tournament = tournament;
+                RegistrationCount = await _registrationService.GetRegistrationCountAsync(tournamentId, RegistrationStatus.Registered);
+                Leaderboard = (await _leaderboardService.GetTournamentLeaderboardAsync(tournamentId)).ToList();
+                CanRegister = true;
+                return Page();
+            }
+
+            if (!await _registrationService.CanGuestRegisterAsync(tournamentId, Input.GuestEmail))
+            {
+                TempData["ErrorMessage"] = "Registration is not available for this tournament or this email is already registered.";
                 return RedirectToPage(new { id = tournamentId });
             }
 
             var registration = new Registration
             {
                 TournamentId = tournamentId,
-                PlayerId = user.Id,
+                PlayerId = null,
+                GuestName = Input.GuestName.Trim(),
+                GuestEmail = Input.GuestEmail.Trim(),
                 RegistrationFee = tournament.EntryFee,
                 Status = RegistrationStatus.Pending,
                 PaymentConfirmed = false
@@ -95,30 +95,6 @@ namespace GolfAssociationCommunity.Pages.Tournaments
             await _registrationService.CreateRegistrationAsync(registration);
             TempData["SuccessMessage"] = "Your registration has been submitted.";
             return RedirectToPage(new { id = tournamentId });
-        }
-
-        public async Task<IActionResult> OnPostWithdrawAsync(int registrationId, string reason)
-        {
-            if (!(User.Identity?.IsAuthenticated ?? false))
-            {
-                return Challenge();
-            }
-
-            var registration = await _registrationService.GetRegistrationByIdAsync(registrationId);
-            if (registration == null)
-            {
-                return NotFound();
-            }
-
-            var user = await _userManager.GetUserAsync(User);
-            if (user == null || registration.PlayerId != user.Id)
-            {
-                return Forbid();
-            }
-
-            await _registrationService.WithdrawRegistrationAsync(registrationId, reason);
-            TempData["SuccessMessage"] = "Your registration has been withdrawn.";
-            return RedirectToPage(new { id = registration.TournamentId });
         }
     }
 }

@@ -58,7 +58,7 @@ namespace GolfAssociationCommunity.Data
                 .HasOne(r => r.Player)
                 .WithMany()
                 .HasForeignKey(r => r.PlayerId)
-                .OnDelete(DeleteBehavior.Cascade);
+                .OnDelete(DeleteBehavior.SetNull);
 
             builder.Entity<PlayerScore>()
                 .HasOne(ps => ps.Player)

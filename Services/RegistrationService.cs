@@ -11,6 +11,7 @@ namespace GolfAssociationCommunity.Services
     {
         Task<Registration?> GetRegistrationByIdAsync(int id);
         Task<Registration?> GetPlayerTournamentRegistrationAsync(int tournamentId, string playerId);
+        Task<Registration?> GetGuestTournamentRegistrationAsync(int tournamentId, string guestEmail);
         Task<IEnumerable<Registration>> GetTournamentRegistrationsAsync(int tournamentId);
         Task<IEnumerable<Registration>> GetPlayerRegistrationsAsync(string playerId);
         Task<Registration> CreateRegistrationAsync(Registration registration);
@@ -18,6 +19,7 @@ namespace GolfAssociationCommunity.Services
         Task<bool> ConfirmPaymentAsync(int id, string authorizeNetTransactionId);
         Task<bool> WithdrawRegistrationAsync(int id, string reason);
         Task<bool> CanPlayerRegisterAsync(int tournamentId, string playerId);
+        Task<bool> CanGuestRegisterAsync(int tournamentId, string guestEmail);
         Task<int> GetRegistrationCountAsync(int tournamentId, RegistrationStatus status);
     }
 
@@ -61,6 +63,27 @@ namespace GolfAssociationCommunity.Services
             {
                 _logger.LogError(ex, "Error retrieving registration for tournament ID: {TournamentId}, player ID: {PlayerId}",
                     tournamentId, playerId);
+                throw;
+            }
+        }
+
+        public async Task<Registration?> GetGuestTournamentRegistrationAsync(int tournamentId, string guestEmail)
+        {
+            try
+            {
+                var normalizedEmail = guestEmail.Trim().ToUpperInvariant();
+                return await _context.Registrations
+                    .Include(r => r.Tournament)
+                    .FirstOrDefaultAsync(r =>
+                        r.TournamentId == tournamentId &&
+                        r.GuestEmail.ToUpper() == normalizedEmail &&
+                        r.Status != RegistrationStatus.Cancelled &&
+                        r.Status != RegistrationStatus.Withdrew);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error retrieving guest registration for tournament ID: {TournamentId}, email: {GuestEmail}",
+                    tournamentId, guestEmail);
                 throw;
             }
         }
@@ -246,6 +269,55 @@ namespace GolfAssociationCommunity.Services
             {
                 _logger.LogError(ex, "Error checking registration eligibility for player ID: {PlayerId}, tournament ID: {TournamentId}",
                     playerId, tournamentId);
+                throw;
+            }
+        }
+
+        public async Task<bool> CanGuestRegisterAsync(int tournamentId, string guestEmail)
+        {
+            try
+            {
+                if (string.IsNullOrWhiteSpace(guestEmail))
+                {
+                    return false;
+                }
+
+                // Check if the guest email already has an active registration for this tournament.
+                var existingRegistration = await GetGuestTournamentRegistrationAsync(tournamentId, guestEmail);
+                if (existingRegistration != null)
+                {
+                    _logger.LogWarning("Guest email {GuestEmail} already has an active registration for tournament {TournamentId}",
+                        guestEmail, tournamentId);
+                    return false;
+                }
+
+                var tournament = await _context.Tournaments.FindAsync(tournamentId);
+                if (tournament == null)
+                {
+                    _logger.LogWarning("Tournament not found with ID: {TournamentId}", tournamentId);
+                    return false;
+                }
+
+                var registeredCount = await GetRegistrationCountAsync(tournamentId, RegistrationStatus.Registered);
+                if (registeredCount >= tournament.MaxPlayers)
+                {
+                    _logger.LogWarning("Tournament {TournamentId} is full", tournamentId);
+                    return false;
+                }
+
+                if (tournament.RegistrationDeadline.HasValue &&
+                    tournament.RegistrationDeadline.Value < DateTime.UtcNow)
+                {
+                    _logger.LogWarning("Registration deadline has passed for tournament {TournamentId}", tournamentId);
+                    return false;
+                }
+
+                return true;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error checking guest registration eligibility for email: {GuestEmail}, tournament ID: {TournamentId}",
+                    guestEmail, tournamentId);
                 throw;
             }
         }

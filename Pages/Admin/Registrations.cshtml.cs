@@ -119,7 +119,9 @@ namespace GolfAssociationCommunity.Pages.Admin
                 .Select(r => new RegistrationRow
                 {
                     Id = r.Id,
-                    PlayerEmail = r.Player != null ? (r.Player.Email ?? r.Player.Id) : r.PlayerId,
+                    PlayerEmail = r.Player != null
+                        ? (r.Player.Email ?? r.Player.Id)
+                        : $"{r.GuestName} ({r.GuestEmail})",
                     TournamentName = r.Tournament != null ? r.Tournament.Name : "-",
                     AssociationName = r.Tournament != null && r.Tournament.GolfAssociation != null
                         ? r.Tournament.GolfAssociation.Name
