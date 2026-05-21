@@ -10,13 +10,36 @@
     <link rel="stylesheet" href="~/css/site.css" />
 </head>
 <body>
+    @{ 
+        var publicAssociationId = ViewData["PublicAssociationId"] as int?;
+        if (publicAssociationId is null && ViewData["PublicAssociationId"] != null)
+        {
+            publicAssociationId = Convert.ToInt32(ViewData["PublicAssociationId"]);
+        }
+        var publicAssociationName = ViewData["PublicAssociationName"]?.ToString();
+    }
     <header class="site-header">
         <div class="container">
-            <a class="brand" href="~/">Golf Association Community</a>
+            @if (publicAssociationId.HasValue && !string.IsNullOrWhiteSpace(publicAssociationName))
+            {
+                <a class="brand" href="~/Associations/Details/@publicAssociationId">@publicAssociationName</a>
+            }
+            else
+            {
+                <a class="brand" href="~/">Golf Association Community</a>
+            }
             <nav class="site-nav">
-                <a href="~/">Home</a>
-                <a href="~/Associations">Associations</a>
-                <a href="~/Tournaments">Tournaments</a>
+                @if (publicAssociationId.HasValue)
+                {
+                    <a href="~/Associations/Details/@publicAssociationId">Association Home</a>
+                    <a href="~/Associations/Tournaments?associationId=@publicAssociationId">Tournaments</a>
+                    <a href="~/">All Associations</a>
+                }
+                else
+                {
+                    <a href="~/">Home</a>
+                    <a href="~/">Associations</a>
+                }
                 @if (SignInManager.IsSignedIn(User))
                 {
                     @if (User.IsInRole("AssociationAdmin"))

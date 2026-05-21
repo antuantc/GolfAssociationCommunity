@@ -165,8 +165,7 @@ namespace GolfAssociationCommunity.Pages.Admin
                         FirstName = string.IsNullOrWhiteSpace(Input.AssociationAdminFirstName) ? null : Input.AssociationAdminFirstName.Trim(),
                         LastName = string.IsNullOrWhiteSpace(Input.AssociationAdminLastName) ? null : Input.AssociationAdminLastName.Trim(),
                         GolfAssociationId = created.Id,
-                        UpdatedAt = DateTime.UtcNow,
-                        RequirePasswordChange = true
+                        UpdatedAt = DateTime.UtcNow
                     };
 
                     var createAdminResult = await _userManager.CreateAsync(associationAdmin, Input.AssociationAdminPassword!);

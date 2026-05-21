@@ -145,36 +145,6 @@ app.Use(async (context, next) =>
 
 app.Use(async (context, next) =>
 {
-    if (context.User.Identity?.IsAuthenticated == true)
-    {
-        var path = context.Request.Path;
-        var isAllowedPath =
-            path.StartsWithSegments("/ForcePasswordChange", StringComparison.OrdinalIgnoreCase) ||
-            path.StartsWithSegments("/Identity/Account/Logout", StringComparison.OrdinalIgnoreCase) ||
-            path.StartsWithSegments("/Identity/Account/AccessDenied", StringComparison.OrdinalIgnoreCase) ||
-            path.StartsWithSegments("/css", StringComparison.OrdinalIgnoreCase) ||
-            path.StartsWithSegments("/js", StringComparison.OrdinalIgnoreCase) ||
-            path.StartsWithSegments("/lib", StringComparison.OrdinalIgnoreCase) ||
-            path.StartsWithSegments("/images", StringComparison.OrdinalIgnoreCase) ||
-            path.StartsWithSegments("/favicon.ico", StringComparison.OrdinalIgnoreCase);
-
-        if (!isAllowedPath)
-        {
-            var userManager = context.RequestServices.GetRequiredService<UserManager<ApplicationUser>>();
-            var user = await userManager.GetUserAsync(context.User);
-            if (user != null && user.RequirePasswordChange)
-            {
-                context.Response.Redirect("/ForcePasswordChange");
-                return;
-            }
-        }
-    }
-
-    await next();
-});
-
-app.Use(async (context, next) =>
-{
     if (context.User.Identity?.IsAuthenticated == true &&
         context.User.IsInRole("AssociationAdmin") &&
         !context.User.IsInRole("Admin"))

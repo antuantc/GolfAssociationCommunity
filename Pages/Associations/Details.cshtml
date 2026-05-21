@@ -8,7 +8,7 @@
     {
         <h1>Association not found</h1>
         <p>The association you requested does not exist or is not active.</p>
-        <a href="~/Associations" class="btn btn-secondary">Back to associations</a>
+        <a href="~/" class="btn btn-secondary">Back to associations</a>
     }
     else
     {
@@ -47,13 +47,15 @@
                                 <span>@tournament.StartDate.ToString("MMM d, yyyy") - @tournament.EndDate.ToString("MMM d, yyyy")</span>
                                 <span>Status: @tournament.Status</span>
                             </div>
-                            <a class="card-link" href="~/Tournaments/Details/@tournament.Id">View tournament</a>
+                            <a class="card-link" href="~/Tournaments/Details/@tournament.Id?associationId=@Model.Association.Id">View tournament</a>
                         </article>
                     }
                 </div>
             }
+
+            <a class="btn" href="~/Associations/Tournaments?associationId=@Model.Association.Id">View all association tournaments</a>
         </div>
 
-        <a href="~/Associations" class="btn btn-secondary">Back to associations</a>
+        <a href="~/" class="btn btn-secondary">Back to associations</a>
     }
 </section>

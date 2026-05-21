@@ -23,6 +23,7 @@ namespace GolfAssociationCommunity.Pages.Tournaments
         }
 
         public Tournament? Tournament { get; set; }
+        public int? AssociationId { get; set; }
         public int RegistrationCount { get; set; }
         public bool CanRegister { get; set; }
         public List<Leaderboard> Leaderboard { get; set; } = new();
@@ -42,12 +43,32 @@ namespace GolfAssociationCommunity.Pages.Tournaments
             public string GuestEmail { get; set; } = string.Empty;
         }
 
-        public async Task<IActionResult> OnGetAsync(int id)
+        public async Task<IActionResult> OnGetAsync(int id, int? associationId)
         {
             Tournament = await _tournamentService.GetTournamentByIdAsync(id);
             if (Tournament == null)
             {
                 return NotFound();
+            }
+
+            if (!associationId.HasValue)
+            {
+                return RedirectToPage(new { id, associationId = Tournament.GolfAssociationId });
+            }
+
+            if (associationId.HasValue)
+            {
+                if (Tournament.GolfAssociationId != associationId.Value)
+                {
+                    return NotFound();
+                }
+
+                AssociationId = associationId.Value;
+                if (Tournament.GolfAssociation != null)
+                {
+                    ViewData["PublicAssociationId"] = Tournament.GolfAssociation.Id;
+                    ViewData["PublicAssociationName"] = Tournament.GolfAssociation.Name;
+                }
             }
 
             RegistrationCount = await _registrationService.GetRegistrationCountAsync(id, RegistrationStatus.Registered);
@@ -58,7 +79,7 @@ namespace GolfAssociationCommunity.Pages.Tournaments
             return Page();
         }
 
-        public async Task<IActionResult> OnPostRegisterAsync(int tournamentId)
+        public async Task<IActionResult> OnPostRegisterAsync(int tournamentId, int? associationId)
         {
             var tournament = await _tournamentService.GetTournamentByIdAsync(tournamentId);
             if (tournament == null)
@@ -66,9 +87,22 @@ namespace GolfAssociationCommunity.Pages.Tournaments
                 return NotFound();
             }
 
+            associationId ??= tournament.GolfAssociationId;
+
+            if (associationId.HasValue && tournament.GolfAssociationId != associationId.Value)
+            {
+                return NotFound();
+            }
+
             if (!ModelState.IsValid)
             {
                 Tournament = tournament;
+                AssociationId = associationId;
+                if (associationId.HasValue && tournament.GolfAssociation != null)
+                {
+                    ViewData["PublicAssociationId"] = tournament.GolfAssociation.Id;
+                    ViewData["PublicAssociationName"] = tournament.GolfAssociation.Name;
+                }
                 RegistrationCount = await _registrationService.GetRegistrationCountAsync(tournamentId, RegistrationStatus.Registered);
                 Leaderboard = (await _leaderboardService.GetTournamentLeaderboardAsync(tournamentId)).ToList();
                 CanRegister = true;
@@ -78,7 +112,7 @@ namespace GolfAssociationCommunity.Pages.Tournaments
             if (!await _registrationService.CanGuestRegisterAsync(tournamentId, Input.GuestEmail))
             {
                 TempData["ErrorMessage"] = "Registration is not available for this tournament or this email is already registered.";
-                return RedirectToPage(new { id = tournamentId });
+                return RedirectToPage(new { id = tournamentId, associationId });
             }
 
             var registration = new Registration
@@ -94,7 +128,7 @@ namespace GolfAssociationCommunity.Pages.Tournaments
 
             await _registrationService.CreateRegistrationAsync(registration);
             TempData["SuccessMessage"] = "Your registration has been submitted.";
-            return RedirectToPage(new { id = tournamentId });
+            return RedirectToPage(new { id = tournamentId, associationId });
         }
     }
 }

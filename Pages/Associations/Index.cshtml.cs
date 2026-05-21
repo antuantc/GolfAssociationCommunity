@@ -1,5 +1,6 @@
 using GolfAssociationCommunity.Models;
 using GolfAssociationCommunity.Services;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 
 namespace GolfAssociationCommunity.Pages.Associations
@@ -17,13 +18,9 @@ namespace GolfAssociationCommunity.Pages.Associations
 
         public Dictionary<int, int> MemberCounts { get; set; } = new();
 
-        public async Task OnGetAsync()
+        public IActionResult OnGet()
         {
-            Associations = (await _associationService.GetAllActiveAssociationsAsync()).ToList();
-            foreach (var association in Associations)
-            {
-                MemberCounts[association.Id] = await _associationService.GetMemberCountAsync(association.Id);
-            }
+            return RedirectToPage("/Index");
         }
     }
 }

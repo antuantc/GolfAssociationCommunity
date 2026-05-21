@@ -45,8 +45,6 @@ namespace GolfAssociationCommunity.Pages.Admin
             [DataType(DataType.Password)]
             [Compare(nameof(NewPassword), ErrorMessage = "Password and confirmation do not match.")]
             public string? ConfirmPassword { get; set; }
-
-            public bool RequirePasswordChangeOnNextLogin { get; set; }
         }
 
         public async Task<IActionResult> OnGetAsync(string id)
@@ -62,8 +60,7 @@ namespace GolfAssociationCommunity.Pages.Admin
             {
                 Email = user.Email ?? string.Empty,
                 FirstName = user.FirstName,
-                LastName = user.LastName,
-                RequirePasswordChangeOnNextLogin = user.RequirePasswordChange
+                LastName = user.LastName
             };
 
             return Page();
@@ -96,7 +93,6 @@ namespace GolfAssociationCommunity.Pages.Admin
             user.UserName = normalizedEmail;
             user.FirstName = string.IsNullOrWhiteSpace(Input.FirstName) ? null : Input.FirstName.Trim();
             user.LastName = string.IsNullOrWhiteSpace(Input.LastName) ? null : Input.LastName.Trim();
-            user.RequirePasswordChange = Input.RequirePasswordChangeOnNextLogin;
             user.UpdatedAt = DateTime.UtcNow;
 
             var updateResult = await _userManager.UpdateAsync(user);
@@ -133,8 +129,7 @@ namespace GolfAssociationCommunity.Pages.Admin
             {
                 ["TargetUserId"] = user.Id,
                 ["TargetEmail"] = user.Email,
-                ["PasswordChanged"] = passwordChanged ? "Yes" : "No",
-                ["RequirePasswordChange"] = user.RequirePasswordChange ? "Yes" : "No"
+                ["PasswordChanged"] = passwordChanged ? "Yes" : "No"
             });
 
             TempData["SuccessMessage"] = passwordChanged

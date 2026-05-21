@@ -26,6 +26,8 @@ namespace GolfAssociationCommunity.Pages.Associations
                 return NotFound();
             }
 
+            ViewData["PublicAssociationId"] = Association.Id;
+            ViewData["PublicAssociationName"] = Association.Name;
             MemberCount = await _associationService.GetMemberCountAsync(id);
             return Page();
         }

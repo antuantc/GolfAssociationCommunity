@@ -1,29 +1,10 @@
 @page
 @model GolfAssociationCommunity.Pages.Associations.IndexModel
 @{
-    ViewData["Title"] = "Associations";
+    ViewData["Title"] = "Choose an Association";
 }
 <section class="section-panel">
-    <h1>Active Golf Associations</h1>
-    @if (Model.Associations.Count == 0)
-    {
-        <p>There are no active associations at the moment.</p>
-    }
-    else
-    {
-        <div class="card-grid">
-            @foreach (var association in Model.Associations)
-            {
-                <article class="card">
-                    <h2>@association.Name</h2>
-                    <p>@association.Description</p>
-                    <div class="card-meta">
-                        <span>@association.City, @association.State</span>
-                        <span>@Model.MemberCounts[association.Id] members</span>
-                    </div>
-                    <a class="card-link" href="~/Associations/Details/@association.Id">View details</a>
-                </article>
-            }
-        </div>
-    }
+    <h1>Choose an Association</h1>
+    <p>If you are not redirected automatically, return to the public association selector.</p>
+    <a class="btn" href="~/">Go to association selector</a>
 </section>

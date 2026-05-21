@@ -7,23 +7,22 @@ namespace GolfAssociationCommunity.Pages
     public class IndexModel : PageModel
     {
         private readonly IAssociationService _associationService;
-        private readonly ITournamentService _tournamentService;
 
-        public IndexModel(
-            IAssociationService associationService,
-            ITournamentService tournamentService)
+        public IndexModel(IAssociationService associationService)
         {
             _associationService = associationService;
-            _tournamentService = tournamentService;
         }
 
         public List<GolfAssociation> Associations { get; set; } = new();
-        public List<Tournament> UpcomingTournaments { get; set; } = new();
+        public Dictionary<int, int> MemberCounts { get; set; } = new();
 
         public async Task OnGetAsync()
         {
             Associations = (await _associationService.GetAllActiveAssociationsAsync()).ToList();
-            UpcomingTournaments = (await _tournamentService.GetAllUpcomingTournamentsAsync()).Take(5).ToList();
+            foreach (var association in Associations)
+            {
+                MemberCounts[association.Id] = await _associationService.GetMemberCountAsync(association.Id);
+            }
         }
     }
 }
