@@ -50,6 +50,7 @@ namespace GolfAssociationCommunity.Pages.Admin
             public string AssociationName { get; set; } = string.Empty;
             public DateTime RegistrationDate { get; set; }
             public RegistrationStatus Status { get; set; }
+            public decimal? Handicap { get; set; }
             public bool PaymentConfirmed { get; set; }
             public string? CardLast4 { get; set; }
         }
@@ -129,6 +130,7 @@ namespace GolfAssociationCommunity.Pages.Admin
                         : "-",
                     RegistrationDate = r.RegistrationDate,
                     Status = r.Status,
+                    Handicap = r.Handicap,
                     PaymentConfirmed = r.PaymentConfirmed,
                     CardLast4 = r.CardLast4
                 })

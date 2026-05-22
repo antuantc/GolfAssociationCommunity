@@ -18,13 +18,63 @@
                 <p>@Model.Association.Description</p>
                 <dl class="details-list">
                     <dt>Location</dt>
-                    <dd>@Model.Association.City, @Model.Association.State</dd>
-                    <dt>Contact</dt>
-                    <dd>@Model.Association.ContactEmail</dd>
+                    <dd>@(string.Join(", ", new[] { Model.Association.City, Model.Association.State, Model.Association.Country }.Where(v => !string.IsNullOrWhiteSpace(v))))</dd>
+                    <dt>Address</dt>
+                    <dd>@(string.Join(", ", new[] { Model.Association.Street, Model.Association.City, Model.Association.State, Model.Association.ZipCode, Model.Association.Country }.Where(v => !string.IsNullOrWhiteSpace(v))))</dd>
+                    <dt>Contact Email</dt>
+                    <dd>@(string.IsNullOrWhiteSpace(Model.Association.ContactEmail) ? "Not provided" : Model.Association.ContactEmail)</dd>
+                    <dt>Contact Phone</dt>
+                    <dd>@(string.IsNullOrWhiteSpace(Model.Association.ContactPhone) ? "Not provided" : Model.Association.ContactPhone)</dd>
                     <dt>Website</dt>
-                    <dd><a href="@Model.Association.Website" target="_blank">@Model.Association.Website</a></dd>
+                    <dd>
+                        @if (string.IsNullOrWhiteSpace(Model.Association.Website))
+                        {
+                            <span>Not provided</span>
+                        }
+                        else
+                        {
+                            <a href="@Model.Association.Website" target="_blank" rel="noopener noreferrer">@Model.Association.Website</a>
+                        }
+                    </dd>
+                    <dt>Members</dt>
+                    <dd>@Model.Association.Members.Count</dd>
+                    <dt>Total Tournaments</dt>
+                    <dd>@Model.Association.Tournaments.Count</dd>
+                    <dt>Upcoming Tournaments</dt>
+                    <dd>@Model.Association.Tournaments.Count(t => t.StartDate >= DateTime.UtcNow)</dd>
                 </dl>
             </div>
+        </div>
+
+        <div class="section-panel">
+            <h2>Sponsorship Packages</h2>
+            @{
+                var activePackages = Model.Association.SponsorshipPackages
+                    .Where(sp => sp.IsActive)
+                    .OrderBy(sp => sp.DisplayOrder)
+                    .ThenByDescending(sp => sp.Amount)
+                    .ToList();
+            }
+            @if (activePackages.Count == 0)
+            {
+                <p>Sponsorship packages will be announced soon.</p>
+            }
+            else
+            {
+                <div class="card-grid">
+                    @foreach (var package in activePackages)
+                    {
+                        <article class="card">
+                            <h3>@package.Name</h3>
+                            <p>@(string.IsNullOrWhiteSpace(package.Description) ? "Support this association as a sponsor." : package.Description)</p>
+                            <div class="card-meta">
+                                <span>Level Contribution: @package.Amount.ToString("C")</span>
+                            </div>
+                            <p>@package.Benefits</p>
+                        </article>
+                    }
+                </div>
+            }
         </div>
 
         <div class="section-panel">
@@ -41,17 +91,29 @@
                         <article class="card">
                             <h3>@tournament.Name</h3>
                             <p>@tournament.Description</p>
-                            <div class="card-meta">
-                                <span>@tournament.StartDate.ToString("MMM d, yyyy") - @tournament.EndDate.ToString("MMM d, yyyy")</span>
-                                <span>Status: @tournament.Status</span>
-                            </div>
-                            <a class="card-link" href="~/Tournaments/Details/@tournament.Id?associationId=@Model.Association.Id">View tournament</a>
+                            <dl class="details-list">
+                                <dt>Dates</dt>
+                                <dd>@tournament.StartDate.ToString("MMM d, yyyy") - @tournament.EndDate.ToString("MMM d, yyyy")</dd>
+                                <dt>Registration Deadline</dt>
+                                <dd>@(tournament.RegistrationDeadline.HasValue ? tournament.RegistrationDeadline.Value.ToString("MMM d, yyyy") : "Not set")</dd>
+                                <dt>Format</dt>
+                                <dd>@tournament.Format</dd>
+                                <dt>Location</dt>
+                                <dd>@(string.IsNullOrWhiteSpace(tournament.Location) ? "TBD" : tournament.Location)</dd>
+                                <dt>Golf Course</dt>
+                                <dd>@(string.IsNullOrWhiteSpace(tournament.GolfCourse) ? "TBD" : tournament.GolfCourse)</dd>
+                                <dt>Entry Fee</dt>
+                                <dd>@tournament.EntryFee.ToString("C")</dd>
+                                <dt>Max Players</dt>
+                                <dd>@tournament.MaxPlayers</dd>
+                                <dt>Status</dt>
+                                <dd>@tournament.Status</dd>
+                            </dl>
+                            <a class="btn" href="~/Tournaments/Details/@tournament.Id?associationId=@Model.Association.Id">Register</a>
                         </article>
                     }
                 </div>
             }
-
-            <a class="btn" href="~/Associations/Tournaments?associationId=@Model.Association.Id">View all association tournaments</a>
         </div>
 
         <a href="~/" class="btn btn-secondary">Back to associations</a>

@@ -1,0 +1,55 @@
+@page "{id:int}"
+@model GolfAssociationCommunity.Pages.AssociationAdmin.EditSponsorshipModel
+@{
+    ViewData["Title"] = "Edit Sponsorship";
+}
+
+<section class="section-panel">
+    <h1>Edit Sponsorship Package</h1>
+
+    <form method="post" autocomplete="on">
+        <div asp-validation-summary="ModelOnly" class="message error"></div>
+
+        <div class="card-grid">
+            <div>
+                <label asp-for="Input.Name">Package Name</label>
+                <input asp-for="Input.Name" class="form-control" />
+                <span asp-validation-for="Input.Name" class="text-danger"></span>
+            </div>
+            <div>
+                <label asp-for="Input.Amount">Contribution Amount</label>
+                <input asp-for="Input.Amount" class="form-control" inputmode="decimal" />
+                <span asp-validation-for="Input.Amount" class="text-danger"></span>
+            </div>
+            <div>
+                <label asp-for="Input.DisplayOrder">Display Order</label>
+                <input asp-for="Input.DisplayOrder" class="form-control" inputmode="numeric" />
+                <span asp-validation-for="Input.DisplayOrder" class="text-danger"></span>
+            </div>
+            <div>
+                <label asp-for="Input.IsActive">Status</label>
+                <div>
+                    <input asp-for="Input.IsActive" /> Active
+                </div>
+            </div>
+        </div>
+
+        <div>
+            <label asp-for="Input.Description">Description</label>
+            <textarea asp-for="Input.Description" class="form-control" rows="3"></textarea>
+            <span asp-validation-for="Input.Description" class="text-danger"></span>
+        </div>
+        <div>
+            <label asp-for="Input.Benefits">Benefits</label>
+            <textarea asp-for="Input.Benefits" class="form-control" rows="4"></textarea>
+            <span asp-validation-for="Input.Benefits" class="text-danger"></span>
+        </div>
+
+        <button type="submit" class="btn">Save Changes</button>
+        <a class="btn btn-secondary" href="~/AssociationAdmin/Sponsorships">Cancel</a>
+    </form>
+</section>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

@@ -57,6 +57,22 @@ namespace GolfAssociationCommunity.Models
         public DateTime UpdatedAt { get; set; }
         public ICollection<ApplicationUser> Members { get; set; } = new List<ApplicationUser>();
         public ICollection<Tournament> Tournaments { get; set; } = new List<Tournament>();
+        public ICollection<SponsorshipPackage> SponsorshipPackages { get; set; } = new List<SponsorshipPackage>();
+    }
+
+    public class SponsorshipPackage
+    {
+        public int Id { get; set; }
+        public int GolfAssociationId { get; set; }
+        public GolfAssociation? GolfAssociation { get; set; }
+        public string Name { get; set; } = string.Empty;
+        public string? Description { get; set; }
+        public decimal Amount { get; set; }
+        public string Benefits { get; set; } = string.Empty;
+        public bool IsActive { get; set; } = true;
+        public int DisplayOrder { get; set; }
+        public DateTime CreatedAt { get; set; }
+        public DateTime UpdatedAt { get; set; }
     }
 
     public class Tournament
@@ -90,6 +106,7 @@ namespace GolfAssociationCommunity.Models
         public ApplicationUser? Player { get; set; }
         public string GuestName { get; set; } = string.Empty;
         public string GuestEmail { get; set; } = string.Empty;
+        public decimal? Handicap { get; set; }
         public DateTime RegistrationDate { get; set; }
         public DateTime? UpdatedAt { get; set; }
         public decimal RegistrationFee { get; set; }

@@ -3,6 +3,7 @@ using System;
 using GolfAssociationCommunity.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -10,9 +11,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace GolfAssociationCommunity.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260522023452_AddRegistrationHandicap")]
+    partial class AddRegistrationHandicap
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "8.0.0");
@@ -354,51 +357,6 @@ namespace GolfAssociationCommunity.Migrations
                     b.ToTable("Registrations");
                 });
 
-            modelBuilder.Entity("GolfAssociationCommunity.Models.SponsorshipPackage", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
-
-                    b.Property<decimal>("Amount")
-                        .HasPrecision(18, 2)
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("Benefits")
-                        .IsRequired()
-                        .HasMaxLength(2000)
-                        .HasColumnType("TEXT");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("Description")
-                        .HasColumnType("TEXT");
-
-                    b.Property<int>("DisplayOrder")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<int>("GolfAssociationId")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<bool>("IsActive")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasMaxLength(120)
-                        .HasColumnType("TEXT");
-
-                    b.Property<DateTime>("UpdatedAt")
-                        .HasColumnType("TEXT");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("GolfAssociationId", "DisplayOrder");
-
-                    b.ToTable("SponsorshipPackages");
-                });
-
             modelBuilder.Entity("GolfAssociationCommunity.Models.Tournament", b =>
                 {
                     b.Property<int>("Id")
@@ -650,17 +608,6 @@ namespace GolfAssociationCommunity.Migrations
                     b.Navigation("Tournament");
                 });
 
-            modelBuilder.Entity("GolfAssociationCommunity.Models.SponsorshipPackage", b =>
-                {
-                    b.HasOne("GolfAssociationCommunity.Models.GolfAssociation", "GolfAssociation")
-                        .WithMany("SponsorshipPackages")
-                        .HasForeignKey("GolfAssociationId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("GolfAssociation");
-                });
-
             modelBuilder.Entity("GolfAssociationCommunity.Models.Tournament", b =>
                 {
                     b.HasOne("GolfAssociationCommunity.Models.GolfAssociation", "GolfAssociation")
@@ -726,8 +673,6 @@ namespace GolfAssociationCommunity.Migrations
             modelBuilder.Entity("GolfAssociationCommunity.Models.GolfAssociation", b =>
                 {
                     b.Navigation("Members");
-
-                    b.Navigation("SponsorshipPackages");
 
                     b.Navigation("Tournaments");
                 });

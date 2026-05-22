@@ -57,6 +57,8 @@
                     <input type="hidden" name="tournamentId" value="@Model.Tournament.Id" />
                     <input type="hidden" name="associationId" value="@Model.AssociationId" />
                     <div asp-validation-summary="ModelOnly" class="message error"></div>
+
+                    <h3>Registration Details</h3>
                     <div class="card-grid">
                         <div>
                             <label asp-for="Input.GuestName">Full Name</label>
@@ -68,6 +70,15 @@
                             <input asp-for="Input.GuestEmail" class="form-control" autocomplete="email" />
                             <span asp-validation-for="Input.GuestEmail" class="text-danger"></span>
                         </div>
+                        <div>
+                            <label asp-for="Input.Handicap">Handicap</label>
+                            <input asp-for="Input.Handicap" class="form-control" inputmode="decimal" placeholder="e.g. 12.4" />
+                            <span asp-validation-for="Input.Handicap" class="text-danger"></span>
+                        </div>
+                    </div>
+
+                    <h3>Payment Details</h3>
+                    <div class="card-grid">
                         <div>
                             <label asp-for="Input.CardholderName">Cardholder Name</label>
                             <input asp-for="Input.CardholderName" class="form-control" autocomplete="cc-name" />

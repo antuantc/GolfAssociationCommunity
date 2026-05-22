@@ -39,6 +39,7 @@ namespace GolfAssociationCommunity.Services
                 return await _context.GolfAssociations
                     .Include(ga => ga.Members)
                     .Include(ga => ga.Tournaments)
+                    .Include(ga => ga.SponsorshipPackages)
                     .FirstOrDefaultAsync(ga => ga.Id == id && ga.IsActive);
             }
             catch (Exception ex)

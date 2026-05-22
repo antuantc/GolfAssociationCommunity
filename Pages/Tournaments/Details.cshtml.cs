@@ -45,6 +45,9 @@ namespace GolfAssociationCommunity.Pages.Tournaments
             [StringLength(256)]
             public string GuestEmail { get; set; } = string.Empty;
 
+            [Range(-10, 60, ErrorMessage = "Handicap must be between -10 and 60.")]
+            public decimal? Handicap { get; set; }
+
             [Required]
             [CreditCard]
             [StringLength(19)]
@@ -207,6 +210,7 @@ namespace GolfAssociationCommunity.Pages.Tournaments
                 PlayerId = null,
                 GuestName = Input.GuestName.Trim(),
                 GuestEmail = Input.GuestEmail.Trim(),
+                Handicap = Input.Handicap,
                 RegistrationFee = tournament.EntryFee,
                 Status = RegistrationStatus.Registered,
                 PaymentConfirmed = true,

@@ -30,11 +30,25 @@
                         <article class="card">
                             <h3>@tournament.Name</h3>
                             <p>@tournament.Description</p>
-                            <div class="card-meta">
-                                <span>@tournament.StartDate.ToString("MMM d, yyyy")</span>
-                                <span>Status: @tournament.Status</span>
-                            </div>
-                            <a class="card-link" href="~/Tournaments/Details/@tournament.Id?associationId=@Model.Association.Id">View tournament</a>
+                            <dl class="details-list">
+                                <dt>Dates</dt>
+                                <dd>@tournament.StartDate.ToString("MMM d, yyyy") - @tournament.EndDate.ToString("MMM d, yyyy")</dd>
+                                <dt>Registration Deadline</dt>
+                                <dd>@(tournament.RegistrationDeadline.HasValue ? tournament.RegistrationDeadline.Value.ToString("MMM d, yyyy") : "Not set")</dd>
+                                <dt>Format</dt>
+                                <dd>@tournament.Format</dd>
+                                <dt>Location</dt>
+                                <dd>@(string.IsNullOrWhiteSpace(tournament.Location) ? "TBD" : tournament.Location)</dd>
+                                <dt>Golf Course</dt>
+                                <dd>@(string.IsNullOrWhiteSpace(tournament.GolfCourse) ? "TBD" : tournament.GolfCourse)</dd>
+                                <dt>Entry Fee</dt>
+                                <dd>@tournament.EntryFee.ToString("C")</dd>
+                                <dt>Max Players</dt>
+                                <dd>@tournament.MaxPlayers</dd>
+                                <dt>Status</dt>
+                                <dd>@tournament.Status</dd>
+                            </dl>
+                            <a class="btn" href="~/Tournaments/Details/@tournament.Id?associationId=@Model.Association.Id">Register</a>
                         </article>
                     }
                 </div>
@@ -55,11 +69,25 @@
                         <article class="card">
                             <h3>@tournament.Name</h3>
                             <p>@tournament.Description</p>
-                            <div class="card-meta">
-                                <span>@tournament.EndDate.ToString("MMM d, yyyy")</span>
-                                <span>Status: @tournament.Status</span>
-                            </div>
-                            <a class="card-link" href="~/Tournaments/Details/@tournament.Id?associationId=@Model.Association.Id">View tournament</a>
+                            <dl class="details-list">
+                                <dt>Dates</dt>
+                                <dd>@tournament.StartDate.ToString("MMM d, yyyy") - @tournament.EndDate.ToString("MMM d, yyyy")</dd>
+                                <dt>Registration Deadline</dt>
+                                <dd>@(tournament.RegistrationDeadline.HasValue ? tournament.RegistrationDeadline.Value.ToString("MMM d, yyyy") : "Not set")</dd>
+                                <dt>Format</dt>
+                                <dd>@tournament.Format</dd>
+                                <dt>Location</dt>
+                                <dd>@(string.IsNullOrWhiteSpace(tournament.Location) ? "TBD" : tournament.Location)</dd>
+                                <dt>Golf Course</dt>
+                                <dd>@(string.IsNullOrWhiteSpace(tournament.GolfCourse) ? "TBD" : tournament.GolfCourse)</dd>
+                                <dt>Entry Fee</dt>
+                                <dd>@tournament.EntryFee.ToString("C")</dd>
+                                <dt>Max Players</dt>
+                                <dd>@tournament.MaxPlayers</dd>
+                                <dt>Status</dt>
+                                <dd>@tournament.Status</dd>
+                            </dl>
+                            <a class="btn" href="~/Tournaments/Details/@tournament.Id?associationId=@Model.Association.Id">Register</a>
                         </article>
                     }
                 </div>

@@ -13,6 +13,7 @@ namespace GolfAssociationCommunity.Data
 
         public DbSet<GolfAssociation> GolfAssociations { get; set; } = null!;
         public DbSet<Tournament> Tournaments { get; set; } = null!;
+        public DbSet<SponsorshipPackage> SponsorshipPackages { get; set; } = null!;
         public DbSet<Registration> Registrations { get; set; } = null!;
         public DbSet<PlayerScore> PlayerScores { get; set; } = null!;
         public DbSet<Leaderboard> Leaderboards { get; set; } = null!;
@@ -34,6 +35,27 @@ namespace GolfAssociationCommunity.Data
                 .HasForeignKey(t => t.GolfAssociationId)
                 .OnDelete(DeleteBehavior.Cascade);
 
+            builder.Entity<GolfAssociation>()
+                .HasMany(ga => ga.SponsorshipPackages)
+                .WithOne(sp => sp.GolfAssociation)
+                .HasForeignKey(sp => sp.GolfAssociationId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            builder.Entity<SponsorshipPackage>()
+                .Property(sp => sp.Amount)
+                .HasPrecision(18, 2);
+
+            builder.Entity<SponsorshipPackage>()
+                .Property(sp => sp.Name)
+                .HasMaxLength(120);
+
+            builder.Entity<SponsorshipPackage>()
+                .Property(sp => sp.Benefits)
+                .HasMaxLength(2000);
+
+            builder.Entity<SponsorshipPackage>()
+                .HasIndex(sp => new { sp.GolfAssociationId, sp.DisplayOrder });
+
             builder.Entity<Tournament>()
                 .HasMany(t => t.Registrations)
                 .WithOne(r => r.Tournament)
@@ -53,6 +75,10 @@ namespace GolfAssociationCommunity.Data
             builder.Entity<Registration>()
                 .Property(r => r.RegistrationFee)
                 .HasPrecision(18, 2);
+
+            builder.Entity<Registration>()
+                .Property(r => r.Handicap)
+                .HasPrecision(5, 2);
 
             builder.Entity<Registration>()
                 .HasOne(r => r.Player)

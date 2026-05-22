@@ -1,0 +1,103 @@
+@page
+@model GolfAssociationCommunity.Pages.AssociationAdmin.SponsorshipsModel
+@{
+    ViewData["Title"] = "Manage Sponsorships";
+}
+
+<section class="section-panel">
+    <h1>Manage Sponsorship Packages</h1>
+    <p>Create and maintain sponsorship levels, pricing, and benefit details for your association.</p>
+
+    @if (TempData["SuccessMessage"] is string success)
+    {
+        <div class="message success">@success</div>
+    }
+
+    <h2>Create Sponsorship Package</h2>
+    <form method="post" asp-page-handler="Create" autocomplete="on">
+        <div asp-validation-summary="ModelOnly" class="message error"></div>
+        <div class="card-grid">
+            <div>
+                <label asp-for="Input.Name">Package Name</label>
+                <input asp-for="Input.Name" class="form-control" />
+                <span asp-validation-for="Input.Name" class="text-danger"></span>
+            </div>
+            <div>
+                <label asp-for="Input.Amount">Contribution Amount</label>
+                <input asp-for="Input.Amount" class="form-control" inputmode="decimal" />
+                <span asp-validation-for="Input.Amount" class="text-danger"></span>
+            </div>
+            <div>
+                <label asp-for="Input.DisplayOrder">Display Order</label>
+                <input asp-for="Input.DisplayOrder" class="form-control" inputmode="numeric" />
+                <span asp-validation-for="Input.DisplayOrder" class="text-danger"></span>
+            </div>
+            <div>
+                <label asp-for="Input.IsActive">Status</label>
+                <div>
+                    <input asp-for="Input.IsActive" /> Active
+                </div>
+            </div>
+        </div>
+        <div>
+            <label asp-for="Input.Description">Description</label>
+            <textarea asp-for="Input.Description" class="form-control" rows="3"></textarea>
+            <span asp-validation-for="Input.Description" class="text-danger"></span>
+        </div>
+        <div>
+            <label asp-for="Input.Benefits">Benefits</label>
+            <textarea asp-for="Input.Benefits" class="form-control" rows="4" placeholder="List key sponsor benefits and inclusions."></textarea>
+            <span asp-validation-for="Input.Benefits" class="text-danger"></span>
+        </div>
+        <button type="submit" class="btn">Create Package</button>
+    </form>
+</section>
+
+<section class="section-panel">
+    <h2>Current Packages</h2>
+
+    @if (Model.Packages.Count == 0)
+    {
+        <p>No sponsorship packages created yet.</p>
+    }
+    else
+    {
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Amount</th>
+                    <th>Order</th>
+                    <th>Status</th>
+                    <th>Details</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var package in Model.Packages)
+                {
+                    <tr>
+                        <td>@package.Name</td>
+                        <td>@package.Amount.ToString("C")</td>
+                        <td>@package.DisplayOrder</td>
+                        <td>@(package.IsActive ? "Active" : "Inactive")</td>
+                        <td>@(string.IsNullOrWhiteSpace(package.Description) ? "-" : package.Description)</td>
+                        <td>
+                            <a class="card-link" href="~/AssociationAdmin/EditSponsorship/@package.Id">Edit</a>
+                            <form method="post" asp-page-handler="ToggleActive" asp-route-id="@package.Id" class="inline-form">
+                                <button type="submit" class="link-button">@(package.IsActive ? "Deactivate" : "Activate")</button>
+                            </form>
+                            <form method="post" asp-page-handler="Delete" asp-route-id="@package.Id" class="inline-form" onsubmit="return confirm('Delete this sponsorship package?');">
+                                <button type="submit" class="link-button">Delete</button>
+                            </form>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+</section>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

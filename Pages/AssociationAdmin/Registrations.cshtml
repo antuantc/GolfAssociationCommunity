@@ -37,6 +37,7 @@
                     <th>Tournament</th>
                     <th>Player</th>
                     <th>Status</th>
+                    <th>Handicap</th>
                     <th>Payment</th>
                     <th>Actions</th>
                 </tr>
@@ -46,8 +47,9 @@
             {
                 <tr>
                     <td>@registration.Tournament?.Name</td>
-                    <td>@registration.Player?.Email</td>
+                    <td>@(registration.Player?.Email ?? $"{registration.GuestName} ({registration.GuestEmail})")</td>
                     <td>@registration.Status</td>
+                    <td>@(registration.Handicap.HasValue ? registration.Handicap.Value.ToString("0.0#") : "-")</td>
                     <td>@(registration.PaymentConfirmed ? "Confirmed" : "Pending")</td>
                     <td>
                         @if (!registration.PaymentConfirmed)
