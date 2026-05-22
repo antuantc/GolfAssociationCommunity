@@ -49,6 +49,7 @@ namespace GolfAssociationCommunity.Models
         public string? State { get; set; }
         public string? ZipCode { get; set; }
         public string? Country { get; set; }
+        public string ThemeKey { get; set; } = BrandingThemes.DefaultKey;
         public string? Website { get; set; }
         public string? LogoUrl { get; set; }
         public string? AdminUserId { get; set; }

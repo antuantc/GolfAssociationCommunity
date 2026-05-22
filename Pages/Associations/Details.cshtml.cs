@@ -36,6 +36,7 @@ namespace GolfAssociationCommunity.Pages.Associations
 
             ViewData["PublicAssociationId"] = Association.Id;
             ViewData["PublicAssociationName"] = Association.Name;
+            ViewData["PublicThemeKey"] = BrandingThemes.Normalize(Association.ThemeKey);
             ActiveSponsorshipPackages = Association.SponsorshipPackages
                 .Where(sp => sp.IsActive)
                 .OrderBy(sp => sp.DisplayOrder)

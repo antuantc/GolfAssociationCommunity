@@ -7,10 +7,10 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>@ViewData["Title"] - Golf Association Community</title>
-    <link rel="stylesheet" href="~/css/site.css" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
 </head>
-<body>
     @{ 
+        var publicThemeKey = GolfAssociationCommunity.Models.BrandingThemes.Normalize(ViewData["PublicThemeKey"]?.ToString());
         var publicAssociationId = ViewData["PublicAssociationId"] as int?;
         if (publicAssociationId is null && ViewData["PublicAssociationId"] != null)
         {
@@ -18,6 +18,7 @@
         }
         var publicAssociationName = ViewData["PublicAssociationName"]?.ToString();
     }
+<body class="theme-@publicThemeKey">
     <header class="site-header">
         <div class="container">
             @if (publicAssociationId.HasValue && !string.IsNullOrWhiteSpace(publicAssociationName))

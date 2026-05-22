@@ -24,6 +24,7 @@ namespace GolfAssociationCommunity.Pages.Admin
         public EditAssociationInput Input { get; set; } = new();
 
         public int AssociationId { get; private set; }
+        public IReadOnlyList<BrandingThemeOption> ThemeOptions => BrandingThemes.Options;
 
         public class EditAssociationInput
         {
@@ -66,6 +67,10 @@ namespace GolfAssociationCommunity.Pages.Admin
 
             [StringLength(450)]
             public string? AdminUserId { get; set; }
+
+            [Required]
+            [StringLength(50)]
+            public string ThemeKey { get; set; } = BrandingThemes.DefaultKey;
         }
 
         public async Task<IActionResult> OnGetAsync(int id)
@@ -90,7 +95,8 @@ namespace GolfAssociationCommunity.Pages.Admin
                 Country = association.Country,
                 Website = association.Website,
                 LogoUrl = association.LogoUrl,
-                AdminUserId = association.AdminUserId
+                AdminUserId = association.AdminUserId,
+                ThemeKey = BrandingThemes.Normalize(association.ThemeKey)
             };
 
             return Page();
@@ -117,7 +123,8 @@ namespace GolfAssociationCommunity.Pages.Admin
                 Country = Input.Country,
                 Website = Input.Website,
                 LogoUrl = Input.LogoUrl,
-                AdminUserId = Input.AdminUserId
+                AdminUserId = Input.AdminUserId,
+                ThemeKey = BrandingThemes.Normalize(Input.ThemeKey)
             };
 
             var result = await _associationService.UpdateAssociationAsync(id, updatedAssociation);

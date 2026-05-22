@@ -1,8 +1,123 @@
 :root {
     color-scheme: light;
     font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
-    background: #f4f7fb;
-    color: #1c2530;
+    --page-bg: #f4f7fb;
+    --text-color: #1c2530;
+    --header-bg: #1b3a5b;
+    --header-text: #ffffff;
+    --brand-accent: #2a76d2;
+    --secondary-accent: #576c86;
+    --hero-start: #0d2f5b;
+    --hero-end: #3d79c8;
+    --panel-shadow: rgba(9, 30, 66, 0.08);
+    --card-border: #dde4ef;
+    --muted-text: #4c5a6d;
+    --success-bg: #e6f4ea;
+    --success-text: #1f5f35;
+    --error-bg: #fdecea;
+    --error-text: #7a1f1f;
+    --footer-bg: #1b3a5b;
+    background: var(--page-bg);
+    color: var(--text-color);
+}
+
+body.theme-sunrise-tee {
+    --page-bg: #fffaf2;
+    --text-color: #2a2b2e;
+    --header-bg: #8e5a2b;
+    --brand-accent: #d0732f;
+    --secondary-accent: #8d7a67;
+    --hero-start: #c35f2b;
+    --hero-end: #f3b04d;
+    --footer-bg: #8e5a2b;
+}
+
+body.theme-sand-wedge {
+    --page-bg: #f9f4e8;
+    --text-color: #253247;
+    --header-bg: #2f5d7a;
+    --brand-accent: #4e87ad;
+    --secondary-accent: #8a7f67;
+    --hero-start: #3b6785;
+    --hero-end: #9fc3d9;
+    --footer-bg: #2f5d7a;
+}
+
+body.theme-ocean-fairway {
+    --page-bg: #f1f8fb;
+    --text-color: #173447;
+    --header-bg: #0d4f6e;
+    --brand-accent: #1084b3;
+    --secondary-accent: #456d7b;
+    --hero-start: #0b5c7c;
+    --hero-end: #2fa4c8;
+    --footer-bg: #0d4f6e;
+}
+
+body.theme-pine-bogey {
+    --page-bg: #f2f7f2;
+    --text-color: #223328;
+    --header-bg: #2f4f3a;
+    --brand-accent: #3d7a52;
+    --secondary-accent: #5f7769;
+    --hero-start: #2f5a3d;
+    --hero-end: #4f8b63;
+    --footer-bg: #2f4f3a;
+}
+
+body.theme-sunset-backnine {
+    --page-bg: #fff4ef;
+    --text-color: #3a2926;
+    --header-bg: #7d3b2c;
+    --brand-accent: #d66a3a;
+    --secondary-accent: #805f58;
+    --hero-start: #9a3f2f;
+    --hero-end: #d88945;
+    --footer-bg: #7d3b2c;
+}
+
+body.theme-masters-azalea {
+    --page-bg: #f8f3f7;
+    --text-color: #2d2631;
+    --header-bg: #2f5e43;
+    --brand-accent: #c0457e;
+    --secondary-accent: #6f6782;
+    --hero-start: #2b724d;
+    --hero-end: #b9477d;
+    --footer-bg: #2f5e43;
+}
+
+body.theme-st-andrews {
+    --page-bg: #f5f4f1;
+    --text-color: #2e3237;
+    --header-bg: #49525c;
+    --brand-accent: #66788a;
+    --secondary-accent: #7d7670;
+    --hero-start: #596471;
+    --hero-end: #8c9aaa;
+    --footer-bg: #49525c;
+}
+
+body.theme-desert-dunes {
+    --page-bg: #fff8ee;
+    --text-color: #3b3023;
+    --header-bg: #866443;
+    --brand-accent: #c78a45;
+    --secondary-accent: #8b785f;
+    --hero-start: #9d7449;
+    --hero-end: #d5a25a;
+    --footer-bg: #866443;
+}
+
+body.theme-midnight-drivingrange {
+    --page-bg: #eef3ff;
+    --text-color: #1d2333;
+    --header-bg: #161f3d;
+    --brand-accent: #2f88ff;
+    --secondary-accent: #4f5e8a;
+    --hero-start: #101b3a;
+    --hero-end: #2f4e9b;
+    --footer-bg: #161f3d;
 }
 
 * {
@@ -20,8 +135,8 @@ body {
 }
 
 .site-header {
-    background: #1b3a5b;
-    color: white;
+    background: var(--header-bg);
+    color: var(--header-text);
 }
 
 .site-header .container {
@@ -32,7 +147,7 @@ body {
 }
 
 .brand {
-    color: white;
+    color: var(--header-text);
     text-decoration: none;
     font-size: 1.2rem;
     font-weight: 700;
@@ -47,14 +162,14 @@ body {
 
 .site-nav a,
 .link-button {
-    color: #2a76d2;
+    color: var(--brand-accent);
     text-decoration: none;
     font-weight: 600;
 }
 
 .site-nav a,
 .site-nav .link-button {
-    color: white;
+    color: var(--header-text);
 }
 
 .site-nav .link-button {
@@ -80,7 +195,7 @@ body {
 }
 
 .card-link {
-    background: #2a76d2;
+    background: var(--brand-accent);
 }
 
 .table .card-link,
@@ -93,22 +208,22 @@ body {
 .section-panel .link-button {
     background: transparent;
     border: 0;
-    color: #2a76d2;
+    color: var(--brand-accent);
     cursor: pointer;
     font-weight: 600;
     padding: 0;
 }
 
 .btn {
-    background: #2a76d2;
+    background: var(--brand-accent);
 }
 
 .btn-secondary {
-    background: #576c86;
+    background: var(--secondary-accent);
 }
 
 .hero {
-    background: linear-gradient(135deg, #0d2f5b 0%, #3d79c8 100%);
+    background: linear-gradient(135deg, var(--hero-start) 0%, var(--hero-end) 100%);
     color: white;
     padding: 3.5rem 1.5rem;
     border-radius: 0.75rem;
@@ -123,7 +238,7 @@ body {
     background: white;
     padding: 1.75rem;
     border-radius: 0.75rem;
-    box-shadow: 0 15px 40px rgba(9, 30, 66, 0.08);
+    box-shadow: 0 15px 40px var(--panel-shadow);
     margin-bottom: 1.5rem;
 }
 
@@ -136,7 +251,7 @@ body {
 .card {
     background: #ffffff;
     padding: 1.25rem;
-    border: 1px solid #dde4ef;
+    border: 1px solid var(--card-border);
     border-radius: 0.65rem;
     min-height: 180px;
 }
@@ -153,7 +268,7 @@ body {
     gap: 0.5rem;
     font-size: 0.95rem;
     margin-top: 0.75rem;
-    color: #4c5a6d;
+    color: var(--muted-text);
 }
 
 .details-list {
@@ -183,13 +298,13 @@ body {
 }
 
 .message.success {
-    background: #e6f4ea;
-    color: #1f5f35;
+    background: var(--success-bg);
+    color: var(--success-text);
 }
 
 .message.error {
-    background: #fdecea;
-    color: #7a1f1f;
+    background: var(--error-bg);
+    color: var(--error-text);
 }
 
 .details-list dt {
@@ -201,7 +316,7 @@ body {
 }
 
 .site-footer {
-    background: #1b3a5b;
+    background: var(--footer-bg);
     color: white;
     padding: 1rem 0;
     text-align: center;
@@ -274,8 +389,8 @@ input[type="password"] {
 input[type="text"]:focus,
 input[type="email"]:focus,
 input[type="password"]:focus {
-    outline: 2px solid rgba(42, 118, 210, 0.18);
-    border-color: #2a76d2;
+    outline: 2px solid var(--brand-accent);
+    border-color: var(--brand-accent);
 }
 
 .btn-primary,
@@ -289,18 +404,18 @@ input[type="password"]:focus {
 }
 
 .btn-primary {
-    background: #2a76d2;
+    background: var(--brand-accent);
     color: #fff;
 }
 
 .btn-danger {
-    background: #204e84;
+    background: var(--secondary-accent);
     color: #fff;
 }
 
 .btn-link {
     background: transparent;
-    color: #2a76d2;
+    color: var(--brand-accent);
     text-decoration: none;
 }
 

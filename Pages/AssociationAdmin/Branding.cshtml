@@ -1,0 +1,39 @@
+@page
+@model GolfAssociationCommunity.Pages.AssociationAdmin.BrandingModel
+@{
+    ViewData["Title"] = "Branding Themes";
+}
+
+<section class="section-panel">
+    <h1>Branding Themes</h1>
+    <p>Choose a golf-themed visual style for your association's public pages.</p>
+
+    @if (TempData["SuccessMessage"] is string success)
+    {
+        <div class="message success">@success</div>
+    }
+
+    <form method="post">
+        <div asp-validation-summary="ModelOnly" class="message error"></div>
+
+        <div class="card-grid">
+            @foreach (var option in Model.ThemeOptions)
+            {
+                <label class="card" for="theme-@option.Key">
+                    <h3>@option.Name</h3>
+                    <p>@option.Description</p>
+                    <div>
+                        <input id="theme-@option.Key" type="radio" asp-for="SelectedThemeKey" value="@option.Key" />
+                        <span>Use this theme</span>
+                    </div>
+                </label>
+            }
+        </div>
+
+        <button type="submit" class="btn">Save Theme</button>
+    </form>
+</section>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

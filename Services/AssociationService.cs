@@ -70,6 +70,7 @@ namespace GolfAssociationCommunity.Services
         {
             try
             {
+                association.ThemeKey = BrandingThemes.Normalize(association.ThemeKey);
                 association.CreatedAt = DateTime.UtcNow;
                 association.UpdatedAt = DateTime.UtcNow;
                 association.IsActive = true;
@@ -107,6 +108,9 @@ namespace GolfAssociationCommunity.Services
                 existing.State = association.State;
                 existing.ZipCode = association.ZipCode;
                 existing.Country = association.Country;
+                existing.ThemeKey = string.IsNullOrWhiteSpace(association.ThemeKey)
+                    ? existing.ThemeKey
+                    : BrandingThemes.Normalize(association.ThemeKey);
                 existing.Website = association.Website;
                 existing.LogoUrl = association.LogoUrl;
                 existing.AdminUserId = association.AdminUserId;

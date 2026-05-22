@@ -65,6 +65,16 @@
                 <input asp-for="Input.LogoUrl" class="form-control" />
                 <span asp-validation-for="Input.LogoUrl" class="text-danger"></span>
             </div>
+            <div>
+                <label asp-for="Input.ThemeKey">Branding Theme</label>
+                <select asp-for="Input.ThemeKey" class="form-control">
+                    @foreach (var option in Model.ThemeOptions)
+                    {
+                        <option value="@option.Key">@option.Name</option>
+                    }
+                </select>
+                <span asp-validation-for="Input.ThemeKey" class="text-danger"></span>
+            </div>
         </div>
 
         <div class="mb-3">

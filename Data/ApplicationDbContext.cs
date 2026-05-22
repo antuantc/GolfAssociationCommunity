@@ -37,6 +37,10 @@ namespace GolfAssociationCommunity.Data
                 .OnDelete(DeleteBehavior.Cascade);
 
             builder.Entity<GolfAssociation>()
+                .Property(ga => ga.ThemeKey)
+                .HasMaxLength(50);
+
+            builder.Entity<GolfAssociation>()
                 .HasMany(ga => ga.SponsorshipPackages)
                 .WithOne(sp => sp.GolfAssociation)
                 .HasForeignKey(sp => sp.GolfAssociationId)

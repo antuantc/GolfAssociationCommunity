@@ -30,6 +30,7 @@ namespace GolfAssociationCommunity.Pages.Associations
 
             ViewData["PublicAssociationId"] = Association.Id;
             ViewData["PublicAssociationName"] = Association.Name;
+            ViewData["PublicThemeKey"] = BrandingThemes.Normalize(Association.ThemeKey);
             UpcomingTournaments = (await _tournamentService.GetUpcomingTournamentsAsync(associationId)).ToList();
             CompletedTournaments = (await _tournamentService.GetCompletedTournamentsAsync(associationId)).ToList();
             return Page();
