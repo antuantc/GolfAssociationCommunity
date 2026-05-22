@@ -157,6 +157,7 @@ namespace GolfAssociationCommunity.Pages.Associations
             };
 
             var paymentResult = await _authorizeNetPaymentService.ProcessPaymentAsync(
+                Association!.Id,
                 package.Amount,
                 sanitizedCardNumber,
                 expirationDate,

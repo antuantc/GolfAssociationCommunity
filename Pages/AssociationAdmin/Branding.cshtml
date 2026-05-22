@@ -13,7 +13,7 @@
         <div class="message success">@success</div>
     }
 
-    <form method="post">
+    <form method="post" asp-page-handler="Theme">
         <div asp-validation-summary="ModelOnly" class="message error"></div>
 
         <div class="card-grid">
@@ -31,6 +31,42 @@
         </div>
 
         <button type="submit" class="btn">Save Theme</button>
+    </form>
+</section>
+
+<section class="section-panel">
+    <h2>Payment Gateway</h2>
+    <p>Configure Authorize.Net credentials for this association. Leave API Login ID and Transaction Key empty to disable association-specific credentials.</p>
+
+    <form method="post" asp-page-handler="Payment">
+        <div asp-validation-summary="ModelOnly" class="message error"></div>
+        <input type="hidden" asp-for="SelectedThemeKey" />
+
+        <div class="card-grid">
+            <div>
+                <label asp-for="AuthorizeNetApiLoginId">Authorize.Net API Login ID</label>
+                <input asp-for="AuthorizeNetApiLoginId" class="form-control" autocomplete="off" />
+                <span asp-validation-for="AuthorizeNetApiLoginId" class="text-danger"></span>
+            </div>
+
+            <div>
+                <label asp-for="AuthorizeNetTransactionKey">Authorize.Net Transaction Key</label>
+                <input asp-for="AuthorizeNetTransactionKey" class="form-control" autocomplete="off" />
+                <span asp-validation-for="AuthorizeNetTransactionKey" class="text-danger"></span>
+                @if (Model.HasStoredAuthorizeNetTransactionKey)
+                {
+                    <small>Transaction key is already configured. Leave blank to keep existing value.</small>
+                }
+            </div>
+
+            <div>
+                <label asp-for="AuthorizeNetUseSandbox">Use Authorize.Net Sandbox</label>
+                <input asp-for="AuthorizeNetUseSandbox" type="checkbox" />
+                <span asp-validation-for="AuthorizeNetUseSandbox" class="text-danger"></span>
+            </div>
+        </div>
+
+        <button type="submit" class="btn">Save Payment Settings</button>
     </form>
 </section>
 

@@ -195,6 +195,7 @@ namespace GolfAssociationCommunity.Pages.Tournaments
             };
 
             var paymentResult = await _authorizeNetPaymentService.ProcessPaymentAsync(
+                tournament.GolfAssociationId,
                 tournament.EntryFee,
                 sanitizedCardNumber,
                 expirationDate,

@@ -41,6 +41,14 @@ namespace GolfAssociationCommunity.Data
                 .HasMaxLength(50);
 
             builder.Entity<GolfAssociation>()
+                .Property(ga => ga.AuthorizeNetApiLoginId)
+                .HasMaxLength(128);
+
+            builder.Entity<GolfAssociation>()
+                .Property(ga => ga.AuthorizeNetTransactionKey)
+                .HasMaxLength(128);
+
+            builder.Entity<GolfAssociation>()
                 .HasMany(ga => ga.SponsorshipPackages)
                 .WithOne(sp => sp.GolfAssociation)
                 .HasForeignKey(sp => sp.GolfAssociationId)

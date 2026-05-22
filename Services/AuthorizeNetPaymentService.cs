@@ -1,7 +1,9 @@
 using Microsoft.Extensions.Logging;
+using Microsoft.EntityFrameworkCore;
 using AuthorizeNet.Api.Contracts.V1;
 using AuthorizeNet.Api.Controllers;
 using AuthorizeNet.Api.Controllers.Bases;
+using GolfAssociationCommunity.Data;
 
 namespace GolfAssociationCommunity.Services
 {
@@ -24,51 +26,68 @@ namespace GolfAssociationCommunity.Services
 
     public interface IAuthorizeNetPaymentService
     {
-        Task<PaymentResult> ProcessPaymentAsync(decimal amount, string cardNumber, string expirationDate, string cvv, PaymentBillingAddress billingAddress);
+        Task<PaymentResult> ProcessPaymentAsync(int associationId, decimal amount, string cardNumber, string expirationDate, string cvv, PaymentBillingAddress billingAddress);
     }
 
     public class AuthorizeNetPaymentService : IAuthorizeNetPaymentService
     {
-        private readonly IConfiguration _configuration;
+        private readonly ApplicationDbContext _context;
         private readonly ILogger<AuthorizeNetPaymentService> _logger;
 
-        public AuthorizeNetPaymentService(IConfiguration configuration, ILogger<AuthorizeNetPaymentService> logger)
+        public AuthorizeNetPaymentService(ApplicationDbContext context, ILogger<AuthorizeNetPaymentService> logger)
         {
-            _configuration = configuration;
+            _context = context;
             _logger = logger;
         }
 
-        public Task<PaymentResult> ProcessPaymentAsync(decimal amount, string cardNumber, string expirationDate, string cvv, PaymentBillingAddress billing)
+        public async Task<PaymentResult> ProcessPaymentAsync(int associationId, decimal amount, string cardNumber, string expirationDate, string cvv, PaymentBillingAddress billing)
         {
             try
             {
-                var apiLoginId = _configuration["AuthorizeNet:ApiLoginId"];
-                var transactionKey = _configuration["AuthorizeNet:TransactionKey"];
-                var useSandboxText = _configuration["AuthorizeNet:UseSandbox"];
+                var associationCredentials = await _context.GolfAssociations
+                    .AsNoTracking()
+                    .Where(ga => ga.Id == associationId)
+                    .Select(ga => new
+                    {
+                        ga.AuthorizeNetApiLoginId,
+                        ga.AuthorizeNetTransactionKey,
+                        ga.AuthorizeNetUseSandbox
+                    })
+                    .FirstOrDefaultAsync();
+
+                var apiLoginId = associationCredentials?.AuthorizeNetApiLoginId;
+                var transactionKey = associationCredentials?.AuthorizeNetTransactionKey;
+                var useSandbox = associationCredentials?.AuthorizeNetUseSandbox ?? true;
 
                 if (string.IsNullOrWhiteSpace(apiLoginId) || string.IsNullOrWhiteSpace(transactionKey))
                 {
                     _logger.LogWarning(
-                        "Authorize.Net configuration missing. ApiLoginId present: {HasApiLoginId}, TransactionKey present: {HasTransactionKey}",
+                        "Authorize.Net configuration missing for association {AssociationId}. ApiLoginId present: {HasApiLoginId}, TransactionKey present: {HasTransactionKey}",
+                        associationId,
                         !string.IsNullOrWhiteSpace(apiLoginId),
                         !string.IsNullOrWhiteSpace(transactionKey));
 
-                    return Task.FromResult(new PaymentResult
+                    return new PaymentResult
                     {
                         Succeeded = false,
                         ErrorMessage = "Payment is temporarily unavailable. Please contact the association administrator."
-                    });
-                }
-
-                var useSandbox = true;
-                if (!string.IsNullOrWhiteSpace(useSandboxText) && bool.TryParse(useSandboxText, out var parsedSandbox))
-                {
-                    useSandbox = parsedSandbox;
+                    };
                 }
 
                 var runEnvironment = useSandbox
                     ? AuthorizeNet.Environment.SANDBOX
                     : AuthorizeNet.Environment.PRODUCTION;
+
+                var xmlBaseUrl = runEnvironment.getXmlBaseUrl();
+                var requestUrl = $"{xmlBaseUrl}/xml/v1/request.api";
+
+                _logger.LogInformation(
+                    "Authorize.Net request setup. AssociationId: {AssociationId}, UseSandbox: {UseSandbox}, RequestUrl: {RequestUrl}, ApiLoginId: {MaskedApiLoginId}, HasTransactionKey: {HasTransactionKey}",
+                    associationId,
+                    useSandbox,
+                    requestUrl,
+                    MaskCredential(apiLoginId),
+                    !string.IsNullOrWhiteSpace(transactionKey));
 
                 ApiOperationBase<ANetApiRequest, ANetApiResponse>.RunEnvironment = runEnvironment;
 
@@ -119,48 +138,49 @@ namespace GolfAssociationCommunity.Services
                 if (response == null)
                 {
                     _logger.LogWarning(
-                        "Authorize.Net returned null response. Environment: {Environment}, ApiLoginIdPresent: {HasApiLoginId}, TransactionKeyPresent: {HasTransactionKey}. This usually indicates outbound connectivity, TLS/proxy interception, or gateway endpoint reachability issues.",
+                        "Authorize.Net returned null response. AssociationId: {AssociationId}, Environment: {Environment}, ApiLoginIdPresent: {HasApiLoginId}, TransactionKeyPresent: {HasTransactionKey}. This usually indicates outbound connectivity, TLS/proxy interception, or gateway endpoint reachability issues.",
+                        associationId,
                         useSandbox ? "Sandbox" : "Production",
                         !string.IsNullOrWhiteSpace(apiLoginId),
                         !string.IsNullOrWhiteSpace(transactionKey));
 
-                    return Task.FromResult(new PaymentResult
+                    return new PaymentResult
                     {
                         Succeeded = false,
                         ErrorMessage = "Payment gateway did not return a response. Please try again in a moment."
-                    });
+                    };
                 }
 
                 if (response.messages.resultCode == messageTypeEnum.Ok &&
                     response.transactionResponse != null &&
                     !string.IsNullOrWhiteSpace(response.transactionResponse.transId))
                 {
-                    return Task.FromResult(new PaymentResult
+                    return new PaymentResult
                     {
                         Succeeded = true,
                         TransactionId = response.transactionResponse.transId
-                    });
+                    };
                 }
 
                 var transactionError = response.transactionResponse?.errors?.FirstOrDefault()?.errorText;
                 var apiMessage = response.messages.message?.FirstOrDefault()?.text;
                 var errorMessage = transactionError ?? apiMessage ?? "Payment authorization failed.";
 
-                _logger.LogWarning("Authorize.Net payment failed: {ErrorMessage}", errorMessage);
-                return Task.FromResult(new PaymentResult
+                _logger.LogWarning("Authorize.Net payment failed for association {AssociationId}: {ErrorMessage}", associationId, errorMessage);
+                return new PaymentResult
                 {
                     Succeeded = false,
                     ErrorMessage = errorMessage
-                });
+                };
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error while processing payment through Authorize.Net.");
-                return Task.FromResult(new PaymentResult
+                _logger.LogError(ex, "Error while processing payment through Authorize.Net for association {AssociationId}.", associationId);
+                return new PaymentResult
                 {
                     Succeeded = false,
                     ErrorMessage = "Payment service encountered an error. Please try again."
-                });
+                };
             }
         }
 
@@ -183,6 +203,22 @@ namespace GolfAssociationCommunity.Services
             var firstName = parts[0];
             var lastName = string.Join(' ', parts.Skip(1));
             return (firstName, lastName);
+        }
+
+        private static string MaskCredential(string? value)
+        {
+            if (string.IsNullOrWhiteSpace(value))
+            {
+                return "<empty>";
+            }
+
+            var trimmed = value.Trim();
+            if (trimmed.Length <= 4)
+            {
+                return new string('*', trimmed.Length);
+            }
+
+            return $"{new string('*', trimmed.Length - 4)}{trimmed[^4..]}";
         }
     }
 }
