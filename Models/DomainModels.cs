@@ -60,9 +60,26 @@ namespace GolfAssociationCommunity.Models
         public DateTime CreatedAt { get; set; }
         public DateTime UpdatedAt { get; set; }
         public ICollection<ApplicationUser> Members { get; set; } = new List<ApplicationUser>();
+        public ICollection<AssociationPlayer> Players { get; set; } = new List<AssociationPlayer>();
         public ICollection<Tournament> Tournaments { get; set; } = new List<Tournament>();
         public ICollection<SponsorshipPackage> SponsorshipPackages { get; set; } = new List<SponsorshipPackage>();
         public ICollection<SponsorshipPayment> SponsorshipPayments { get; set; } = new List<SponsorshipPayment>();
+    }
+
+    public class AssociationPlayer
+    {
+        public int Id { get; set; }
+        public int GolfAssociationId { get; set; }
+        public GolfAssociation? GolfAssociation { get; set; }
+        public string DisplayName { get; set; } = string.Empty;
+        public string Email { get; set; } = string.Empty;
+        public decimal? HandicapIndex { get; set; }
+        public bool IsActive { get; set; } = true;
+        public DateTime CreatedAt { get; set; }
+        public DateTime UpdatedAt { get; set; }
+        public ICollection<Registration> Registrations { get; set; } = new List<Registration>();
+        public ICollection<PlayerScore> Scores { get; set; } = new List<PlayerScore>();
+        public ICollection<Leaderboard> LeaderboardEntries { get; set; } = new List<Leaderboard>();
     }
 
     public class SponsorshipPackage
@@ -131,8 +148,8 @@ namespace GolfAssociationCommunity.Models
         public int Id { get; set; }
         public int TournamentId { get; set; }
         public Tournament? Tournament { get; set; }
-        public string? PlayerId { get; set; }
-        public ApplicationUser? Player { get; set; }
+        public int? AssociationPlayerId { get; set; }
+        public AssociationPlayer? AssociationPlayer { get; set; }
         public string GuestName { get; set; } = string.Empty;
         public string GuestEmail { get; set; } = string.Empty;
         public decimal? Handicap { get; set; }
@@ -155,19 +172,24 @@ namespace GolfAssociationCommunity.Models
 
     public class PlayerScore
     {
+        public const int RoundTotalEntryHoleNumber = 0;
+
         public int Id { get; set; }
         public int TournamentId { get; set; }
         public Tournament? Tournament { get; set; }
-        public string PlayerId { get; set; } = string.Empty;
-        public ApplicationUser? Player { get; set; }
+        public int AssociationPlayerId { get; set; }
+        public AssociationPlayer? AssociationPlayer { get; set; }
         public int Round { get; set; }
         public int HoleNumber { get; set; }
         public int Score { get; set; }
         public int HolePar { get; set; }
         public int HandicapStrokes { get; set; }
+        public int? TiebreakerHoleHandicap { get; set; }
         public int StablefordPoints { get; set; }
         public DateTime CreatedAt { get; set; }
         public DateTime UpdatedAt { get; set; }
+
+        public bool IsRoundTotalEntry => HoleNumber == RoundTotalEntryHoleNumber;
     }
 
     public class Leaderboard
@@ -175,8 +197,8 @@ namespace GolfAssociationCommunity.Models
         public int Id { get; set; }
         public int TournamentId { get; set; }
         public Tournament? Tournament { get; set; }
-        public string PlayerId { get; set; } = string.Empty;
-        public ApplicationUser? Player { get; set; }
+        public int AssociationPlayerId { get; set; }
+        public AssociationPlayer? AssociationPlayer { get; set; }
         public int Position { get; set; }
         public int TotalScore { get; set; }
         public int StablefordPoints { get; set; }

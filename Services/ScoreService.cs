@@ -10,15 +10,15 @@ namespace GolfAssociationCommunity.Services
     public interface IScoreService
     {
         Task<PlayerScore?> GetScoreByIdAsync(int id);
-        Task<IEnumerable<PlayerScore>> GetPlayerScoresAsync(int tournamentId, string playerId);
+        Task<IEnumerable<PlayerScore>> GetPlayerScoresAsync(int tournamentId, int associationPlayerId);
         Task<IEnumerable<PlayerScore>> GetTournamentScoresAsync(int tournamentId);
         Task<PlayerScore> RecordScoreAsync(PlayerScore score);
         Task<PlayerScore?> UpdateScoreAsync(int id, PlayerScore score);
         Task<bool> DeleteScoreAsync(int id);
         Task<int> CalculateStablefordPointsAsync(int holeScore, int holePar, int handicapStrokes);
-        Task<int> CalculateTotalStablefordAsync(int tournamentId, string playerId);
-        Task<int> CalculateTotalScoreAsync(int tournamentId, string playerId);
-        Task<IEnumerable<PlayerScore>> GetPlayerRoundScoresAsync(int tournamentId, string playerId, int round);
+        Task<int> CalculateTotalStablefordAsync(int tournamentId, int associationPlayerId);
+        Task<int> CalculateTotalScoreAsync(int tournamentId, int associationPlayerId);
+        Task<IEnumerable<PlayerScore>> GetPlayerRoundScoresAsync(int tournamentId, int associationPlayerId, int round);
     }
 
     public class ScoreService : IScoreService
@@ -37,7 +37,7 @@ namespace GolfAssociationCommunity.Services
             try
             {
                 return await _context.PlayerScores
-                    .Include(ps => ps.Player)
+                    .Include(ps => ps.AssociationPlayer)
                     .Include(ps => ps.Tournament)
                     .FirstOrDefaultAsync(ps => ps.Id == id);
             }
@@ -48,20 +48,21 @@ namespace GolfAssociationCommunity.Services
             }
         }
 
-        public async Task<IEnumerable<PlayerScore>> GetPlayerScoresAsync(int tournamentId, string playerId)
+        public async Task<IEnumerable<PlayerScore>> GetPlayerScoresAsync(int tournamentId, int associationPlayerId)
         {
             try
             {
                 return await _context.PlayerScores
-                    .Where(ps => ps.TournamentId == tournamentId && ps.PlayerId == playerId)
+                    .Where(ps => ps.TournamentId == tournamentId && ps.AssociationPlayerId == associationPlayerId)
+                    .Include(ps => ps.AssociationPlayer)
                     .OrderBy(ps => ps.Round)
-                    .ThenBy(ps => ps.HoleNumber)
+                        .ThenBy(ps => ps.IsRoundTotalEntry ? -1 : ps.HoleNumber)
                     .ToListAsync();
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error retrieving scores for tournament {TournamentId}, player {PlayerId}",
-                    tournamentId, playerId);
+                _logger.LogError(ex, "Error retrieving scores for tournament {TournamentId}, association player {AssociationPlayerId}",
+                    tournamentId, associationPlayerId);
                 throw;
             }
         }
@@ -72,10 +73,10 @@ namespace GolfAssociationCommunity.Services
             {
                 return await _context.PlayerScores
                     .Where(ps => ps.TournamentId == tournamentId)
-                    .Include(ps => ps.Player)
-                    .OrderBy(ps => ps.PlayerId)
+                    .Include(ps => ps.AssociationPlayer)
+                    .OrderBy(ps => ps.AssociationPlayerId)
                     .ThenBy(ps => ps.Round)
-                    .ThenBy(ps => ps.HoleNumber)
+                    .ThenBy(ps => ps.IsRoundTotalEntry ? -1 : ps.HoleNumber)
                     .ToListAsync();
             }
             catch (Exception ex)
@@ -89,32 +90,33 @@ namespace GolfAssociationCommunity.Services
         {
             try
             {
-                // Validate hole number (1-18)
-                if (score.HoleNumber < 1 || score.HoleNumber > 18)
+                if (score.HoleNumber < PlayerScore.RoundTotalEntryHoleNumber || score.HoleNumber > 18)
                 {
-                    throw new ArgumentException("Hole number must be between 1 and 18");
+                    throw new ArgumentException("Hole number must be between 0 and 18");
                 }
 
                 score.CreatedAt = DateTime.UtcNow;
                 score.UpdatedAt = DateTime.UtcNow;
 
-                // Calculate Stableford points
-                score.StablefordPoints = await CalculateStablefordPointsAsync(
-                    score.Score,
-                    score.HolePar,
-                    score.HandicapStrokes);
+                if (!score.IsRoundTotalEntry)
+                {
+                    score.StablefordPoints = await CalculateStablefordPointsAsync(
+                        score.Score,
+                        score.HolePar,
+                        score.HandicapStrokes);
+                }
 
                 _context.PlayerScores.Add(score);
                 await _context.SaveChangesAsync();
 
-                _logger.LogInformation("Score recorded for player {PlayerId} at hole {HoleNumber}, round {Round}",
-                    score.PlayerId, score.HoleNumber, score.Round);
+                _logger.LogInformation("Score recorded for association player {AssociationPlayerId} at entry {EntryType}, round {Round}",
+                    score.AssociationPlayerId, score.IsRoundTotalEntry ? "round-total" : $"hole-{score.HoleNumber}", score.Round);
                 return score;
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error recording score for tournament {TournamentId}, player {PlayerId}",
-                    score.TournamentId, score.PlayerId);
+                _logger.LogError(ex, "Error recording score for tournament {TournamentId}, association player {AssociationPlayerId}",
+                    score.TournamentId, score.AssociationPlayerId);
                 throw;
             }
         }
@@ -133,10 +135,13 @@ namespace GolfAssociationCommunity.Services
                 existing.Score = score.Score;
                 existing.HolePar = score.HolePar;
                 existing.HandicapStrokes = score.HandicapStrokes;
-                existing.StablefordPoints = await CalculateStablefordPointsAsync(
-                    score.Score,
-                    score.HolePar,
-                    score.HandicapStrokes);
+                existing.TiebreakerHoleHandicap = score.TiebreakerHoleHandicap;
+                existing.StablefordPoints = !score.IsRoundTotalEntry
+                    ? await CalculateStablefordPointsAsync(
+                        score.Score,
+                        score.HolePar,
+                        score.HandicapStrokes)
+                    : score.StablefordPoints;
                 existing.UpdatedAt = DateTime.UtcNow;
 
                 await _context.SaveChangesAsync();
@@ -185,7 +190,7 @@ namespace GolfAssociationCommunity.Services
                 int adjustedPar = holePar;
 
                 int diff = adjustedScore - adjustedPar;
-                int points = 2 + diff;
+                int points = 2 - diff;
 
                 // Minimum points is 0
                 return Task.FromResult(Math.Max(0, points));
@@ -197,55 +202,56 @@ namespace GolfAssociationCommunity.Services
             }
         }
 
-        public async Task<int> CalculateTotalStablefordAsync(int tournamentId, string playerId)
+        public async Task<int> CalculateTotalStablefordAsync(int tournamentId, int associationPlayerId)
         {
             try
             {
                 var scores = await _context.PlayerScores
-                    .Where(ps => ps.TournamentId == tournamentId && ps.PlayerId == playerId)
+                    .Where(ps => ps.TournamentId == tournamentId && ps.AssociationPlayerId == associationPlayerId)
                     .ToListAsync();
 
                 return scores.Sum(ps => ps.StablefordPoints);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error calculating total Stableford score for tournament {TournamentId}, player {PlayerId}",
-                    tournamentId, playerId);
+                _logger.LogError(ex, "Error calculating total Stableford score for tournament {TournamentId}, association player {AssociationPlayerId}",
+                    tournamentId, associationPlayerId);
                 throw;
             }
         }
 
-        public async Task<int> CalculateTotalScoreAsync(int tournamentId, string playerId)
+        public async Task<int> CalculateTotalScoreAsync(int tournamentId, int associationPlayerId)
         {
             try
             {
                 var scores = await _context.PlayerScores
-                    .Where(ps => ps.TournamentId == tournamentId && ps.PlayerId == playerId)
+                    .Where(ps => ps.TournamentId == tournamentId && ps.AssociationPlayerId == associationPlayerId)
                     .ToListAsync();
 
                 return scores.Sum(ps => ps.Score);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error calculating total score for tournament {TournamentId}, player {PlayerId}",
-                    tournamentId, playerId);
+                _logger.LogError(ex, "Error calculating total score for tournament {TournamentId}, association player {AssociationPlayerId}",
+                    tournamentId, associationPlayerId);
                 throw;
             }
         }
 
-        public async Task<IEnumerable<PlayerScore>> GetPlayerRoundScoresAsync(int tournamentId, string playerId, int round)
+        public async Task<IEnumerable<PlayerScore>> GetPlayerRoundScoresAsync(int tournamentId, int associationPlayerId, int round)
         {
             try
             {
                 return await _context.PlayerScores
-                    .Where(ps => ps.TournamentId == tournamentId && ps.PlayerId == playerId && ps.Round == round)
-                    .OrderBy(ps => ps.HoleNumber)
+                    .Where(ps => ps.TournamentId == tournamentId && ps.AssociationPlayerId == associationPlayerId && ps.Round == round)
+                    .Include(ps => ps.AssociationPlayer)
+                    .OrderBy(ps => ps.IsRoundTotalEntry ? -1 : ps.HoleNumber)
                     .ToListAsync();
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error retrieving round scores for tournament {TournamentId}, player {PlayerId}, round {Round}",
-                    tournamentId, playerId, round);
+                _logger.LogError(ex, "Error retrieving round scores for tournament {TournamentId}, association player {AssociationPlayerId}, round {Round}",
+                    tournamentId, associationPlayerId, round);
                 throw;
             }
         }

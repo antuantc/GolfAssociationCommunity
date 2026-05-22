@@ -3,6 +3,7 @@ using System;
 using GolfAssociationCommunity.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -10,9 +11,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace GolfAssociationCommunity.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260522214936_AddAssociationPlayers")]
+    partial class AddAssociationPlayers
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "8.0.0");
@@ -251,6 +254,9 @@ namespace GolfAssociationCommunity.Migrations
                     b.Property<int>("AssociationPlayerId")
                         .HasColumnType("INTEGER");
 
+                    b.Property<string>("PlayerId")
+                        .HasColumnType("TEXT");
+
                     b.Property<int>("Position")
                         .HasColumnType("INTEGER");
 
@@ -272,6 +278,8 @@ namespace GolfAssociationCommunity.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("AssociationPlayerId");
+
+                    b.HasIndex("PlayerId");
 
                     b.HasIndex("TournamentId");
 
@@ -299,6 +307,9 @@ namespace GolfAssociationCommunity.Migrations
                     b.Property<int>("HolePar")
                         .HasColumnType("INTEGER");
 
+                    b.Property<string>("PlayerId")
+                        .HasColumnType("TEXT");
+
                     b.Property<int>("Round")
                         .HasColumnType("INTEGER");
 
@@ -306,9 +317,6 @@ namespace GolfAssociationCommunity.Migrations
                         .HasColumnType("INTEGER");
 
                     b.Property<int>("StablefordPoints")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<int?>("TiebreakerHoleHandicap")
                         .HasColumnType("INTEGER");
 
                     b.Property<int>("TournamentId")
@@ -320,6 +328,8 @@ namespace GolfAssociationCommunity.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("AssociationPlayerId");
+
+                    b.HasIndex("PlayerId");
 
                     b.HasIndex("TournamentId");
 
@@ -379,6 +389,9 @@ namespace GolfAssociationCommunity.Migrations
                     b.Property<DateTime?>("PaymentDate")
                         .HasColumnType("TEXT");
 
+                    b.Property<string>("PlayerId")
+                        .HasColumnType("TEXT");
+
                     b.Property<DateTime>("RegistrationDate")
                         .HasColumnType("TEXT");
 
@@ -404,6 +417,8 @@ namespace GolfAssociationCommunity.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("AssociationPlayerId");
+
+                    b.HasIndex("PlayerId");
 
                     b.HasIndex("TournamentId");
 
@@ -746,6 +761,11 @@ namespace GolfAssociationCommunity.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.HasOne("GolfAssociationCommunity.Models.ApplicationUser", "Player")
+                        .WithMany()
+                        .HasForeignKey("PlayerId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
                     b.HasOne("GolfAssociationCommunity.Models.Tournament", "Tournament")
                         .WithMany()
                         .HasForeignKey("TournamentId")
@@ -753,6 +773,8 @@ namespace GolfAssociationCommunity.Migrations
                         .IsRequired();
 
                     b.Navigation("AssociationPlayer");
+
+                    b.Navigation("Player");
 
                     b.Navigation("Tournament");
                 });
@@ -765,6 +787,11 @@ namespace GolfAssociationCommunity.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.HasOne("GolfAssociationCommunity.Models.ApplicationUser", "Player")
+                        .WithMany()
+                        .HasForeignKey("PlayerId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
                     b.HasOne("GolfAssociationCommunity.Models.Tournament", "Tournament")
                         .WithMany("PlayerScores")
                         .HasForeignKey("TournamentId")
@@ -772,6 +799,8 @@ namespace GolfAssociationCommunity.Migrations
                         .IsRequired();
 
                     b.Navigation("AssociationPlayer");
+
+                    b.Navigation("Player");
 
                     b.Navigation("Tournament");
                 });
@@ -783,6 +812,11 @@ namespace GolfAssociationCommunity.Migrations
                         .HasForeignKey("AssociationPlayerId")
                         .OnDelete(DeleteBehavior.SetNull);
 
+                    b.HasOne("GolfAssociationCommunity.Models.ApplicationUser", "Player")
+                        .WithMany()
+                        .HasForeignKey("PlayerId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
                     b.HasOne("GolfAssociationCommunity.Models.Tournament", "Tournament")
                         .WithMany("Registrations")
                         .HasForeignKey("TournamentId")
@@ -790,6 +824,8 @@ namespace GolfAssociationCommunity.Migrations
                         .IsRequired();
 
                     b.Navigation("AssociationPlayer");
+
+                    b.Navigation("Player");
 
                     b.Navigation("Tournament");
                 });

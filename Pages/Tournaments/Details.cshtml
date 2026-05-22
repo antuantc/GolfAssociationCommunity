@@ -58,74 +58,91 @@
                     <input type="hidden" name="associationId" value="@Model.AssociationId" />
                     <div asp-validation-summary="ModelOnly" class="message error"></div>
 
-                    <h3>Registration Details</h3>
-                    <div class="card-grid">
-                        <div>
+                    <div class="form-shell">
+                        <div class="form-section">
+                            <h3 class="form-section-title">Registration Details</h3>
+                            <div class="form-meta">
+                                <span class="pill">Entry Fee: @Model.Tournament.EntryFee.ToString("C")</span>
+                                <span class="pill">Spots: @Model.RegistrationCount / @Model.Tournament.MaxPlayers</span>
+                            </div>
+
+                            <div class="form-grid">
+                                <div>
                             <label asp-for="Input.GuestName">Full Name</label>
                             <input asp-for="Input.GuestName" class="form-control" autocomplete="name" />
                             <span asp-validation-for="Input.GuestName" class="text-danger"></span>
-                        </div>
-                        <div>
+                                </div>
+                                <div>
                             <label asp-for="Input.GuestEmail">Email</label>
                             <input asp-for="Input.GuestEmail" class="form-control" autocomplete="email" />
                             <span asp-validation-for="Input.GuestEmail" class="text-danger"></span>
-                        </div>
-                        <div>
+                                </div>
+                                <div>
                             <label asp-for="Input.Handicap">Handicap</label>
-                            <input asp-for="Input.Handicap" class="form-control" inputmode="decimal" placeholder="e.g. 12.4" />
+                            <input asp-for="Input.Handicap" type="number" step="0.1" class="form-control" inputmode="decimal" placeholder="e.g. 12.4" />
                             <span asp-validation-for="Input.Handicap" class="text-danger"></span>
+                            <div class="field-note">Optional. Use your most recent verified handicap.</div>
+                                </div>
+                            </div>
                         </div>
-                    </div>
 
-                    <h3>Payment Details</h3>
-                    <div class="card-grid">
-                        <div>
+                        <div class="form-section">
+                            <h3 class="form-section-title">Payment Details</h3>
+                            <div class="security-note">Card details are sent directly for authorization and are not stored in full.</div>
+
+                            <div class="form-grid">
+                                <div class="full">
                             <label asp-for="Input.CardholderName">Cardholder Name</label>
                             <input asp-for="Input.CardholderName" class="form-control" autocomplete="cc-name" />
                             <span asp-validation-for="Input.CardholderName" class="text-danger"></span>
-                        </div>
-                        <div>
+                                </div>
+                                <div>
                             <label asp-for="Input.CardNumber">Card Number</label>
-                            <input asp-for="Input.CardNumber" class="form-control" inputmode="numeric" autocomplete="cc-number" />
+                            <input asp-for="Input.CardNumber" class="form-control" inputmode="numeric" autocomplete="cc-number" placeholder="0000 0000 0000 0000" />
                             <span asp-validation-for="Input.CardNumber" class="text-danger"></span>
-                        </div>
-                        <div>
+                                </div>
+                                <div>
                             <label asp-for="Input.CardExpiry">Expiry (MM/YY)</label>
                             <input asp-for="Input.CardExpiry" class="form-control" inputmode="numeric" autocomplete="cc-exp" placeholder="MM/YY" />
                             <span asp-validation-for="Input.CardExpiry" class="text-danger"></span>
-                        </div>
-                        <div>
+                                </div>
+                                <div>
                             <label asp-for="Input.Cvv">CVV</label>
-                            <input asp-for="Input.Cvv" type="password" class="form-control" inputmode="numeric" autocomplete="cc-csc" />
+                            <input asp-for="Input.Cvv" type="password" class="form-control" inputmode="numeric" autocomplete="cc-csc" maxlength="4" />
                             <span asp-validation-for="Input.Cvv" class="text-danger"></span>
-                        </div>
-                        <div>
+                                </div>
+                                <div class="full">
                             <label asp-for="Input.BillingAddressLine1">Billing Address</label>
                             <input asp-for="Input.BillingAddressLine1" class="form-control" autocomplete="billing address-line1" />
                             <span asp-validation-for="Input.BillingAddressLine1" class="text-danger"></span>
-                        </div>
-                        <div>
+                                </div>
+                                <div>
                             <label asp-for="Input.BillingCity">City</label>
                             <input asp-for="Input.BillingCity" class="form-control" autocomplete="billing address-level2" />
                             <span asp-validation-for="Input.BillingCity" class="text-danger"></span>
-                        </div>
-                        <div>
+                                </div>
+                                <div>
                             <label asp-for="Input.BillingState">State/Province</label>
                             <input asp-for="Input.BillingState" class="form-control" autocomplete="billing address-level1" />
                             <span asp-validation-for="Input.BillingState" class="text-danger"></span>
-                        </div>
-                        <div>
+                                </div>
+                                <div>
                             <label asp-for="Input.BillingZipCode">Postal Code</label>
                             <input asp-for="Input.BillingZipCode" class="form-control" autocomplete="billing postal-code" />
                             <span asp-validation-for="Input.BillingZipCode" class="text-danger"></span>
-                        </div>
-                        <div>
+                                </div>
+                                <div>
                             <label asp-for="Input.BillingCountry">Country</label>
                             <input asp-for="Input.BillingCountry" class="form-control" autocomplete="billing country" />
                             <span asp-validation-for="Input.BillingCountry" class="text-danger"></span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-actions">
+                            <button type="submit" class="btn">Pay and Register</button>
                         </div>
                     </div>
-                    <button type="submit" class="btn">Pay and Register</button>
                 </form>
             }
             else
@@ -138,27 +155,29 @@
         {
             <div class="section-panel">
                 <h2>Leaderboard</h2>
-                <table class="table">
-                    <thead>
-                        <tr>
-                            <th>Position</th>
-                            <th>Player</th>
-                            <th>Total Score</th>
-                            <th>Stableford</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach (var entry in Model.Leaderboard)
-                        {
+                <div class="table-scroll">
+                    <table class="table">
+                        <thead>
                             <tr>
-                                <td>@entry.Position</td>
-                                <td>@entry.Player?.UserName</td>
-                                <td>@entry.TotalScore</td>
-                                <td>@entry.StablefordPoints</td>
+                                <th>Position</th>
+                                <th>Player</th>
+                                <th>Total Score</th>
+                                <th>Stableford</th>
                             </tr>
-                        }
-                    </tbody>
-                </table>
+                        </thead>
+                        <tbody>
+                            @foreach (var entry in Model.Leaderboard)
+                            {
+                                <tr>
+                                    <td>@entry.Position</td>
+                                    <td>@(entry.AssociationPlayer?.DisplayName ?? "Unknown Player")</td>
+                                    <td>@entry.TotalScore</td>
+                                    <td>@entry.StablefordPoints</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
             </div>
         }
 

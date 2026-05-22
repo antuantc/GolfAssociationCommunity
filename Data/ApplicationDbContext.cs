@@ -12,6 +12,7 @@ namespace GolfAssociationCommunity.Data
         }
 
         public DbSet<GolfAssociation> GolfAssociations { get; set; } = null!;
+        public DbSet<AssociationPlayer> AssociationPlayers { get; set; } = null!;
         public DbSet<Tournament> Tournaments { get; set; } = null!;
         public DbSet<SponsorshipPackage> SponsorshipPackages { get; set; } = null!;
         public DbSet<SponsorshipPayment> SponsorshipPayments { get; set; } = null!;
@@ -34,6 +35,12 @@ namespace GolfAssociationCommunity.Data
                 .HasMany(ga => ga.Tournaments)
                 .WithOne(t => t.GolfAssociation)
                 .HasForeignKey(t => t.GolfAssociationId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            builder.Entity<GolfAssociation>()
+                .HasMany(ga => ga.Players)
+                .WithOne(player => player.GolfAssociation)
+                .HasForeignKey(player => player.GolfAssociationId)
                 .OnDelete(DeleteBehavior.Cascade);
 
             builder.Entity<GolfAssociation>()
@@ -116,6 +123,21 @@ namespace GolfAssociationCommunity.Data
                 .HasForeignKey(ps => ps.TournamentId)
                 .OnDelete(DeleteBehavior.Cascade);
 
+            builder.Entity<AssociationPlayer>()
+                .Property(player => player.DisplayName)
+                .HasMaxLength(160);
+
+            builder.Entity<AssociationPlayer>()
+                .Property(player => player.Email)
+                .HasMaxLength(256);
+
+            builder.Entity<AssociationPlayer>()
+                .Property(player => player.HandicapIndex)
+                .HasPrecision(5, 2);
+
+            builder.Entity<AssociationPlayer>()
+                .HasIndex(player => new { player.GolfAssociationId, player.Email });
+
             builder.Entity<Registration>()
                 .Property(r => r.RegistrationFee)
                 .HasPrecision(18, 2);
@@ -125,21 +147,21 @@ namespace GolfAssociationCommunity.Data
                 .HasPrecision(5, 2);
 
             builder.Entity<Registration>()
-                .HasOne(r => r.Player)
-                .WithMany()
-                .HasForeignKey(r => r.PlayerId)
+                .HasOne(r => r.AssociationPlayer)
+                .WithMany(player => player.Registrations)
+                .HasForeignKey(r => r.AssociationPlayerId)
                 .OnDelete(DeleteBehavior.SetNull);
 
             builder.Entity<PlayerScore>()
-                .HasOne(ps => ps.Player)
-                .WithMany()
-                .HasForeignKey(ps => ps.PlayerId)
+                .HasOne(ps => ps.AssociationPlayer)
+                .WithMany(player => player.Scores)
+                .HasForeignKey(ps => ps.AssociationPlayerId)
                 .OnDelete(DeleteBehavior.Cascade);
 
             builder.Entity<Leaderboard>()
-                .HasOne(l => l.Player)
-                .WithMany()
-                .HasForeignKey(l => l.PlayerId)
+                .HasOne(l => l.AssociationPlayer)
+                .WithMany(player => player.LeaderboardEntries)
+                .HasForeignKey(l => l.AssociationPlayerId)
                 .OnDelete(DeleteBehavior.Cascade);
 
             builder.Entity<Leaderboard>()

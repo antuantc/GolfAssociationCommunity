@@ -27,6 +27,14 @@
             <p>Registrations</p>
         </article>
         <article class="card">
+            <h3>@Model.PlayerCount</h3>
+            <p>Players</p>
+        </article>
+        <article class="card">
+            <h3>@Model.ScoreCount</h3>
+            <p>Scores Recorded</p>
+        </article>
+        <article class="card">
             <h3>@Model.SponsorshipPackageCount</h3>
             <p>Sponsorship Packages</p>
         </article>
@@ -35,8 +43,10 @@
 
 <section class="section-panel">
     <h2>Quick Actions</h2>
+    <a class="btn" href="~/AssociationAdmin/Players">Manage Players</a>
     <a class="btn" href="~/AssociationAdmin/Tournaments">Manage Tournaments</a>
-    <a class="btn btn-secondary" href="~/AssociationAdmin/Registrations">Manage Registrations</a>
+    <a class="btn btn-secondary" href="~/AssociationAdmin/Scores">Manage Scores</a>
+    <a class="btn btn-secondary" href="~/AssociationAdmin/Leaderboards">View Leaderboards</a>
     <a class="btn btn-secondary" href="~/AssociationAdmin/Sponsorships">Manage Sponsorships</a>
     <a class="btn btn-secondary" href="~/AssociationAdmin/Branding">Manage Branding &amp; Payments</a>
 </section>

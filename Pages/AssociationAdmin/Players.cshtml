@@ -1,0 +1,139 @@
+@page
+@model GolfAssociationCommunity.Pages.AssociationAdmin.PlayersModel
+@{
+    ViewData["Title"] = "Association Players";
+}
+
+<section class="section-panel">
+    <h1>Association Players</h1>
+    @if (TempData["SuccessMessage"] is string success)
+    {
+        <div class="message success">@success</div>
+    }
+
+    <p>Manage the player roster for this association. Guest tournament registrations automatically create player records, and deleting a player removes that player from this association.</p>
+
+    <form method="post" asp-page-handler="Save" class="form-shell">
+        <div class="form-section">
+            <h2 class="form-section-title">@(Model.IsEditing ? "Edit Player" : "Add Player")</h2>
+            <div asp-validation-summary="ModelOnly" class="message error"></div>
+            <input type="hidden" asp-for="EditId" />
+            <div class="form-grid">
+                <div>
+                    <label asp-for="Input.DisplayName"></label>
+                    <input asp-for="Input.DisplayName" class="form-control" />
+                    <span asp-validation-for="Input.DisplayName" class="text-danger"></span>
+                </div>
+                <div>
+                    <label asp-for="Input.Email"></label>
+                    <input asp-for="Input.Email" class="form-control" />
+                    <span asp-validation-for="Input.Email" class="text-danger"></span>
+                </div>
+                <div>
+                    <label asp-for="Input.HandicapIndex">Handicap</label>
+                    <input asp-for="Input.HandicapIndex" type="number" step="0.1" class="form-control" />
+                    <span asp-validation-for="Input.HandicapIndex" class="text-danger"></span>
+                </div>
+            </div>
+            <div class="form-actions">
+                <button type="submit" class="btn">@(Model.IsEditing ? "Save Player" : "Add Player")</button>
+                @if (Model.IsEditing)
+                {
+                    <a class="btn btn-secondary" href="~/AssociationAdmin/Players">Cancel</a>
+                }
+            </div>
+        </div>
+    </form>
+
+    @if (Model.Players.Count == 0)
+    {
+        <p>No players are currently assigned to this association.</p>
+    }
+    else
+    {
+        <h2>Active Players</h2>
+        <div class="table-scroll">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Player</th>
+                        <th>Email</th>
+                        <th>Handicap</th>
+                        <th>Tournaments</th>
+                        <th>Scores</th>
+                        <th>Wins</th>
+                        <th>Last Score Update</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                @foreach (var player in Model.Players)
+                {
+                    <tr>
+                        <td>@player.DisplayName</td>
+                        <td>@player.Email</td>
+                        <td>@(player.HandicapIndex.HasValue ? player.HandicapIndex.Value.ToString("0.0#") : "-")</td>
+                        <td>@player.TournamentCount</td>
+                        <td>@player.ScoreCount</td>
+                        <td>@player.Wins</td>
+                        <td>@(player.LastScoreUpdateUtc.HasValue ? player.LastScoreUpdateUtc.Value.ToString("MMM d, yyyy h:mm tt") : "-")</td>
+                        <td>
+                            <a class="card-link" href="~/AssociationAdmin/Players?EditId=@player.Id">Edit</a>
+                            <a class="card-link" href="~/AssociationAdmin/Scores?AssociationPlayerId=@player.Id">Manage Scores</a>
+                            <form method="post" asp-page-handler="Delete" asp-route-id="@player.Id" class="inline-form" onsubmit="return confirm('Delete this player from this association? This will remove linked score history for this association.');">
+                                <button type="submit" class="link-button">Delete</button>
+                            </form>
+                        </td>
+                    </tr>
+                }
+                </tbody>
+            </table>
+        </div>
+    }
+
+    <section class="section-panel">
+        <h2>Archived Players</h2>
+        @if (Model.ArchivedPlayers.Count == 0)
+        {
+            <p>No archived players for this association.</p>
+        }
+        else
+        {
+            <div class="table-scroll">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Player</th>
+                            <th>Email</th>
+                            <th>Handicap</th>
+                            <th>Tournaments</th>
+                            <th>Scores</th>
+                            <th>Wins</th>
+                            <th>Last Score Update</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    @foreach (var player in Model.ArchivedPlayers)
+                    {
+                        <tr>
+                            <td>@player.DisplayName</td>
+                            <td>@player.Email</td>
+                            <td>@(player.HandicapIndex.HasValue ? player.HandicapIndex.Value.ToString("0.0#") : "-")</td>
+                            <td>@player.TournamentCount</td>
+                            <td>@player.ScoreCount</td>
+                            <td>@player.Wins</td>
+                            <td>@(player.LastScoreUpdateUtc.HasValue ? player.LastScoreUpdateUtc.Value.ToString("MMM d, yyyy h:mm tt") : "-")</td>
+                            <td>
+                                <form method="post" asp-page-handler="Activate" asp-route-id="@player.Id" class="inline-form">
+                                    <button type="submit" class="link-button">Reactivate</button>
+                                </form>
+                            </td>
+                        </tr>
+                    }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </section>
+</section>

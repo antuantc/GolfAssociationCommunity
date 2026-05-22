@@ -10,15 +10,12 @@ namespace GolfAssociationCommunity.Services
     public interface IRegistrationService
     {
         Task<Registration?> GetRegistrationByIdAsync(int id);
-        Task<Registration?> GetPlayerTournamentRegistrationAsync(int tournamentId, string playerId);
         Task<Registration?> GetGuestTournamentRegistrationAsync(int tournamentId, string guestEmail);
         Task<IEnumerable<Registration>> GetTournamentRegistrationsAsync(int tournamentId);
-        Task<IEnumerable<Registration>> GetPlayerRegistrationsAsync(string playerId);
         Task<Registration> CreateRegistrationAsync(Registration registration);
         Task<Registration?> UpdateRegistrationAsync(int id, Registration registration);
         Task<bool> ConfirmPaymentAsync(int id, string authorizeNetTransactionId);
         Task<bool> WithdrawRegistrationAsync(int id, string reason);
-        Task<bool> CanPlayerRegisterAsync(int tournamentId, string playerId);
         Task<bool> CanGuestRegisterAsync(int tournamentId, string guestEmail);
         Task<int> GetRegistrationCountAsync(int tournamentId, RegistrationStatus status);
     }
@@ -40,29 +37,12 @@ namespace GolfAssociationCommunity.Services
             {
                 return await _context.Registrations
                     .Include(r => r.Tournament)
-                    .Include(r => r.Player)
+                    .Include(r => r.AssociationPlayer)
                     .FirstOrDefaultAsync(r => r.Id == id);
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error retrieving registration with ID: {RegistrationId}", id);
-                throw;
-            }
-        }
-
-        public async Task<Registration?> GetPlayerTournamentRegistrationAsync(int tournamentId, string playerId)
-        {
-            try
-            {
-                return await _context.Registrations
-                    .Include(r => r.Tournament)
-                    .Include(r => r.Player)
-                    .FirstOrDefaultAsync(r => r.TournamentId == tournamentId && r.PlayerId == playerId);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error retrieving registration for tournament ID: {TournamentId}, player ID: {PlayerId}",
-                    tournamentId, playerId);
                 throw;
             }
         }
@@ -94,7 +74,7 @@ namespace GolfAssociationCommunity.Services
             {
                 return await _context.Registrations
                     .Where(r => r.TournamentId == tournamentId)
-                    .Include(r => r.Player)
+                    .Include(r => r.AssociationPlayer)
                     .OrderBy(r => r.RegistrationDate)
                     .ToListAsync();
             }
@@ -105,27 +85,15 @@ namespace GolfAssociationCommunity.Services
             }
         }
 
-        public async Task<IEnumerable<Registration>> GetPlayerRegistrationsAsync(string playerId)
-        {
-            try
-            {
-                return await _context.Registrations
-                    .Where(r => r.PlayerId == playerId)
-                    .Include(r => r.Tournament)
-                    .OrderByDescending(r => r.Tournament!.StartDate)
-                    .ToListAsync();
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error retrieving registrations for player ID: {PlayerId}", playerId);
-                throw;
-            }
-        }
-
         public async Task<Registration> CreateRegistrationAsync(Registration registration)
         {
             try
             {
+                if (!registration.AssociationPlayerId.HasValue)
+                {
+                    registration.AssociationPlayerId = await ResolveAssociationPlayerIdAsync(registration);
+                }
+
                 registration.RegistrationDate = DateTime.UtcNow;
                 registration.UpdatedAt = DateTime.UtcNow;
 
@@ -227,52 +195,6 @@ namespace GolfAssociationCommunity.Services
             }
         }
 
-        public async Task<bool> CanPlayerRegisterAsync(int tournamentId, string playerId)
-        {
-            try
-            {
-                // Check if player already registered
-                var existingRegistration = await GetPlayerTournamentRegistrationAsync(tournamentId, playerId);
-                if (existingRegistration != null && existingRegistration.Status == RegistrationStatus.Registered)
-                {
-                    _logger.LogWarning("Player {PlayerId} already registered for tournament {TournamentId}",
-                        playerId, tournamentId);
-                    return false;
-                }
-
-                // Check if tournament has available slots
-                var tournament = await _context.Tournaments.FindAsync(tournamentId);
-                if (tournament == null)
-                {
-                    _logger.LogWarning("Tournament not found with ID: {TournamentId}", tournamentId);
-                    return false;
-                }
-
-                var registeredCount = await GetRegistrationCountAsync(tournamentId, RegistrationStatus.Registered);
-                if (registeredCount >= tournament.MaxPlayers)
-                {
-                    _logger.LogWarning("Tournament {TournamentId} is full", tournamentId);
-                    return false;
-                }
-
-                // Check registration deadline
-                if (tournament.RegistrationDeadline.HasValue && 
-                    tournament.RegistrationDeadline.Value < DateTime.UtcNow)
-                {
-                    _logger.LogWarning("Registration deadline has passed for tournament {TournamentId}", tournamentId);
-                    return false;
-                }
-
-                return true;
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error checking registration eligibility for player ID: {PlayerId}, tournament ID: {TournamentId}",
-                    playerId, tournamentId);
-                throw;
-            }
-        }
-
         public async Task<bool> CanGuestRegisterAsync(int tournamentId, string guestEmail)
         {
             try
@@ -334,6 +256,73 @@ namespace GolfAssociationCommunity.Services
                 _logger.LogError(ex, "Error retrieving registration count for tournament ID: {TournamentId}", tournamentId);
                 throw;
             }
+        }
+
+        private async Task<int?> ResolveAssociationPlayerIdAsync(Registration registration)
+        {
+            if (string.IsNullOrWhiteSpace(registration.GuestEmail) && string.IsNullOrWhiteSpace(registration.GuestName))
+            {
+                return null;
+            }
+
+            var tournamentAssociationId = await _context.Tournaments
+                .Where(tournament => tournament.Id == registration.TournamentId)
+                .Select(tournament => (int?)tournament.GolfAssociationId)
+                .FirstOrDefaultAsync();
+
+            if (!tournamentAssociationId.HasValue)
+            {
+                return null;
+            }
+
+            var normalizedEmail = registration.GuestEmail.Trim().ToUpperInvariant();
+            AssociationPlayer? player = null;
+
+            if (!string.IsNullOrWhiteSpace(normalizedEmail))
+            {
+                player = await _context.AssociationPlayers
+                    .FirstOrDefaultAsync(existing => existing.GolfAssociationId == tournamentAssociationId.Value
+                        && existing.Email.ToUpper() == normalizedEmail);
+            }
+
+            if (player == null && !string.IsNullOrWhiteSpace(registration.GuestName))
+            {
+                var normalizedName = registration.GuestName.Trim().ToUpperInvariant();
+                player = await _context.AssociationPlayers
+                    .FirstOrDefaultAsync(existing => existing.GolfAssociationId == tournamentAssociationId.Value
+                        && existing.DisplayName.ToUpper() == normalizedName);
+            }
+
+            if (player == null)
+            {
+                player = new AssociationPlayer
+                {
+                    GolfAssociationId = tournamentAssociationId.Value,
+                    DisplayName = registration.GuestName.Trim(),
+                    Email = registration.GuestEmail.Trim(),
+                    HandicapIndex = registration.Handicap,
+                    CreatedAt = DateTime.UtcNow,
+                    UpdatedAt = DateTime.UtcNow,
+                    IsActive = true
+                };
+
+                _context.AssociationPlayers.Add(player);
+                await _context.SaveChangesAsync();
+                return player.Id;
+            }
+
+            player.DisplayName = string.IsNullOrWhiteSpace(registration.GuestName)
+                ? player.DisplayName
+                : registration.GuestName.Trim();
+            player.Email = string.IsNullOrWhiteSpace(registration.GuestEmail)
+                ? player.Email
+                : registration.GuestEmail.Trim();
+            player.HandicapIndex = registration.Handicap ?? player.HandicapIndex;
+            player.IsActive = true;
+            player.UpdatedAt = DateTime.UtcNow;
+            await _context.SaveChangesAsync();
+
+            return player.Id;
         }
     }
 }

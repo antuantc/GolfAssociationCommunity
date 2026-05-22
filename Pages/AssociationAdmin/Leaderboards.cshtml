@@ -1,0 +1,123 @@
+@page
+@model GolfAssociationCommunity.Pages.AssociationAdmin.LeaderboardsModel
+@{
+    ViewData["Title"] = "Leaderboards";
+}
+
+<section class="section-panel">
+    <h1>Leaderboards</h1>
+    @if (TempData["SuccessMessage"] is string success)
+    {
+        <div class="message success">@success</div>
+    }
+
+    <div class="form-actions">
+        <form method="get">
+            <label for="tournamentId">Tournament Leaderboard</label>
+            <select id="tournamentId" name="TournamentId" class="form-control" onchange="this.form.submit()">
+                <option value="">Select a tournament</option>
+                @foreach (var tournament in Model.Tournaments)
+                {
+                    <option value="@tournament.Id" selected="@(Model.TournamentId == tournament.Id)">@tournament.Name</option>
+                }
+            </select>
+        </form>
+        <form method="post" asp-page-handler="RecalculateAssociation">
+            <button type="submit" class="btn btn-secondary">Recalculate All Leaderboards</button>
+        </form>
+    </div>
+</section>
+
+<section class="section-panel">
+    <h2>Association Overall Leaderboard</h2>
+    <p>Overall position is based on rollup points from tournament finishes within this association.</p>
+
+    @if (Model.AssociationLeaderboard.Count == 0)
+    {
+        <p>No leaderboard data is available yet. Record scores for registered players to populate rankings.</p>
+    }
+    else
+    {
+        <div class="table-scroll">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Position</th>
+                        <th>Player</th>
+                        <th>Email</th>
+                        <th>Rollup Points</th>
+                        <th>Tournaments</th>
+                        <th>Wins</th>
+                        <th>Avg Finish</th>
+                        <th>Total Score</th>
+                        <th>Stableford</th>
+                    </tr>
+                </thead>
+                <tbody>
+                @foreach (var row in Model.AssociationLeaderboard)
+                {
+                    <tr>
+                        <td>@row.OverallPosition</td>
+                        <td>@row.PlayerName</td>
+                        <td>@row.PlayerEmail</td>
+                        <td>@row.TournamentPoints</td>
+                        <td>@row.TournamentsPlayed</td>
+                        <td>@row.Wins</td>
+                        <td>@row.AveragePosition.ToString("0.##")</td>
+                        <td>@row.TotalScore</td>
+                        <td>@row.TotalStablefordPoints</td>
+                    </tr>
+                }
+                </tbody>
+            </table>
+        </div>
+    }
+</section>
+
+@if (Model.SelectedTournament != null)
+{
+    <section class="section-panel">
+        <div class="form-actions">
+            <div>
+                <h2>@Model.SelectedTournament.Name Leaderboard</h2>
+                <p>@Model.SelectedTournament.StartDate.ToString("MMM d, yyyy") - @Model.SelectedTournament.EndDate.ToString("MMM d, yyyy")</p>
+            </div>
+            <form method="post" asp-page-handler="RecalculateTournament" asp-route-tournamentId="@Model.SelectedTournament.Id">
+                <button type="submit" class="btn btn-secondary">Recalculate This Tournament</button>
+            </form>
+        </div>
+
+        @if (Model.TournamentLeaderboard.Count == 0)
+        {
+            <p>No leaderboard entries are available for this tournament yet.</p>
+        }
+        else
+        {
+            <div class="table-scroll">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Position</th>
+                            <th>Player</th>
+                            <th>Total Score</th>
+                            <th>Stableford</th>
+                            <th>Differential</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    @foreach (var row in Model.TournamentLeaderboard)
+                    {
+                        <tr>
+                            <td>@row.Position</td>
+                            <td>@(row.AssociationPlayer?.DisplayName ?? "Unknown Player")</td>
+                            <td>@row.TotalScore</td>
+                            <td>@row.StablefordPoints</td>
+                            <td>@row.ScoreDifferential</td>
+                        </tr>
+                    }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </section>
+}

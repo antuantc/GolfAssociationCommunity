@@ -211,7 +211,6 @@ namespace GolfAssociationCommunity.Pages.Tournaments
             var registration = new Registration
             {
                 TournamentId = tournamentId,
-                PlayerId = null,
                 GuestName = Input.GuestName.Trim(),
                 GuestEmail = Input.GuestEmail.Trim(),
                 Handicap = Input.Handicap,

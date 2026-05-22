@@ -114,15 +114,17 @@ namespace GolfAssociationCommunity.Pages.Admin
         {
             var query = _context.Registrations
                 .AsNoTracking()
-                .Include(r => r.Player)
+                .Include(r => r.AssociationPlayer)
                 .Include(r => r.Tournament)
                     .ThenInclude(t => t!.GolfAssociation)
                 .OrderByDescending(r => r.RegistrationDate)
                 .Select(r => new RegistrationRow
                 {
                     Id = r.Id,
-                    PlayerEmail = r.Player != null
-                        ? (r.Player.Email ?? r.Player.Id)
+                    PlayerEmail = r.AssociationPlayer != null
+                        ? (string.IsNullOrWhiteSpace(r.AssociationPlayer.Email)
+                            ? r.AssociationPlayer.DisplayName
+                            : $"{r.AssociationPlayer.DisplayName} ({r.AssociationPlayer.Email})")
                         : $"{r.GuestName} ({r.GuestEmail})",
                     TournamentName = r.Tournament != null ? r.Tournament.Name : "-",
                     AssociationName = r.Tournament != null && r.Tournament.GolfAssociation != null

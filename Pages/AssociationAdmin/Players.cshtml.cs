@@ -1,0 +1,268 @@
+using GolfAssociationCommunity.Data;
+using GolfAssociationCommunity.Models;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using System.ComponentModel.DataAnnotations;
+
+namespace GolfAssociationCommunity.Pages.AssociationAdmin
+{
+    public class PlayersModel : AssociationAdminPageModel
+    {
+        public PlayersModel(UserManager<ApplicationUser> userManager, ApplicationDbContext context)
+            : base(userManager, context)
+        {
+        }
+
+        [BindProperty(SupportsGet = true)]
+        public int? EditId { get; set; }
+
+        [BindProperty]
+        public PlayerInput Input { get; set; } = new();
+
+        public List<PlayerRow> Players { get; private set; } = new();
+        public List<PlayerRow> ArchivedPlayers { get; private set; } = new();
+        public bool IsEditing => EditId.HasValue;
+
+        public class PlayerInput
+        {
+            [Required]
+            [StringLength(160)]
+            public string DisplayName { get; set; } = string.Empty;
+
+            [Required]
+            [EmailAddress]
+            [StringLength(256)]
+            public string Email { get; set; } = string.Empty;
+
+            [Range(-10, 60)]
+            public decimal? HandicapIndex { get; set; }
+        }
+
+        public class PlayerRow
+        {
+            public int Id { get; set; }
+            public string DisplayName { get; set; } = string.Empty;
+            public string Email { get; set; } = string.Empty;
+            public decimal? HandicapIndex { get; set; }
+            public bool IsActive { get; set; }
+            public int TournamentCount { get; set; }
+            public int ScoreCount { get; set; }
+            public int Wins { get; set; }
+            public DateTime? LastScoreUpdateUtc { get; set; }
+        }
+
+        public async Task<IActionResult> OnGetAsync()
+        {
+            var contextResult = await LoadAssociationContextAsync();
+            if (contextResult is not null)
+            {
+                return contextResult;
+            }
+
+            await LoadPageDataAsync();
+            return Page();
+        }
+
+        public async Task<IActionResult> OnPostSaveAsync()
+        {
+            var contextResult = await LoadAssociationContextAsync();
+            if (contextResult is not null)
+            {
+                return contextResult;
+            }
+
+            if (!ModelState.IsValid)
+            {
+                await LoadPageDataAsync();
+                return Page();
+            }
+
+            var normalizedEmail = Input.Email.Trim();
+            var duplicate = await Context.AssociationPlayers
+                .FirstOrDefaultAsync(player => player.GolfAssociationId == CurrentAssociation.Id
+                    && player.Email.ToUpper() == normalizedEmail.ToUpper()
+                    && (!EditId.HasValue || player.Id != EditId.Value));
+
+            if (duplicate != null)
+            {
+                if (!duplicate.IsActive && !EditId.HasValue)
+                {
+                    duplicate.DisplayName = Input.DisplayName.Trim();
+                    duplicate.Email = normalizedEmail;
+                    duplicate.HandicapIndex = Input.HandicapIndex;
+                    duplicate.IsActive = true;
+                    duplicate.UpdatedAt = DateTime.UtcNow;
+
+                    await Context.SaveChangesAsync();
+                    TempData["SuccessMessage"] = "Existing player restored to the active roster.";
+                    return RedirectToPage();
+                }
+
+                ModelState.AddModelError(nameof(Input.Email), "A player with this email already exists for the association.");
+                await LoadPageDataAsync();
+                return Page();
+            }
+
+            if (EditId.HasValue)
+            {
+                var existing = await Context.AssociationPlayers
+                    .FirstOrDefaultAsync(player => player.Id == EditId.Value && player.GolfAssociationId == CurrentAssociation.Id);
+
+                if (existing == null)
+                {
+                    return NotFound();
+                }
+
+                existing.DisplayName = Input.DisplayName.Trim();
+                existing.Email = normalizedEmail;
+                existing.HandicapIndex = Input.HandicapIndex;
+                existing.UpdatedAt = DateTime.UtcNow;
+                TempData["SuccessMessage"] = "Player updated.";
+            }
+            else
+            {
+                Context.AssociationPlayers.Add(new AssociationPlayer
+                {
+                    GolfAssociationId = CurrentAssociation.Id,
+                    DisplayName = Input.DisplayName.Trim(),
+                    Email = normalizedEmail,
+                    HandicapIndex = Input.HandicapIndex,
+                    IsActive = true,
+                    CreatedAt = DateTime.UtcNow,
+                    UpdatedAt = DateTime.UtcNow
+                });
+                TempData["SuccessMessage"] = "Player added.";
+            }
+
+            await Context.SaveChangesAsync();
+            return RedirectToPage();
+        }
+
+        public async Task<IActionResult> OnPostDeleteAsync(int id)
+        {
+            var contextResult = await LoadAssociationContextAsync();
+            if (contextResult is not null)
+            {
+                return contextResult;
+            }
+
+            var player = await Context.AssociationPlayers
+                .FirstOrDefaultAsync(item => item.Id == id && item.GolfAssociationId == CurrentAssociation.Id);
+
+            if (player == null)
+            {
+                return NotFound();
+            }
+
+            Context.AssociationPlayers.Remove(player);
+            TempData["SuccessMessage"] = "Player deleted from this association.";
+
+            await Context.SaveChangesAsync();
+            return RedirectToPage();
+        }
+
+        public async Task<IActionResult> OnPostActivateAsync(int id)
+        {
+            var contextResult = await LoadAssociationContextAsync();
+            if (contextResult is not null)
+            {
+                return contextResult;
+            }
+
+            var player = await Context.AssociationPlayers
+                .FirstOrDefaultAsync(item => item.Id == id && item.GolfAssociationId == CurrentAssociation.Id);
+
+            if (player == null)
+            {
+                return NotFound();
+            }
+
+            player.IsActive = true;
+            player.UpdatedAt = DateTime.UtcNow;
+            await Context.SaveChangesAsync();
+
+            TempData["SuccessMessage"] = "Player restored to the active roster.";
+            return RedirectToPage();
+        }
+
+        private async Task LoadPageDataAsync()
+        {
+            var players = await Context.AssociationPlayers
+                .Where(player => player.GolfAssociationId == CurrentAssociation.Id)
+                .OrderBy(player => player.DisplayName)
+                .ThenBy(player => player.Email)
+                .ToListAsync();
+
+            if (EditId.HasValue)
+            {
+                var player = players.FirstOrDefault(item => item.Id == EditId.Value && item.IsActive);
+                if (player != null)
+                {
+                    Input = new PlayerInput
+                    {
+                        DisplayName = player.DisplayName,
+                        Email = player.Email,
+                        HandicapIndex = player.HandicapIndex
+                    };
+                }
+                else
+                {
+                    EditId = null;
+                }
+            }
+
+            var playerIds = players.Select(player => player.Id).ToList();
+
+            var tournamentCounts = await Context.Registrations
+                .Where(registration => registration.AssociationPlayerId != null
+                    && playerIds.Contains(registration.AssociationPlayerId.Value)
+                    && registration.Tournament != null
+                    && registration.Tournament.GolfAssociationId == CurrentAssociation.Id
+                    && registration.Status == RegistrationStatus.Registered)
+                .GroupBy(registration => registration.AssociationPlayerId!.Value)
+                .Select(group => new { AssociationPlayerId = group.Key, Count = group.Count() })
+                .ToDictionaryAsync(item => item.AssociationPlayerId, item => item.Count);
+
+            var scoreCounts = await Context.PlayerScores
+                .Where(score => playerIds.Contains(score.AssociationPlayerId)
+                    && score.Tournament != null
+                    && score.Tournament.GolfAssociationId == CurrentAssociation.Id)
+                .GroupBy(score => score.AssociationPlayerId)
+                .Select(group => new { AssociationPlayerId = group.Key, Count = group.Count(), LastUpdatedAt = group.Max(score => score.UpdatedAt) })
+                .ToDictionaryAsync(item => item.AssociationPlayerId, item => new { item.Count, item.LastUpdatedAt });
+
+            var wins = await Context.Leaderboards
+                .Where(leaderboard => playerIds.Contains(leaderboard.AssociationPlayerId)
+                    && leaderboard.Tournament != null
+                    && leaderboard.Tournament.GolfAssociationId == CurrentAssociation.Id
+                    && leaderboard.Position == 1)
+                .GroupBy(leaderboard => leaderboard.AssociationPlayerId)
+                .Select(group => new { AssociationPlayerId = group.Key, Count = group.Count() })
+                .ToDictionaryAsync(item => item.AssociationPlayerId, item => item.Count);
+
+            var playerRows = players
+                .Select(player => new PlayerRow
+                {
+                    Id = player.Id,
+                    DisplayName = player.DisplayName,
+                    Email = player.Email,
+                    HandicapIndex = player.HandicapIndex,
+                    IsActive = player.IsActive,
+                    TournamentCount = tournamentCounts.GetValueOrDefault(player.Id),
+                    ScoreCount = scoreCounts.TryGetValue(player.Id, out var scoreData) ? scoreData.Count : 0,
+                    Wins = wins.GetValueOrDefault(player.Id),
+                    LastScoreUpdateUtc = scoreCounts.TryGetValue(player.Id, out scoreData) ? scoreData.LastUpdatedAt : null
+                })
+                .ToList();
+
+            Players = playerRows
+                .Where(player => player.IsActive)
+                .ToList();
+
+            ArchivedPlayers = playerRows
+                .Where(player => !player.IsActive)
+                .ToList();
+        }
+    }
+}

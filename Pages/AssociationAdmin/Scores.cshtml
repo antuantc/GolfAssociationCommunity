@@ -1,0 +1,113 @@
+@page
+@using GolfAssociationCommunity.Models
+@model GolfAssociationCommunity.Pages.AssociationAdmin.ScoresModel
+@{
+    ViewData["Title"] = "Tournament Scores";
+}
+
+<section class="section-panel">
+    <h1>Tournament Score Management</h1>
+    @if (TempData["SuccessMessage"] is string success)
+    {
+        <div class="message success">@success</div>
+    }
+
+    <form method="get" class="form-shell">
+        <div class="form-section">
+            <h2 class="form-section-title">Select Tournament and Player</h2>
+            <div class="form-grid">
+                <div>
+                    <label asp-for="TournamentId">Tournament</label>
+                    <select asp-for="TournamentId" class="form-control">
+                        <option value="">Select tournament</option>
+                        @foreach (var tournament in Model.Tournaments)
+                        {
+                            <option value="@tournament.Id">@tournament.Name</option>
+                        }
+                    </select>
+                </div>
+                <div>
+                    <label asp-for="AssociationPlayerId">Player</label>
+                    @if (Model.TournamentId.HasValue)
+                    {
+                            <select asp-for="AssociationPlayerId" class="form-control">
+                            <option value="">Select player</option>
+                            @foreach (var player in Model.Players)
+                            {
+                                <option value="@player.Id">@player.Name</option>
+                            }
+                        </select>
+                    }
+                    else
+                    {
+                            <select asp-for="AssociationPlayerId" class="form-control" disabled>
+                            <option value="">Select player</option>
+                        </select>
+                    }
+                </div>
+                <div>
+                    <label asp-for="Round">Round</label>
+                    <input asp-for="Round" type="number" min="1" class="form-control" />
+                </div>
+            </div>
+            <div class="form-actions">
+                <button type="submit" class="btn">Load Scorecard</button>
+            </div>
+        </div>
+    </form>
+</section>
+
+@if (Model.SelectedTournament != null && Model.AssociationPlayerId.HasValue)
+{
+    <section class="section-panel">
+        <div class="form-meta">
+            <span class="pill">Tournament: @Model.SelectedTournament.Name</span>
+            <span class="pill">Player: @Model.SelectedPlayerName</span>
+            <span class="pill">Round: @Model.Round</span>
+            <span class="pill">Total Score: @Model.CurrentTotalScore</span>
+            <span class="pill">Stableford: @Model.CurrentStablefordPoints</span>
+        </div>
+
+        <form method="post" asp-page-handler="Save" class="form-shell">
+            <input type="hidden" asp-for="TournamentId" />
+            <input type="hidden" asp-for="AssociationPlayerId" />
+            <input type="hidden" asp-for="Round" />
+            <div asp-validation-summary="ModelOnly" class="message error"></div>
+
+            <div class="form-section">
+                <p class="field-note">Enter one total per round for now. If tournament totals tie, the lower tiebreaker hole handicap wins when provided.</p>
+                <div class="form-grid">
+                    <div>
+                        <label asp-for="Input.TotalScore">Round Score</label>
+                        <input asp-for="Input.TotalScore" type="number" min="1" class="form-control" />
+                        <span asp-validation-for="Input.TotalScore" class="text-danger"></span>
+                    </div>
+                    @if (Model.SelectedTournament.Format == TournamentFormat.Stableford)
+                    {
+                        <div>
+                            <label asp-for="Input.StablefordPoints">Stableford Points</label>
+                            <input asp-for="Input.StablefordPoints" type="number" min="0" class="form-control" />
+                            <span asp-validation-for="Input.StablefordPoints" class="text-danger"></span>
+                        </div>
+                    }
+                    <div>
+                        <label asp-for="Input.TiebreakerHoleHandicap">Tiebreaker Hole Handicap</label>
+                        <input asp-for="Input.TiebreakerHoleHandicap" type="number" min="1" max="18" class="form-control" />
+                        <span asp-validation-for="Input.TiebreakerHoleHandicap" class="text-danger"></span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-actions">
+                <button type="submit" class="btn">Save Scores and Recalculate Leaderboard</button>
+                <a class="btn btn-secondary" href="~/AssociationAdmin/Leaderboards?TournamentId=@Model.TournamentId">View Leaderboard</a>
+            </div>
+        </form>
+    </section>
+}
+else if (Model.TournamentId.HasValue)
+{
+    <section class="section-panel">
+        <p>Select a registered player to load and manage the scorecard.</p>
+    </section>
+}
