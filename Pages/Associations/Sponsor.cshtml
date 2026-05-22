@@ -1,0 +1,154 @@
+@page "{id:int}"
+@model GolfAssociationCommunity.Pages.Associations.SponsorModel
+@{
+    ViewData["Title"] = Model.Association?.Name is null ? "Sponsor Association" : $"Sponsor {Model.Association.Name}";
+}
+
+<section class="section-panel">
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="message success">@TempData["SuccessMessage"]</div>
+    }
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="message error">@TempData["ErrorMessage"]</div>
+    }
+
+    @if (Model.Association == null)
+    {
+        <h1>Association not found</h1>
+        <p>The association you requested does not exist or is not active.</p>
+        <a href="~/" class="btn btn-secondary">Back to associations</a>
+    }
+    else if (Model.ActiveSponsorshipPackages.Count == 0)
+    {
+        <h1>Sponsorship Unavailable</h1>
+        <p>This association does not currently have active sponsorship packages.</p>
+        <a href="~/Associations/Details/@Model.Association.Id" class="btn btn-secondary">Back to association</a>
+    }
+    else
+    {
+        <h1>Sponsor @Model.Association.Name</h1>
+        <p>Select a sponsorship package and complete payment.</p>
+
+        <form method="post" autocomplete="on">
+            <div asp-validation-summary="ModelOnly" class="message error"></div>
+
+            <h3>Sponsorship Selection</h3>
+            <div class="card-grid">
+                <div>
+                    <label asp-for="Input.SponsorshipPackageId">Package</label>
+                    <select asp-for="Input.SponsorshipPackageId" class="form-control">
+                        <option value="">Select a sponsorship package</option>
+                        @foreach (var package in Model.ActiveSponsorshipPackages)
+                        {
+                            <option value="@package.Id">@package.Name - @package.Amount.ToString("C")</option>
+                        }
+                    </select>
+                    <span asp-validation-for="Input.SponsorshipPackageId" class="text-danger"></span>
+                </div>
+                <div>
+                    <label asp-for="Input.SponsorName">Sponsor Name</label>
+                    <input asp-for="Input.SponsorName" class="form-control" autocomplete="name" />
+                    <span asp-validation-for="Input.SponsorName" class="text-danger"></span>
+                </div>
+                <div>
+                    <label asp-for="Input.SponsorEmail">Sponsor Email</label>
+                    <input asp-for="Input.SponsorEmail" class="form-control" autocomplete="email" />
+                    <span asp-validation-for="Input.SponsorEmail" class="text-danger"></span>
+                </div>
+                <div>
+                    <label asp-for="Input.SponsorCompany">Company (Optional)</label>
+                    <input asp-for="Input.SponsorCompany" class="form-control" autocomplete="organization" />
+                    <span asp-validation-for="Input.SponsorCompany" class="text-danger"></span>
+                </div>
+            </div>
+
+            <h3>Payment Details</h3>
+            <div class="card-grid">
+                <div>
+                    <label asp-for="Input.CardholderName">Cardholder Name</label>
+                    <input asp-for="Input.CardholderName" class="form-control" autocomplete="cc-name" />
+                    <span asp-validation-for="Input.CardholderName" class="text-danger"></span>
+                </div>
+                <div>
+                    <label asp-for="Input.CardNumber">Card Number</label>
+                    <input asp-for="Input.CardNumber" class="form-control" inputmode="numeric" autocomplete="cc-number" />
+                    <span asp-validation-for="Input.CardNumber" class="text-danger"></span>
+                </div>
+                <div>
+                    <label asp-for="Input.CardExpiry">Expiry (MM/YY)</label>
+                    <input asp-for="Input.CardExpiry" class="form-control" inputmode="numeric" autocomplete="cc-exp" placeholder="MM/YY" />
+                    <span asp-validation-for="Input.CardExpiry" class="text-danger"></span>
+                </div>
+                <div>
+                    <label asp-for="Input.Cvv">CVV</label>
+                    <input asp-for="Input.Cvv" type="password" class="form-control" inputmode="numeric" autocomplete="cc-csc" />
+                    <span asp-validation-for="Input.Cvv" class="text-danger"></span>
+                </div>
+                <div>
+                    <label asp-for="Input.BillingAddressLine1">Billing Address</label>
+                    <input asp-for="Input.BillingAddressLine1" class="form-control" autocomplete="billing address-line1" />
+                    <span asp-validation-for="Input.BillingAddressLine1" class="text-danger"></span>
+                </div>
+                <div>
+                    <label asp-for="Input.BillingCity">City</label>
+                    <input asp-for="Input.BillingCity" class="form-control" autocomplete="billing address-level2" />
+                    <span asp-validation-for="Input.BillingCity" class="text-danger"></span>
+                </div>
+                <div>
+                    <label asp-for="Input.BillingState">State/Province</label>
+                    <input asp-for="Input.BillingState" class="form-control" autocomplete="billing address-level1" />
+                    <span asp-validation-for="Input.BillingState" class="text-danger"></span>
+                </div>
+                <div>
+                    <label asp-for="Input.BillingZipCode">Postal Code</label>
+                    <input asp-for="Input.BillingZipCode" class="form-control" autocomplete="billing postal-code" />
+                    <span asp-validation-for="Input.BillingZipCode" class="text-danger"></span>
+                </div>
+                <div>
+                    <label asp-for="Input.BillingCountry">Country</label>
+                    <input asp-for="Input.BillingCountry" class="form-control" autocomplete="billing country" />
+                    <span asp-validation-for="Input.BillingCountry" class="text-danger"></span>
+                </div>
+            </div>
+
+            <button type="submit" class="btn">Pay and Sponsor</button>
+            <a class="btn btn-secondary" href="~/Associations/Details/@Model.Association.Id">Back to association</a>
+        </form>
+    }
+</section>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        (function () {
+            var cardNumberInput = document.getElementById('Input_CardNumber');
+            var cardExpiryInput = document.getElementById('Input_CardExpiry');
+
+            if (cardNumberInput) {
+                cardNumberInput.addEventListener('input', function (event) {
+                    var digits = event.target.value.replace(/\D/g, '').slice(0, 19);
+                    event.target.value = digits.replace(/(.{4})/g, '$1 ').trim();
+                });
+            }
+
+            if (cardExpiryInput) {
+                cardExpiryInput.addEventListener('input', function (event) {
+                    var digits = event.target.value.replace(/\D/g, '').slice(0, 6);
+                    if (digits.length <= 2) {
+                        event.target.value = digits;
+                        return;
+                    }
+
+                    if (digits.length <= 4) {
+                        event.target.value = digits.slice(0, 2) + '/' + digits.slice(2);
+                        return;
+                    }
+
+                    event.target.value = digits.slice(0, 2) + '/' + digits.slice(2);
+                });
+            }
+        })();
+    </script>
+}

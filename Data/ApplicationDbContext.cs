@@ -14,6 +14,7 @@ namespace GolfAssociationCommunity.Data
         public DbSet<GolfAssociation> GolfAssociations { get; set; } = null!;
         public DbSet<Tournament> Tournaments { get; set; } = null!;
         public DbSet<SponsorshipPackage> SponsorshipPackages { get; set; } = null!;
+        public DbSet<SponsorshipPayment> SponsorshipPayments { get; set; } = null!;
         public DbSet<Registration> Registrations { get; set; } = null!;
         public DbSet<PlayerScore> PlayerScores { get; set; } = null!;
         public DbSet<Leaderboard> Leaderboards { get; set; } = null!;
@@ -55,6 +56,37 @@ namespace GolfAssociationCommunity.Data
 
             builder.Entity<SponsorshipPackage>()
                 .HasIndex(sp => new { sp.GolfAssociationId, sp.DisplayOrder });
+
+            builder.Entity<GolfAssociation>()
+                .HasMany(ga => ga.SponsorshipPayments)
+                .WithOne(sp => sp.GolfAssociation)
+                .HasForeignKey(sp => sp.GolfAssociationId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            builder.Entity<SponsorshipPackage>()
+                .HasMany(sp => sp.SponsorshipPayments)
+                .WithOne(p => p.SponsorshipPackage)
+                .HasForeignKey(p => p.SponsorshipPackageId)
+                .OnDelete(DeleteBehavior.SetNull);
+
+            builder.Entity<SponsorshipPayment>()
+                .Property(sp => sp.AmountPaid)
+                .HasPrecision(18, 2);
+
+            builder.Entity<SponsorshipPayment>()
+                .Property(sp => sp.PackageName)
+                .HasMaxLength(120);
+
+            builder.Entity<SponsorshipPayment>()
+                .Property(sp => sp.SponsorName)
+                .HasMaxLength(120);
+
+            builder.Entity<SponsorshipPayment>()
+                .Property(sp => sp.SponsorEmail)
+                .HasMaxLength(256);
+
+            builder.Entity<SponsorshipPayment>()
+                .HasIndex(sp => sp.PaidAtUtc);
 
             builder.Entity<Tournament>()
                 .HasMany(t => t.Registrations)

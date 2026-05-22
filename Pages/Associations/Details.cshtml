@@ -4,6 +4,15 @@
     ViewData["Title"] = Model.Association?.Name ?? "Association Details";
 }
 <section class="section-panel">
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="message success">@TempData["SuccessMessage"]</div>
+    }
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="message error">@TempData["ErrorMessage"]</div>
+    }
+
     @if (Model.Association == null)
     {
         <h1>Association not found</h1>
@@ -46,23 +55,12 @@
             </div>
         </div>
 
-        <div class="section-panel">
-            <h2>Sponsorship Packages</h2>
-            @{
-                var activePackages = Model.Association.SponsorshipPackages
-                    .Where(sp => sp.IsActive)
-                    .OrderBy(sp => sp.DisplayOrder)
-                    .ThenByDescending(sp => sp.Amount)
-                    .ToList();
-            }
-            @if (activePackages.Count == 0)
-            {
-                <p>Sponsorship packages will be announced soon.</p>
-            }
-            else
-            {
+        @if (Model.ActiveSponsorshipPackages.Count > 0)
+        {
+            <div class="section-panel">
+                <h2>Sponsorship Packages</h2>
                 <div class="card-grid">
-                    @foreach (var package in activePackages)
+                    @foreach (var package in Model.ActiveSponsorshipPackages)
                     {
                         <article class="card">
                             <h3>@package.Name</h3>
@@ -71,11 +69,12 @@
                                 <span>Level Contribution: @package.Amount.ToString("C")</span>
                             </div>
                             <p>@package.Benefits</p>
+                            <a class="btn" href="~/Associations/Sponsor/@Model.Association.Id?selectedPackageId=@package.Id">Sponsor this package</a>
                         </article>
                     }
                 </div>
-            }
-        </div>
+            </div>
+        }
 
         <div class="section-panel">
             <h2>Tournaments</h2>
@@ -119,3 +118,4 @@
         <a href="~/" class="btn btn-secondary">Back to associations</a>
     }
 </section>
+

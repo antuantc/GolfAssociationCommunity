@@ -58,6 +58,7 @@ namespace GolfAssociationCommunity.Models
         public ICollection<ApplicationUser> Members { get; set; } = new List<ApplicationUser>();
         public ICollection<Tournament> Tournaments { get; set; } = new List<Tournament>();
         public ICollection<SponsorshipPackage> SponsorshipPackages { get; set; } = new List<SponsorshipPackage>();
+        public ICollection<SponsorshipPayment> SponsorshipPayments { get; set; } = new List<SponsorshipPayment>();
     }
 
     public class SponsorshipPackage
@@ -73,6 +74,30 @@ namespace GolfAssociationCommunity.Models
         public int DisplayOrder { get; set; }
         public DateTime CreatedAt { get; set; }
         public DateTime UpdatedAt { get; set; }
+        public ICollection<SponsorshipPayment> SponsorshipPayments { get; set; } = new List<SponsorshipPayment>();
+    }
+
+    public class SponsorshipPayment
+    {
+        public int Id { get; set; }
+        public int GolfAssociationId { get; set; }
+        public GolfAssociation? GolfAssociation { get; set; }
+        public int? SponsorshipPackageId { get; set; }
+        public SponsorshipPackage? SponsorshipPackage { get; set; }
+        public string PackageName { get; set; } = string.Empty;
+        public string SponsorName { get; set; } = string.Empty;
+        public string SponsorEmail { get; set; } = string.Empty;
+        public string? SponsorCompany { get; set; }
+        public decimal AmountPaid { get; set; }
+        public bool PaymentConfirmed { get; set; }
+        public DateTime PaidAtUtc { get; set; }
+        public string? AuthorizeNetTransactionId { get; set; }
+        public string? CardLast4 { get; set; }
+        public string BillingAddressLine1 { get; set; } = string.Empty;
+        public string BillingCity { get; set; } = string.Empty;
+        public string BillingState { get; set; } = string.Empty;
+        public string BillingZipCode { get; set; } = string.Empty;
+        public string BillingCountry { get; set; } = string.Empty;
     }
 
     public class Tournament
