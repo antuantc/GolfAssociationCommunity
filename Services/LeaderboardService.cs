@@ -50,6 +50,7 @@ namespace GolfAssociationCommunity.Services
     public interface ILeaderboardService
     {
         Task<IEnumerable<Leaderboard>> GetTournamentLeaderboardAsync(int tournamentId);
+        Task<Dictionary<int, List<int>>> GetTournamentTiebreakersAsync(int tournamentId);
         Task<IEnumerable<AssociationLeaderboardRow>> GetAssociationLeaderboardAsync(int associationId);
         Task<IEnumerable<RecentTournamentLeaderboard>> GetRecentTournamentLeaderboardsAsync(int associationId, int tournamentCount = 3, int topN = 5);
         Task<IEnumerable<GlobalLeaderboardRow>> GetGlobalLeaderboardAsync(int topN = 10);
@@ -111,6 +112,20 @@ namespace GolfAssociationCommunity.Services
                 _logger.LogError(ex, "Error retrieving leaderboard for tournament ID: {TournamentId}", tournamentId);
                 throw;
             }
+        }
+
+        public async Task<Dictionary<int, List<int>>> GetTournamentTiebreakersAsync(int tournamentId)
+        {
+            var rows = await _context.PlayerScores
+                .Where(ps => ps.TournamentId == tournamentId && ps.HoleNumber < 0)
+                .Select(ps => new { ps.AssociationPlayerId, ps.HoleNumber, ps.Score })
+                .ToListAsync();
+
+            return rows
+                .GroupBy(ps => ps.AssociationPlayerId)
+                .ToDictionary(
+                    g => g.Key,
+                    g => g.OrderByDescending(ps => ps.HoleNumber).Select(ps => ps.Score).ToList());
         }
 
         public async Task<IEnumerable<AssociationLeaderboardRow>> GetAssociationLeaderboardAsync(int associationId)

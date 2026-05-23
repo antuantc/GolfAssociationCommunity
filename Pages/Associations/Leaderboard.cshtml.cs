@@ -26,6 +26,8 @@ namespace GolfAssociationCommunity.Pages.Associations
         public Tournament? SelectedTournament { get; private set; }
         public List<AssociationLeaderboardRow> AssociationLeaderboard { get; private set; } = new();
         public List<Leaderboard> TournamentLeaderboard { get; private set; } = new();
+        public bool HasTiebreakerData { get; private set; }
+        public Dictionary<int, List<int>> TiebreakersByPlayer { get; private set; } = new();
 
         [BindProperty(SupportsGet = true)]
         public int? TournamentId { get; set; }
@@ -54,6 +56,8 @@ namespace GolfAssociationCommunity.Pages.Associations
                 if (SelectedTournament != null)
                 {
                     TournamentLeaderboard = (await _leaderboardService.GetTournamentLeaderboardAsync(TournamentId.Value)).ToList();
+                    TiebreakersByPlayer = await _leaderboardService.GetTournamentTiebreakersAsync(TournamentId.Value);
+                    HasTiebreakerData = TiebreakersByPlayer.Count > 0;
                 }
             }
 
