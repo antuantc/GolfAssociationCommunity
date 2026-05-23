@@ -45,6 +45,7 @@ namespace GolfAssociationCommunity.Pages.Tournaments
             [StringLength(256)]
             public string GuestEmail { get; set; } = string.Empty;
 
+            [Required(ErrorMessage = "Handicap is required.")]
             [Range(-10, 60, ErrorMessage = "Handicap must be between -10 and 60.")]
             public decimal? Handicap { get; set; }
 
