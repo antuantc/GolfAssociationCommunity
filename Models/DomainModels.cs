@@ -28,6 +28,12 @@ namespace GolfAssociationCommunity.Models
         Fourball
     }
 
+    public enum MediaType
+    {
+        Photo,
+        Video
+    }
+
     public class ApplicationUser : IdentityUser
     {
         public string? FirstName { get; set; }
@@ -60,12 +66,23 @@ namespace GolfAssociationCommunity.Models
         public bool IsActive { get; set; }
         public DateTime CreatedAt { get; set; }
         public DateTime UpdatedAt { get; set; }
+        // Homepage branding
+        public string? HeroImageUrl { get; set; }
+        public string? Tagline { get; set; }
+        public string? Motto { get; set; }
+        public int? EstYear { get; set; }
+        // Charity
+        public string? CharityName { get; set; }
+        public string? CharityDescription { get; set; }
+        public string? CharityUrl { get; set; }
         public ICollection<ApplicationUser> Members { get; set; } = new List<ApplicationUser>();
         public ICollection<AssociationPlayer> Players { get; set; } = new List<AssociationPlayer>();
         public ICollection<Tournament> Tournaments { get; set; } = new List<Tournament>();
         public ICollection<SponsorshipPackage> SponsorshipPackages { get; set; } = new List<SponsorshipPackage>();
         public ICollection<SponsorshipPayment> SponsorshipPayments { get; set; } = new List<SponsorshipPayment>();
         public ICollection<AssociationOfficer> OfficersAndMembers { get; set; } = new List<AssociationOfficer>();
+        public ICollection<AssociationMedia> MediaItems { get; set; } = new List<AssociationMedia>();
+        public ICollection<AssociationSponsor> Sponsors { get; set; } = new List<AssociationSponsor>();
     }
 
     public class AssociationOfficer
@@ -232,6 +249,33 @@ namespace GolfAssociationCommunity.Models
         /// <summary>Tiebreaker hole scores (hardest handicap hole first). Not persisted — populated at query time.</summary>
         [NotMapped]
         public List<int> TiebreakerScores { get; set; } = new();
+    }
+
+    public class AssociationMedia
+    {
+        public int Id { get; set; }
+        public int GolfAssociationId { get; set; }
+        public GolfAssociation? GolfAssociation { get; set; }
+        public MediaType MediaType { get; set; } = MediaType.Photo;
+        public string Url { get; set; } = string.Empty;
+        public string? Caption { get; set; }
+        public int DisplayOrder { get; set; }
+        public bool IsActive { get; set; } = true;
+        public DateTime CreatedAt { get; set; }
+    }
+
+    public class AssociationSponsor
+    {
+        public int Id { get; set; }
+        public int GolfAssociationId { get; set; }
+        public GolfAssociation? GolfAssociation { get; set; }
+        public string Name { get; set; } = string.Empty;
+        public string? Category { get; set; }
+        public string? LogoUrl { get; set; }
+        public string? Website { get; set; }
+        public int DisplayOrder { get; set; }
+        public bool IsActive { get; set; } = true;
+        public DateTime CreatedAt { get; set; }
     }
 
     public class AdminAuditEvent

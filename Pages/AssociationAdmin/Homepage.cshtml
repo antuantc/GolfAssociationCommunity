@@ -1,0 +1,260 @@
+@page
+@model GolfAssociationCommunity.Pages.AssociationAdmin.HomepageModel
+@{
+    ViewData["Title"] = "Homepage Content";
+}
+
+<section class="section-panel">
+    <h1>Homepage Content</h1>
+    <p>Manage what visitors see on your association's public homepage — hero, gallery, sponsors, and charity.</p>
+    @if (TempData["SuccessMessage"] is string success)
+    {
+        <div class="message success">@success</div>
+    }
+    @if (TempData["ErrorMessage"] is string error)
+    {
+        <div class="message error">@error</div>
+    }
+</section>
+
+@* Hero & Branding *@
+<section class="section-panel">
+    <h2>Hero &amp; Branding</h2>
+    <p>Set the banner photo, tagline, motto, and founding year shown at the top of your homepage.</p>
+
+    <form method="post" asp-page-handler="SaveHero" enctype="multipart/form-data" class="form-shell">
+        <div asp-validation-summary="ModelOnly" class="message error"></div>
+        <input type="hidden" asp-for="HeroSettings.ExistingHeroImageUrl" />
+
+        <div class="form-section">
+            <div class="form-grid">
+                <div class="full">
+                    <label asp-for="HeroSettings.Description">Description / About (shown in hero)</label>
+                    <textarea asp-for="HeroSettings.Description" class="form-control" rows="3"></textarea>
+                </div>
+                <div class="full">
+                    <label asp-for="HeroSettings.Tagline">Tagline <span class="field-note">Short bold phrase, e.g. "Where Golf Lives"</span></label>
+                    <input asp-for="HeroSettings.Tagline" class="form-control" placeholder="Where Golf Lives" />
+                </div>
+                <div class="full">
+                    <label asp-for="HeroSettings.Motto">Motto / Quote <span class="field-note">Appears as a quote in the hero</span></label>
+                    <input asp-for="HeroSettings.Motto" class="form-control" placeholder="Good shot or bad — we're still brothers." />
+                </div>
+                <div>
+                    <label asp-for="HeroSettings.EstYear">Year Established</label>
+                    <input asp-for="HeroSettings.EstYear" type="number" class="form-control" placeholder="2008" />
+                </div>
+                <div>
+                    <label asp-for="HeroImage">Hero Banner Photo <span class="field-note">JPG/PNG/WebP, max 5 MB</span></label>
+                    @if (!string.IsNullOrWhiteSpace(Model.HeroSettings.ExistingHeroImageUrl))
+                    {
+                        <div class="form-meta">
+                            <img src="@Model.HeroSettings.ExistingHeroImageUrl" alt="Current hero" style="height:72px;border-radius:4px;" />
+                            <span class="field-note">Upload to replace.</span>
+                        </div>
+                    }
+                    <input asp-for="HeroImage" type="file" accept="image/*" class="form-control" />
+                </div>
+            </div>
+        </div>
+        <div class="form-actions">
+            <button type="submit" class="btn">Save Hero &amp; Branding</button>
+        </div>
+    </form>
+</section>
+
+@* Gallery *@
+<section class="section-panel">
+    <h2>Gallery</h2>
+
+    <div class="form-grid" style="margin-bottom:1.5rem;">
+@* Photo upload *@
+        <div class="form-section">
+            <h3 class="form-section-title">Add Photo</h3>
+            <form method="post" asp-page-handler="AddPhoto" enctype="multipart/form-data" class="form-shell">
+                <div>
+                    <label asp-for="PhotoCaption">Caption (optional)</label>
+                    <input asp-for="PhotoCaption" class="form-control" placeholder="Season opener 2025" />
+                </div>
+                <div>
+                    <label asp-for="PhotoUpload">Photo <span class="field-note">JPG/PNG/WebP, max 5 MB</span></label>
+                    <input asp-for="PhotoUpload" type="file" accept="image/*" class="form-control" required />
+                </div>
+                <div class="form-actions">
+                    <button type="submit" class="btn">Upload Photo</button>
+                </div>
+            </form>
+        </div>
+
+@* Video embed *@
+        <div class="form-section">
+            <h3 class="form-section-title">Add Video</h3>
+            <form method="post" asp-page-handler="AddVideo" class="form-shell">
+                <div>
+                    <label asp-for="VideoCaption">Caption (optional)</label>
+                    <input asp-for="VideoCaption" class="form-control" placeholder="Highlights from the championship" />
+                </div>
+                <div>
+                    <label asp-for="VideoUrl">YouTube or Vimeo URL</label>
+                    <input asp-for="VideoUrl" type="url" class="form-control" placeholder="https://www.youtube.com/watch?v=..." />
+                </div>
+                <div class="form-actions">
+                    <button type="submit" class="btn">Add Video</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    @if (Model.MediaItems.Count == 0)
+    {
+        <p>No gallery items yet. Upload photos or add video links above.</p>
+    }
+    else
+    {
+        <div class="gallery-admin-grid">
+            @foreach (var item in Model.MediaItems)
+            {
+                <div class="gallery-admin-item">
+                    @if (item.MediaType == GolfAssociationCommunity.Models.MediaType.Photo)
+                    {
+                        <img src="@item.Url" alt="@item.Caption" class="gallery-admin-thumb" />
+                    }
+                    else
+                    {
+                        <div class="gallery-admin-video-icon">▶ Video</div>
+                    }
+                    @if (!string.IsNullOrWhiteSpace(item.Caption))
+                    {
+                        <p class="field-note" style="margin:0.25rem 0;">@item.Caption</p>
+                    }
+                    <form method="post" asp-page-handler="DeleteMedia" asp-route-id="@item.Id"
+                          onsubmit="return confirm('Remove this item?')">
+                        <button type="submit" class="btn btn-secondary" style="margin-top:0.5rem;padding:0.35rem 0.75rem;font-size:0.85rem;">Remove</button>
+                    </form>
+                </div>
+            }
+        </div>
+    }
+</section>
+
+@* Sponsors *@
+<section class="section-panel">
+    <h2>Sponsors</h2>
+    <p>Add sponsor logos to your homepage. These are display-only entries separate from payment packages.</p>
+
+    <form method="post" asp-page-handler="AddSponsor" enctype="multipart/form-data" class="form-shell" style="margin-bottom:1.5rem;">
+        <div asp-validation-summary="ModelOnly" class="message error"></div>
+        <div class="form-section">
+            <div class="form-grid">
+                <div>
+                    <label asp-for="NewSponsor.Name">Sponsor Name</label>
+                    <input asp-for="NewSponsor.Name" class="form-control" placeholder="Acme Golf Co." />
+                    <span asp-validation-for="NewSponsor.Name" class="text-danger"></span>
+                </div>
+                <div>
+                    <label asp-for="NewSponsor.Category">Category <span class="field-note">e.g. FOOD, INSURANCE</span></label>
+                    <input asp-for="NewSponsor.Category" class="form-control" placeholder="FOOD" />
+                </div>
+                <div>
+                    <label asp-for="NewSponsor.Website">Website (optional)</label>
+                    <input asp-for="NewSponsor.Website" type="url" class="form-control" placeholder="https://example.com" />
+                </div>
+                <div>
+                    <label asp-for="NewSponsor.DisplayOrder">Display Order</label>
+                    <input asp-for="NewSponsor.DisplayOrder" type="number" class="form-control" value="0" />
+                </div>
+                <div class="full">
+                    <label asp-for="SponsorLogo">Logo <span class="field-note">JPG/PNG/WebP, max 5 MB (optional)</span></label>
+                    <input asp-for="SponsorLogo" type="file" accept="image/*" class="form-control" />
+                    <span asp-validation-for="SponsorLogo" class="text-danger"></span>
+                </div>
+            </div>
+        </div>
+        <div class="form-actions">
+            <button type="submit" class="btn">Add Sponsor</button>
+        </div>
+    </form>
+
+    @if (Model.Sponsors.Count == 0)
+    {
+        <p>No sponsors added yet.</p>
+    }
+    else
+    {
+        <div class="table-scroll">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Logo</th>
+                        <th>Name</th>
+                        <th>Category</th>
+                        <th>Website</th>
+                        <th>Order</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var s in Model.Sponsors)
+                    {
+                        <tr>
+                            <td>
+                                @if (!string.IsNullOrWhiteSpace(s.LogoUrl))
+                                {
+                                    <img src="@s.LogoUrl" alt="@s.Name" style="height:40px;width:40px;object-fit:contain;" />
+                                }
+                                else
+                                {
+                                    <span class="sponsor-initials-sm">@(s.Name.Length >= 2 ? s.Name[..2].ToUpperInvariant() : s.Name.ToUpperInvariant())</span>
+                                }
+                            </td>
+                            <td>@s.Name</td>
+                            <td>@(s.Category ?? "—")</td>
+                            <td>
+                                @if (!string.IsNullOrWhiteSpace(s.Website))
+                                {
+                                    <a href="@s.Website" target="_blank" rel="noopener noreferrer">@s.Website</a>
+                                }
+                                else { <span>—</span> }
+                            </td>
+                            <td>@s.DisplayOrder</td>
+                            <td>
+                                <form method="post" asp-page-handler="DeleteSponsor" asp-route-id="@s.Id"
+                                      onsubmit="return confirm('Remove @s.Name?')">
+                                    <button type="submit" class="btn btn-secondary">Remove</button>
+                                </form>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</section>
+
+@* Charity *@
+<section class="section-panel">
+    <h2>Charity</h2>
+    <p>Highlight a charity your association supports on the public homepage.</p>
+
+    <form method="post" asp-page-handler="SaveCharity" class="form-shell">
+        <div class="form-section">
+            <div class="form-grid">
+                <div>
+                    <label asp-for="Charity.CharityName">Charity Name</label>
+                    <input asp-for="Charity.CharityName" class="form-control" placeholder="Local Youth Golf Foundation" />
+                </div>
+                <div>
+                    <label asp-for="Charity.CharityUrl">Charity Website (optional)</label>
+                    <input asp-for="Charity.CharityUrl" type="url" class="form-control" placeholder="https://charity.example.com" />
+                </div>
+                <div class="full">
+                    <label asp-for="Charity.CharityDescription">Description</label>
+                    <textarea asp-for="Charity.CharityDescription" class="form-control" rows="3" placeholder="We proudly support..."></textarea>
+                </div>
+            </div>
+        </div>
+        <div class="form-actions">
+            <button type="submit" class="btn">Save Charity</button>
+        </div>
+    </form>
+</section>

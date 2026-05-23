@@ -14,6 +14,8 @@ namespace GolfAssociationCommunity.Data
         public DbSet<GolfAssociation> GolfAssociations { get; set; } = null!;
         public DbSet<AssociationPlayer> AssociationPlayers { get; set; } = null!;
         public DbSet<AssociationOfficer> AssociationOfficers { get; set; } = null!;
+        public DbSet<AssociationMedia> AssociationMedia { get; set; } = null!;
+        public DbSet<AssociationSponsor> AssociationSponsors { get; set; } = null!;
         public DbSet<Tournament> Tournaments { get; set; } = null!;
         public DbSet<SponsorshipPackage> SponsorshipPackages { get; set; } = null!;
         public DbSet<SponsorshipPayment> SponsorshipPayments { get; set; } = null!;
@@ -190,6 +192,18 @@ namespace GolfAssociationCommunity.Data
 
             builder.Entity<AdminAuditEvent>()
                 .HasIndex(a => a.Action);
+
+            builder.Entity<GolfAssociation>()
+                .HasMany(ga => ga.MediaItems)
+                .WithOne(m => m.GolfAssociation)
+                .HasForeignKey(m => m.GolfAssociationId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            builder.Entity<GolfAssociation>()
+                .HasMany(ga => ga.Sponsors)
+                .WithOne(s => s.GolfAssociation)
+                .HasForeignKey(s => s.GolfAssociationId)
+                .OnDelete(DeleteBehavior.Cascade);
         }
     }
 }

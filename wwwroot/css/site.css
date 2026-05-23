@@ -575,3 +575,289 @@ ul[style*="list-style-type:none"] {
     list-style: none;
     padding-left: 0;
 }
+
+/* ── Association Homepage ──────────────────────────────────────── */
+
+/* Hero */
+.assoc-hero {
+    position: relative;
+    background: linear-gradient(135deg, var(--hero-start) 0%, var(--hero-end) 100%);
+    border-radius: 0.75rem;
+    overflow: hidden;
+    margin-bottom: 1.5rem;
+}
+
+.assoc-hero--image {
+    background-size: cover;
+    background-position: center top;
+}
+
+.assoc-hero__overlay {
+    background: linear-gradient(160deg, rgba(0,0,0,0.62) 0%, rgba(0,0,0,0.72) 100%);
+    padding: 4rem 2.5rem 3rem;
+    color: white;
+}
+
+.assoc-hero__eyebrow {
+    font-size: 0.75rem;
+    font-weight: 800;
+    letter-spacing: 0.2em;
+    color: rgba(255,255,255,0.65);
+    margin: 0 0 0.6rem;
+    text-transform: uppercase;
+}
+
+.assoc-hero__title {
+    font-size: clamp(2rem, 5vw, 3.5rem);
+    font-weight: 900;
+    line-height: 1.05;
+    margin: 0 0 0.9rem;
+    letter-spacing: -0.02em;
+}
+
+.assoc-hero__desc {
+    font-size: 1.1rem;
+    color: rgba(255,255,255,0.82);
+    max-width: 600px;
+    margin: 0 0 0.5rem;
+    line-height: 1.5;
+}
+
+.assoc-hero__motto {
+    border-left: 3px solid rgba(255,255,255,0.45);
+    padding-left: 1rem;
+    margin: 0.75rem 0 0;
+    color: rgba(255,255,255,0.75);
+    font-style: italic;
+    font-size: 1rem;
+    max-width: 520px;
+}
+
+.assoc-hero__badge {
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    color: rgba(255,255,255,0.5);
+    margin: 1.5rem 0 0;
+    text-transform: uppercase;
+}
+
+/* Stats bar */
+.assoc-stats-bar {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+    background: white;
+    border-radius: 0.75rem;
+    box-shadow: 0 15px 40px var(--panel-shadow);
+    margin-bottom: 1.5rem;
+    overflow: hidden;
+}
+
+.assoc-stat {
+    padding: 1.25rem 1rem;
+    text-align: center;
+    border-right: 1px solid var(--card-border);
+}
+
+.assoc-stat:last-child {
+    border-right: none;
+}
+
+.assoc-stat__num {
+    display: block;
+    font-size: 2rem;
+    font-weight: 900;
+    color: var(--brand-accent);
+    line-height: 1;
+}
+
+.assoc-stat__label {
+    display: block;
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted-text);
+    margin-top: 0.4rem;
+}
+
+/* Event cards */
+.event-card__badge {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.6rem;
+}
+
+/* Gallery */
+.gallery-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 0.75rem;
+}
+
+.gallery-item {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.gallery-photo {
+    width: 100%;
+    aspect-ratio: 4/3;
+    object-fit: cover;
+    border-radius: 0.5rem;
+    display: block;
+}
+
+.gallery-video {
+    width: 100%;
+    aspect-ratio: 16/9;
+    border: 0;
+    border-radius: 0.5rem;
+}
+
+.gallery-caption {
+    font-size: 0.82rem;
+    color: var(--muted-text);
+    margin: 0;
+}
+
+/* Gallery admin grid */
+.gallery-admin-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    gap: 1rem;
+}
+
+.gallery-admin-item {
+    display: flex;
+    flex-direction: column;
+    border: 1px solid var(--card-border);
+    border-radius: 0.5rem;
+    padding: 0.75rem;
+    background: #fcfdff;
+}
+
+.gallery-admin-thumb {
+    width: 100%;
+    aspect-ratio: 4/3;
+    object-fit: cover;
+    border-radius: 0.35rem;
+}
+
+.gallery-admin-video-icon {
+    background: #1c2530;
+    color: white;
+    border-radius: 0.35rem;
+    aspect-ratio: 4/3;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 1rem;
+}
+
+/* Sponsors */
+.sponsor-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+    gap: 0.85rem;
+}
+
+.sponsor-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 1rem 0.75rem;
+    border: 1px solid var(--card-border);
+    border-radius: 0.65rem;
+    text-align: center;
+    text-decoration: none;
+    color: var(--text-color);
+    background: white;
+    transition: border-color 0.15s;
+}
+
+a.sponsor-card:hover {
+    border-color: var(--brand-accent);
+}
+
+.sponsor-logo {
+    width: 56px;
+    height: 56px;
+    object-fit: contain;
+}
+
+.sponsor-initials,
+.sponsor-initials-sm {
+    width: 56px;
+    height: 56px;
+    background: var(--brand-accent);
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 800;
+    font-size: 1.1rem;
+    flex-shrink: 0;
+}
+
+.sponsor-initials-sm {
+    width: 36px;
+    height: 36px;
+    font-size: 0.85rem;
+}
+
+.sponsor-name {
+    font-weight: 700;
+    font-size: 0.82rem;
+    line-height: 1.2;
+}
+
+.sponsor-category {
+    font-size: 0.65rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted-text);
+}
+
+/* Charity */
+.charity-panel {
+    display: flex;
+    gap: 1.5rem;
+    align-items: flex-start;
+}
+
+.charity-icon {
+    font-size: 2.5rem;
+    line-height: 1;
+    flex-shrink: 0;
+    color: #c0335a;
+}
+
+@media (max-width: 640px) {
+    .assoc-hero__overlay {
+        padding: 2.5rem 1.25rem 2rem;
+    }
+
+    .assoc-stats-bar {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .assoc-stat {
+        border-bottom: 1px solid var(--card-border);
+    }
+
+    .charity-panel {
+        flex-direction: column;
+    }
+
+    .gallery-grid {
+        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    }
+}
+

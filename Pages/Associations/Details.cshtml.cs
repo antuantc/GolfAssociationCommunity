@@ -19,6 +19,10 @@ namespace GolfAssociationCommunity.Pages.Associations
         public GolfAssociation? Association { get; set; }
         public List<SponsorshipPackage> ActiveSponsorshipPackages { get; private set; } = new();
         public List<RecentTournamentLeaderboard> RecentLeaderboards { get; private set; } = new();
+        public int ActivePlayerCount { get; private set; }
+        public int UpcomingTournamentCount { get; private set; }
+        public List<Tournament> UpcomingTournaments { get; private set; } = new();
+        public Tournament? NextTournament { get; private set; }
 
         public async Task<IActionResult> OnGetAsync(int id)
         {
@@ -45,6 +49,14 @@ namespace GolfAssociationCommunity.Pages.Associations
                 .OrderBy(sp => sp.DisplayOrder)
                 .ThenByDescending(sp => sp.Amount)
                 .ToList();
+            ActivePlayerCount = Association.Players.Count(p => p.IsActive);
+            var upcoming = Association.Tournaments
+                .Where(t => t.StartDate >= DateTime.UtcNow && t.Status != TournamentStatus.Cancelled)
+                .OrderBy(t => t.StartDate)
+                .ToList();
+            UpcomingTournamentCount = upcoming.Count;
+            UpcomingTournaments = upcoming.Take(3).ToList();
+            NextTournament = upcoming.FirstOrDefault();
             RecentLeaderboards = (await _leaderboardService.GetRecentTournamentLeaderboardsAsync(id, 3, 5)).ToList();
             return true;
         }

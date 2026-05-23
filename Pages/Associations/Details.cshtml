@@ -1,183 +1,338 @@
 @page "{id:int}"
 @model GolfAssociationCommunity.Pages.Associations.DetailsModel
+@using GolfAssociationCommunity.Models
 @{
-    ViewData["Title"] = Model.Association?.Name ?? "Association Details";
+    ViewData["Title"] = Model.Association?.Name ?? "Association";
+    var assoc = Model.Association;
 }
-<section class="section-panel">
-    @if (TempData["SuccessMessage"] != null)
-    {
-        <div class="message success">@TempData["SuccessMessage"]</div>
-    }
-    @if (TempData["ErrorMessage"] != null)
-    {
-        <div class="message error">@TempData["ErrorMessage"]</div>
-    }
 
-    @if (Model.Association == null)
-    {
+@if (TempData["SuccessMessage"] != null)
+{
+    <div class="message success container" style="margin-bottom:0;">@TempData["SuccessMessage"]</div>
+}
+@if (TempData["ErrorMessage"] != null)
+{
+    <div class="message error container" style="margin-bottom:0;">@TempData["ErrorMessage"]</div>
+}
+
+@if (assoc == null)
+{
+    <section class="section-panel">
         <h1>Association not found</h1>
         <p>The association you requested does not exist or is not active.</p>
         <a href="~/" class="btn btn-secondary">Back to associations</a>
-    }
-    else
+    </section>
+}
+else
+{
+    @* ── Hero Banner ─────────────────────────────────────────────── *@
+    <div class="assoc-hero@(string.IsNullOrWhiteSpace(assoc.HeroImageUrl) ? "" : " assoc-hero--image")"
+         @(string.IsNullOrWhiteSpace(assoc.HeroImageUrl) ? "" : $"style=\"background-image:url('{assoc.HeroImageUrl}');\"")>
+        <div class="assoc-hero__overlay">
+            @if (!string.IsNullOrWhiteSpace(assoc.Tagline))
+            {
+                <p class="assoc-hero__eyebrow">@assoc.Tagline.ToUpperInvariant()</p>
+            }
+            <h1 class="assoc-hero__title">@assoc.Name</h1>
+            @if (!string.IsNullOrWhiteSpace(assoc.Description))
+            {
+                <p class="assoc-hero__desc">@assoc.Description</p>
+            }
+            @if (!string.IsNullOrWhiteSpace(assoc.Motto))
+            {
+                <blockquote class="assoc-hero__motto">&ldquo;@assoc.Motto&rdquo;</blockquote>
+            }
+            <div class="form-actions" style="margin-top:1.5rem;">
+                <a class="btn" href="~/Associations/Leaderboard/@assoc.Id">View Leaderboard</a>
+                @if (Model.NextTournament != null)
+                {
+                    <a class="btn btn-secondary" href="~/Tournaments/Details/@Model.NextTournament.Id?associationId=@assoc.Id">Register Now</a>
+                }
+            </div>
+            @{
+                var heroBadgeParts = new System.Collections.Generic.List<string>();
+                if (assoc.EstYear.HasValue) heroBadgeParts.Add($"EST. {assoc.EstYear}");
+                var heroLoc = string.Join(", ", new[] { assoc.City, assoc.State }.Where(s => !string.IsNullOrWhiteSpace(s)));
+                if (!string.IsNullOrWhiteSpace(heroLoc)) heroBadgeParts.Add(heroLoc.ToUpperInvariant());
+            }
+            @if (heroBadgeParts.Count > 0)
+            {
+                <p class="assoc-hero__badge">@string.Join(" · ", heroBadgeParts)</p>
+            }
+        </div>
+    </div>
+
+    @* ── Stats Bar ────────────────────────────────────────────────── *@
+    <div class="assoc-stats-bar">
+        <div class="assoc-stat">
+            <span class="assoc-stat__num">@Model.ActivePlayerCount</span>
+            <span class="assoc-stat__label">Active Members</span>
+        </div>
+        <div class="assoc-stat">
+            <span class="assoc-stat__num">@assoc.Tournaments.Count</span>
+            <span class="assoc-stat__label">Tournaments</span>
+        </div>
+        <div class="assoc-stat">
+            <span class="assoc-stat__num">@Model.UpcomingTournamentCount</span>
+            <span class="assoc-stat__label">Upcoming</span>
+        </div>
+        @if (assoc.EstYear.HasValue && assoc.EstYear.Value > 1800)
+        {
+            <div class="assoc-stat">
+                <span class="assoc-stat__num">@(DateTime.UtcNow.Year - assoc.EstYear.Value)+</span>
+                <span class="assoc-stat__label">Years Strong</span>
+            </div>
+        }
+    </div>
+
+    @* ── Upcoming Events ──────────────────────────────────────────── *@
+    @if (Model.UpcomingTournaments.Count > 0)
     {
-        <div class="association-header">
-            <div>
-                <h1>@Model.Association.Name</h1>
-                <p>@Model.Association.Description</p>
-                <dl class="details-list">
-                    <dt>Location</dt>
-                    <dd>@(string.Join(", ", new[] { Model.Association.City, Model.Association.State, Model.Association.Country }.Where(v => !string.IsNullOrWhiteSpace(v))))</dd>
-                    <dt>Address</dt>
-                    <dd>@(string.Join(", ", new[] { Model.Association.Street, Model.Association.City, Model.Association.State, Model.Association.ZipCode, Model.Association.Country }.Where(v => !string.IsNullOrWhiteSpace(v))))</dd>
-                    <dt>Contact Email</dt>
-                    <dd>@(string.IsNullOrWhiteSpace(Model.Association.ContactEmail) ? "Not provided" : Model.Association.ContactEmail)</dd>
-                    <dt>Contact Phone</dt>
-                    <dd>@(string.IsNullOrWhiteSpace(Model.Association.ContactPhone) ? "Not provided" : Model.Association.ContactPhone)</dd>
-                    <dt>Website</dt>
-                    <dd>
-                        @if (string.IsNullOrWhiteSpace(Model.Association.Website))
+        <section class="section-panel">
+            <div class="form-actions" style="justify-content:space-between;margin-bottom:1rem;">
+                <h2 style="margin:0;">Upcoming Events</h2>
+                <a href="~/Associations/Leaderboard/@assoc.Id" class="btn btn-secondary">View All &rsaquo;</a>
+            </div>
+            <div class="card-grid">
+                @foreach (var t in Model.UpcomingTournaments)
+                {
+                    <article class="card event-card">
+                        <div class="event-card__badge">
+                            <span class="pill">UPCOMING</span>
+                            <span class="field-note">@t.StartDate.ToString("MMM d, yyyy")</span>
+                        </div>
+                        <h3>@t.Name</h3>
+                        @if (!string.IsNullOrWhiteSpace(t.GolfCourse)) { <p style="margin:0.25rem 0;">@t.GolfCourse</p> }
+                        @if (!string.IsNullOrWhiteSpace(t.Location)) { <p class="field-note" style="margin:0 0 0.75rem;">@t.Location</p> }
+                        <a class="btn" href="~/Tournaments/Details/@t.Id?associationId=@assoc.Id">Register &rarr;</a>
+                    </article>
+                }
+            </div>
+        </section>
+    }
+
+    @* ── Recent Tournament Results ─────────────────────────────────── *@
+    @if (Model.RecentLeaderboards.Count > 0)
+    {
+        <section class="section-panel">
+            <h2>Recent Tournament Results</h2>
+            <div class="card-grid">
+                @foreach (var lb in Model.RecentLeaderboards)
+                {
+                    <article class="card">
+                        <h3>@lb.TournamentName</h3>
+                        <p class="field-note">@lb.TournamentDates</p>
+                        <table class="table" style="margin-top:0.5rem;">
+                            <thead><tr><th>#</th><th>Player</th><th>Score</th></tr></thead>
+                            <tbody>
+                                @foreach (var e in lb.TopEntries)
+                                {
+                                    <tr>
+                                        <td>@e.Position</td>
+                                        <td>@(e.AssociationPlayer?.DisplayName ?? "Unknown")</td>
+                                        <td>@e.TotalScore</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                        <a class="btn btn-secondary" href="~/Associations/Leaderboard/@assoc.Id?TournamentId=@lb.TournamentId">Full results</a>
+                    </article>
+                }
+            </div>
+        </section>
+    }
+
+    @* ── Gallery ──────────────────────────────────────────────────── *@
+    @if (assoc.MediaItems.Any(m => m.IsActive))
+    {
+        <section class="section-panel">
+            <h2>Gallery</h2>
+            <div class="gallery-grid">
+                @foreach (var item in assoc.MediaItems.Where(m => m.IsActive).OrderBy(m => m.DisplayOrder))
+                {
+                    <div class="gallery-item">
+                        @if (item.MediaType == MediaType.Photo)
                         {
-                            <span>Not provided</span>
+                            <img src="@item.Url" alt="@item.Caption" class="gallery-photo" loading="lazy" />
                         }
                         else
                         {
-                            <a href="@Model.Association.Website" target="_blank" rel="noopener noreferrer">@Model.Association.Website</a>
+                            <iframe src="@item.Url" class="gallery-video" allowfullscreen loading="lazy" title="@item.Caption"></iframe>
                         }
-                    </dd>
-                    <dt>Total Tournaments</dt>
-                    <dd>@Model.Association.Tournaments.Count</dd>
-                    <dt>Upcoming Tournaments</dt>
-                    <dd>@Model.Association.Tournaments.Count(t => t.StartDate >= DateTime.UtcNow)</dd>
-                </dl>
-            </div>
-        </div>
-
-        @if (Model.ActiveSponsorshipPackages.Count > 0)
-        {
-            <div class="section-panel">
-                <h2>Sponsorship Packages</h2>
-                <div class="card-grid">
-                    @foreach (var package in Model.ActiveSponsorshipPackages)
-                    {
-                        <article class="card">
-                            <h3>@package.Name</h3>
-                            <p>@(string.IsNullOrWhiteSpace(package.Description) ? "Support this association as a sponsor." : package.Description)</p>
-                            <div class="card-meta">
-                                <span>Level Contribution: @package.Amount.ToString("C")</span>
-                            </div>
-                            <p>@package.Benefits</p>
-                            <a class="btn" href="~/Associations/Sponsor/@Model.Association.Id?selectedPackageId=@package.Id">Sponsor this package</a>
-                        </article>
-                    }
-                </div>
-            </div>
-        }
-
-        @if (Model.Association.OfficersAndMembers.Any(o => o.IsActive))
-        {
-            <div class="section-panel">
-                <h2>Officers &amp; Members</h2>
-                <div class="card-grid">
-                    @foreach (var officer in Model.Association.OfficersAndMembers.Where(o => o.IsActive).OrderBy(o => o.DisplayOrder).ThenBy(o => o.Name))
-                    {
-                        <article class="card">
-                            @if (!string.IsNullOrWhiteSpace(officer.PictureUrl))
-                            {
-                                <img src="@officer.PictureUrl" alt="@officer.Name"
-                                     style="width:100%;max-height:180px;object-fit:cover;border-radius:6px;margin-bottom:.75rem;" />
-                            }
-                            <h3>@officer.Name</h3>
-                            <div class="card-meta"><span>@officer.Role</span></div>
-                            @if (!string.IsNullOrWhiteSpace(officer.Bio))
-                            {
-                                <p>@officer.Bio</p>
-                            }
-                        </article>
-                    }
-                </div>
-            </div>
-        }
-
-        @if (Model.RecentLeaderboards.Count > 0)
-        {
-            <div class="section-panel">
-                <h2>Recent Tournament Leaderboards</h2>
-                @foreach (var lb in Model.RecentLeaderboards)
-                {
-                    <div class="section-panel">
-                        <h3>@lb.TournamentName</h3>
-                        <p class="field-note">@lb.TournamentDates</p>
-                        <div class="table-scroll">
-                            <table class="table">
-                                <thead>
-                                    <tr>
-                                        <th>#</th>
-                                        <th>Player</th>
-                                        <th>Score</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    @foreach (var entry in lb.TopEntries)
-                                    {
-                                        <tr>
-                                            <td>@entry.Position</td>
-                                            <td>@(entry.AssociationPlayer?.DisplayName ?? "Unknown")</td>
-                                            <td>@entry.TotalScore</td>
-                                        </tr>
-                                    }
-                                </tbody>
-                            </table>
-                        </div>
-                        <a class="btn btn-secondary" href="~/Associations/Leaderboard/@Model.Association.Id?TournamentId=@lb.TournamentId">Full results</a>
+                        @if (!string.IsNullOrWhiteSpace(item.Caption))
+                        {
+                            <p class="gallery-caption">@item.Caption</p>
+                        }
                     </div>
                 }
             </div>
-        }
-
-        <div class="section-panel">
-            <h2>Tournaments</h2>
-            @if (Model.Association.Tournaments == null || Model.Association.Tournaments.Count == 0)
-            {
-                <p>No tournaments are currently associated with this association.</p>
-            }
-            else
-            {
-                <div class="card-grid">
-                    @foreach (var tournament in Model.Association.Tournaments.OrderBy(t => t.StartDate))
-                    {
-                        <article class="card">
-                            <h3>@tournament.Name</h3>
-                            <p>@tournament.Description</p>
-                            <dl class="details-list">
-                                <dt>Dates</dt>
-                                <dd>@tournament.StartDate.ToString("MMM d, yyyy") - @tournament.EndDate.ToString("MMM d, yyyy")</dd>
-                                <dt>Registration Deadline</dt>
-                                <dd>@(tournament.RegistrationDeadline.HasValue ? tournament.RegistrationDeadline.Value.ToString("MMM d, yyyy") : "Not set")</dd>
-                                <dt>Format</dt>
-                                <dd>@tournament.Format</dd>
-                                <dt>Location</dt>
-                                <dd>@(string.IsNullOrWhiteSpace(tournament.Location) ? "TBD" : tournament.Location)</dd>
-                                <dt>Golf Course</dt>
-                                <dd>@(string.IsNullOrWhiteSpace(tournament.GolfCourse) ? "TBD" : tournament.GolfCourse)</dd>
-                                <dt>Entry Fee</dt>
-                                <dd>@tournament.EntryFee.ToString("C")</dd>
-                                <dt>Max Players</dt>
-                                <dd>@tournament.MaxPlayers</dd>
-                                <dt>Status</dt>
-                                <dd>@tournament.Status</dd>
-                            </dl>
-                            <a class="btn" href="~/Tournaments/Details/@tournament.Id?associationId=@Model.Association.Id">Register</a>
-                        </article>
-                    }
-                </div>
-            }
-        </div>
-
-        <div class="form-actions">
-            <a href="~/Associations/Leaderboard/@Model.Association.Id" class="btn">View Leaderboard</a>
-            <a href="~/" class="btn btn-secondary">Back to associations</a>
-        </div>
+        </section>
     }
-</section>
+
+    @* ── Officers & Members ───────────────────────────────────────── *@
+    @if (assoc.OfficersAndMembers.Any(o => o.IsActive))
+    {
+        <section class="section-panel">
+            <h2>Officers &amp; Members</h2>
+            <div class="card-grid">
+                @foreach (var officer in assoc.OfficersAndMembers.Where(o => o.IsActive).OrderBy(o => o.DisplayOrder).ThenBy(o => o.Name))
+                {
+                    <article class="card">
+                        @if (!string.IsNullOrWhiteSpace(officer.PictureUrl))
+                        {
+                            <img src="@officer.PictureUrl" alt="@officer.Name"
+                                 style="width:100%;max-height:180px;object-fit:cover;border-radius:6px;margin-bottom:.75rem;" />
+                        }
+                        <h3>@officer.Name</h3>
+                        <div class="card-meta"><span class="pill">@officer.Role</span></div>
+                        @if (!string.IsNullOrWhiteSpace(officer.Bio)) { <p>@officer.Bio</p> }
+                    </article>
+                }
+            </div>
+        </section>
+    }
+
+    @* ── Charity ──────────────────────────────────────────────────── *@
+    @if (!string.IsNullOrWhiteSpace(assoc.CharityName))
+    {
+        <section class="section-panel charity-panel">
+            <div class="charity-icon">&#9829;</div>
+            <div>
+                <h2 style="margin:0 0 0.5rem;">@assoc.CharityName</h2>
+                @if (!string.IsNullOrWhiteSpace(assoc.CharityDescription)) { <p>@assoc.CharityDescription</p> }
+                @if (!string.IsNullOrWhiteSpace(assoc.CharityUrl))
+                {
+                    <a href="@assoc.CharityUrl" target="_blank" rel="noopener noreferrer" class="btn">Learn More</a>
+                }
+            </div>
+        </section>
+    }
+
+    @* ── Sponsors ─────────────────────────────────────────────────── *@
+    @if (assoc.Sponsors.Any(s => s.IsActive))
+    {
+        <section class="section-panel">
+            <h2>@DateTime.UtcNow.Year Sponsors</h2>
+            <div class="sponsor-grid">
+                @foreach (var s in assoc.Sponsors.Where(s => s.IsActive).OrderBy(s => s.DisplayOrder).ThenBy(s => s.Name))
+                {
+                    var sponsorTag = string.IsNullOrWhiteSpace(s.Website) ? "div" : "a";
+                    @if (!string.IsNullOrWhiteSpace(s.Website))
+                    {
+                        <a href="@s.Website" target="_blank" rel="noopener noreferrer" class="sponsor-card">
+                            @if (!string.IsNullOrWhiteSpace(s.LogoUrl))
+                            {
+                                <img src="@s.LogoUrl" alt="@s.Name" class="sponsor-logo" />
+                            }
+                            else
+                            {
+                                <div class="sponsor-initials">@(s.Name.Length >= 2 ? s.Name[..2].ToUpperInvariant() : s.Name.ToUpperInvariant())</div>
+                            }
+                            <span class="sponsor-name">@s.Name</span>
+                            @if (!string.IsNullOrWhiteSpace(s.Category)) { <span class="sponsor-category">@s.Category</span> }
+                        </a>
+                    }
+                    else
+                    {
+                        <div class="sponsor-card">
+                            @if (!string.IsNullOrWhiteSpace(s.LogoUrl))
+                            {
+                                <img src="@s.LogoUrl" alt="@s.Name" class="sponsor-logo" />
+                            }
+                            else
+                            {
+                                <div class="sponsor-initials">@(s.Name.Length >= 2 ? s.Name[..2].ToUpperInvariant() : s.Name.ToUpperInvariant())</div>
+                            }
+                            <span class="sponsor-name">@s.Name</span>
+                            @if (!string.IsNullOrWhiteSpace(s.Category)) { <span class="sponsor-category">@s.Category</span> }
+                        </div>
+                    }
+                }
+            </div>
+        </section>
+    }
+
+    @* ── Become a Sponsor (packages) ──────────────────────────────── *@
+    @if (Model.ActiveSponsorshipPackages.Count > 0)
+    {
+        <section class="section-panel">
+            <h2>Become a Sponsor</h2>
+            <p>Support this association and grow your business. Choose a level below.</p>
+            <div class="card-grid">
+                @foreach (var package in Model.ActiveSponsorshipPackages)
+                {
+                    <article class="card">
+                        <h3>@package.Name</h3>
+                        <p>@(string.IsNullOrWhiteSpace(package.Description) ? "Support this association as a sponsor." : package.Description)</p>
+                        <div class="card-meta"><span>Contribution: @package.Amount.ToString("C")</span></div>
+                        <p>@package.Benefits</p>
+                        <a class="btn" href="~/Associations/Sponsor/@assoc.Id?selectedPackageId=@package.Id">Sponsor this package</a>
+                    </article>
+                }
+            </div>
+        </section>
+    }
+
+    @* ── All Tournaments ──────────────────────────────────────────── *@
+    <section class="section-panel">
+        <div class="form-actions" style="justify-content:space-between;margin-bottom:1rem;">
+            <h2 style="margin:0;">All Tournaments</h2>
+            <a href="~/Associations/Leaderboard/@assoc.Id" class="btn btn-secondary">Leaderboard</a>
+        </div>
+        @if (assoc.Tournaments == null || assoc.Tournaments.Count == 0)
+        {
+            <p>No tournaments are currently scheduled.</p>
+        }
+        else
+        {
+            <div class="card-grid">
+                @foreach (var tournament in assoc.Tournaments.OrderBy(t => t.StartDate))
+                {
+                    <article class="card event-card">
+                        <div class="event-card__badge">
+                            <span class="pill">@tournament.Status</span>
+                            <span class="field-note">@tournament.StartDate.ToString("MMM d, yyyy")</span>
+                        </div>
+                        <h3>@tournament.Name</h3>
+                        @if (!string.IsNullOrWhiteSpace(tournament.GolfCourse)) { <p style="margin:0.25rem 0;">@tournament.GolfCourse</p> }
+                        @if (!string.IsNullOrWhiteSpace(tournament.Location)) { <p class="field-note" style="margin:0 0 0.5rem;">@tournament.Location</p> }
+                        <dl class="details-list" style="margin:0.5rem 0;">
+                            <dt>Format</dt><dd>@tournament.Format</dd>
+                            <dt>Entry Fee</dt><dd>@tournament.EntryFee.ToString("C")</dd>
+                        </dl>
+                        <a class="btn" href="~/Tournaments/Details/@tournament.Id?associationId=@assoc.Id">Details &amp; Register</a>
+                    </article>
+                }
+            </div>
+        }
+    </section>
+
+    @* ── About & Contact ──────────────────────────────────────────── *@
+    <section class="section-panel">
+        <h2>About @assoc.Name</h2>
+        <dl class="details-list">
+            @if (!string.IsNullOrWhiteSpace(assoc.ContactEmail))
+            {
+                <dt>Email</dt><dd>@assoc.ContactEmail</dd>
+            }
+            @if (!string.IsNullOrWhiteSpace(assoc.ContactPhone))
+            {
+                <dt>Phone</dt><dd>@assoc.ContactPhone</dd>
+            }
+            @if (!string.IsNullOrWhiteSpace(assoc.Website))
+            {
+                <dt>Website</dt>
+                <dd><a href="@assoc.Website" target="_blank" rel="noopener noreferrer">@assoc.Website</a></dd>
+            }
+            @{
+                var fullAddr = string.Join(", ", new[] { assoc.Street, assoc.City, assoc.State, assoc.ZipCode, assoc.Country }.Where(v => !string.IsNullOrWhiteSpace(v)));
+            }
+            @if (!string.IsNullOrWhiteSpace(fullAddr))
+            {
+                <dt>Address</dt><dd>@fullAddr</dd>
+            }
+        </dl>
+        <a href="~/" class="btn btn-secondary">Back to associations</a>
+    </section>
+}
 
