@@ -66,6 +66,10 @@
             <span class="pill">Round: @Model.Round</span>
             <span class="pill">Total Score: @Model.CurrentTotalScore</span>
             <span class="pill">Stableford: @Model.CurrentStablefordPoints</span>
+            @if (!string.IsNullOrWhiteSpace(Model.SelectedFlight))
+            {
+                <span class="pill">Flight: @Model.SelectedFlight</span>
+            }
         </div>
 
         <form method="post" asp-page-handler="Save" class="form-shell">
@@ -73,6 +77,17 @@
             <input type="hidden" asp-for="AssociationPlayerId" />
             <input type="hidden" asp-for="Round" />
             <div asp-validation-summary="ModelOnly" class="message error"></div>
+
+            <div class="form-section">
+                <h3 class="form-section-title">Flight <span class="field-note">(optional — groups players in leaderboard)</span></h3>
+                <div class="form-grid" style="grid-template-columns:1fr 2fr;max-width:500px;">
+                    <div>
+                        <label asp-for="FlightInput">Flight Name</label>
+                        <input asp-for="FlightInput" class="form-control" placeholder="e.g. A, B, Championship" maxlength="50" />
+                        <span class="field-note">Leave blank if this tournament uses no flights.</span>
+                    </div>
+                </div>
+            </div>
 
             <div class="form-section">
                 <p class="field-note">Enter one total per round. If totals tie, the scores on the hardest handicap holes are used as sequential tiebreakers.</p>

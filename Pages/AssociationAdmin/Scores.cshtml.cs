@@ -35,10 +35,14 @@ namespace GolfAssociationCommunity.Pages.AssociationAdmin
         [BindProperty]
         public RoundScoreInput Input { get; set; } = new();
 
+        [BindProperty]
+        public string? FlightInput { get; set; }
+
         public List<Tournament> Tournaments { get; private set; } = new();
         public List<PlayerOption> Players { get; private set; } = new();
         public Tournament? SelectedTournament { get; private set; }
         public string? SelectedPlayerName { get; private set; }
+        public string? SelectedFlight { get; private set; }
         public int CurrentTotalScore { get; private set; }
         public int CurrentStablefordPoints { get; private set; }
 
@@ -129,6 +133,9 @@ namespace GolfAssociationCommunity.Pages.AssociationAdmin
                 await LoadPageDataAsync();
                 return Page();
             }
+
+            // Save flight assignment on registration
+            registeredPlayer.Flight = string.IsNullOrWhiteSpace(FlightInput) ? null : FlightInput.Trim();
 
             var existingScores = await Context.PlayerScores
                 .Where(score => score.TournamentId == TournamentId.Value
@@ -288,6 +295,15 @@ namespace GolfAssociationCommunity.Pages.AssociationAdmin
             }
 
             SelectedPlayerName = player.DisplayName;
+
+            // Load flight assignment from registration
+            var registration = await Context.Registrations
+                .FirstOrDefaultAsync(r => r.TournamentId == TournamentId.Value
+                    && r.AssociationPlayerId == AssociationPlayerId.Value
+                    && r.Status == RegistrationStatus.Registered);
+            SelectedFlight = registration?.Flight;
+            if (FlightInput == null)   // null = GET request (not yet bound by model binder)
+                FlightInput = SelectedFlight;
 
             var existingScores = await Context.PlayerScores
                 .Where(score => score.TournamentId == TournamentId.Value

@@ -208,6 +208,7 @@ namespace GolfAssociationCommunity.Models
         public DateTime? PaymentDate { get; set; }
         public string? WithdrawalReason { get; set; }
         public DateTime? WithdrawalDate { get; set; }
+        public string? Flight { get; set; }
     }
 
     public class PlayerScore
@@ -244,6 +245,7 @@ namespace GolfAssociationCommunity.Models
         public int TotalScore { get; set; }
         public int StablefordPoints { get; set; }
         public int ScoreDifferential { get; set; }
+        public string? Flight { get; set; }
         public DateTime UpdatedAt { get; set; }
 
         /// <summary>Tiebreaker hole scores (hardest handicap hole first). Not persisted — populated at query time.</summary>

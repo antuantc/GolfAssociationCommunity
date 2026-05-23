@@ -87,6 +87,44 @@
         {
             <p>No leaderboard entries are available for this tournament yet.</p>
         }
+        else if (Model.HasMultipleFlights)
+        {
+            @foreach (var flight in Model.TournamentFlights)
+            {
+                var flightRows = Model.TournamentLeaderboard.Where(r => (r.Flight ?? string.Empty) == flight).ToList();
+                <h3 style="margin-top:1.5rem;">@(string.IsNullOrEmpty(flight) ? "No Flight Assigned" : $"Flight {flight}")</h3>
+                <div class="table-scroll">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Position</th>
+                                <th>Player</th>
+                                <th>Total Score</th>
+                                @if (Model.HasTiebreakerData)
+                                {
+                                    <th title="Scores on hardest handicap holes used as tiebreakers">Hdcp Hole Scores (TB)</th>
+                                }
+                            </tr>
+                        </thead>
+                        <tbody>
+                        @foreach (var row in flightRows)
+                        {
+                            <tr>
+                                <td>@row.Position</td>
+                                <td>@(row.AssociationPlayer?.DisplayName ?? "Unknown Player")</td>
+                                <td>@row.TotalScore</td>
+                                @if (Model.HasTiebreakerData)
+                                {
+                                    var tbScores = Model.TiebreakersByPlayer.TryGetValue(row.AssociationPlayerId, out var s) ? string.Join(", ", s) : "—";
+                                    <td>@tbScores</td>
+                                }
+                            </tr>
+                        }
+                        </tbody>
+                    </table>
+                </div>
+            }
+        }
         else
         {
             <div class="table-scroll">

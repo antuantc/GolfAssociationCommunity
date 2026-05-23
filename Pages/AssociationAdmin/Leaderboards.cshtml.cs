@@ -29,6 +29,8 @@ namespace GolfAssociationCommunity.Pages.AssociationAdmin
         public List<AssociationLeaderboardRow> AssociationLeaderboard { get; private set; } = new();
         public bool HasTiebreakerData { get; private set; }
         public Dictionary<int, List<int>> TiebreakersByPlayer { get; private set; } = new();
+        public List<string> TournamentFlights { get; private set; } = new();
+        public bool HasMultipleFlights { get; private set; }
 
         public async Task<IActionResult> OnGetAsync()
         {
@@ -109,6 +111,12 @@ namespace GolfAssociationCommunity.Pages.AssociationAdmin
             TournamentLeaderboard = (await _leaderboardService.GetTournamentLeaderboardAsync(TournamentId.Value)).ToList();
             TiebreakersByPlayer = await _leaderboardService.GetTournamentTiebreakersAsync(TournamentId.Value);
             HasTiebreakerData = TiebreakersByPlayer.Count > 0;
+            TournamentFlights = TournamentLeaderboard
+                .Select(r => r.Flight ?? string.Empty)
+                .Distinct()
+                .OrderBy(f => f)
+                .ToList();
+            HasMultipleFlights = TournamentFlights.Count > 1 || (TournamentFlights.Count == 1 && TournamentFlights[0] != string.Empty);
         }
     }
 }

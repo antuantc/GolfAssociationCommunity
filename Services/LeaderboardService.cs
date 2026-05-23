@@ -42,6 +42,7 @@ namespace GolfAssociationCommunity.Services
         public int AssociationPlayerId { get; set; }
         public int TotalScore { get; set; }
         public List<int> TiebreakerScores { get; set; } = new();
+        public string? Flight { get; set; }
     }
 
     /// <summary>
@@ -322,15 +323,10 @@ namespace GolfAssociationCommunity.Services
                     {
                         AssociationPlayerId = registration.AssociationPlayerId!.Value,
                         TotalScore = totalScore,
-                        TiebreakerScores = tiebreakerScores
+                        TiebreakerScores = tiebreakerScores,
+                        Flight = registration.Flight
                     });
                 }
-
-                // Primary: total score ascending. Tiebreaker: sequential scores on hardest handicap holes.
-                var sortedData = leaderboardData
-                    .OrderBy(x => x.TotalScore)
-                    .ThenBy(x => x, new TiebreakerScoreComparer())
-                    .ThenBy(x => x.AssociationPlayerId);
 
                 // Clear existing leaderboard entries for this tournament
                 var existingLeaderboard = await _context.Leaderboards
@@ -340,23 +336,34 @@ namespace GolfAssociationCommunity.Services
                 _context.Leaderboards.RemoveRange(existingLeaderboard);
                 await _context.SaveChangesAsync();
 
-                // Create new leaderboard entries with positions
-                int position = 1;
-                foreach (var scoreRow in sortedData)
-                {
-                    var leaderboardEntry = new Leaderboard
-                    {
-                        TournamentId = tournamentId,
-                        AssociationPlayerId = scoreRow.AssociationPlayerId,
-                        Position = position,
-                        TotalScore = scoreRow.TotalScore,
-                        StablefordPoints = 0,
-                        ScoreDifferential = 0,
-                        UpdatedAt = DateTime.UtcNow
-                    };
+                // Rank within each flight group; players with no flight compete together
+                var byFlight = leaderboardData
+                    .GroupBy(x => x.Flight ?? string.Empty)
+                    .OrderBy(g => g.Key);
 
-                    _context.Leaderboards.Add(leaderboardEntry);
-                    position++;
+                foreach (var flightGroup in byFlight)
+                {
+                    int position = 1;
+                    var sortedFlight = flightGroup
+                        .OrderBy(x => x.TotalScore)
+                        .ThenBy(x => x, new TiebreakerScoreComparer())
+                        .ThenBy(x => x.AssociationPlayerId);
+
+                    foreach (var scoreRow in sortedFlight)
+                    {
+                        _context.Leaderboards.Add(new Leaderboard
+                        {
+                            TournamentId = tournamentId,
+                            AssociationPlayerId = scoreRow.AssociationPlayerId,
+                            Position = position,
+                            TotalScore = scoreRow.TotalScore,
+                            Flight = scoreRow.Flight,
+                            StablefordPoints = 0,
+                            ScoreDifferential = 0,
+                            UpdatedAt = DateTime.UtcNow
+                        });
+                        position++;
+                    }
                 }
 
                 await _context.SaveChangesAsync();
