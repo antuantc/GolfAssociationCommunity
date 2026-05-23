@@ -114,6 +114,9 @@ namespace GolfAssociationCommunity.Models
         public DateTime PaidAtUtc { get; set; }
         public string? AuthorizeNetTransactionId { get; set; }
         public string? CardLast4 { get; set; }
+        public decimal? RefundAmount { get; set; }
+        public string? RefundTransactionId { get; set; }
+        public DateTime? RefundedAtUtc { get; set; }
         public string BillingAddressLine1 { get; set; } = string.Empty;
         public string BillingCity { get; set; } = string.Empty;
         public string BillingState { get; set; } = string.Empty;
@@ -160,6 +163,9 @@ namespace GolfAssociationCommunity.Models
         public bool PaymentConfirmed { get; set; }
         public string? AuthorizeNetTransactionId { get; set; }
         public string? CardLast4 { get; set; }
+        public decimal? RefundAmount { get; set; }
+        public string? RefundTransactionId { get; set; }
+        public DateTime? RefundedAtUtc { get; set; }
         public string BillingAddressLine1 { get; set; } = string.Empty;
         public string BillingCity { get; set; } = string.Empty;
         public string BillingState { get; set; } = string.Empty;

@@ -1,0 +1,112 @@
+@page
+@model GolfAssociationCommunity.Pages.AssociationAdmin.TransactionsModel
+@{
+    ViewData["Title"] = "Authorize.Net Transactions";
+}
+
+<section class="section-panel">
+    <h1>Authorize.Net Transactions</h1>
+    <p>Review registrations and sponsorship payments, then open a transaction to reconcile or refund it.</p>
+
+    @if (TempData["SuccessMessage"] is string successMessage)
+    {
+        <div class="message success">@successMessage</div>
+    }
+
+    @if (TempData["ErrorMessage"] is string errorMessage)
+    {
+        <div class="message error">@errorMessage</div>
+    }
+
+    <form method="get" class="card-grid">
+        <div>
+            <label for="search">Search</label>
+            <input id="search" name="Search" value="@Model.Search" class="form-control" placeholder="Transaction, customer, source" />
+        </div>
+        <div>
+            <label>&nbsp;</label>
+            <div>
+                <button type="submit" class="btn">Apply Filters</button>
+                <a class="btn btn-secondary" href="~/AssociationAdmin/Transactions">Reset</a>
+            </div>
+        </div>
+    </form>
+
+    <div class="card-grid">
+        <article class="card">
+            <h3>@Model.Transactions.Count</h3>
+            <p>Transactions</p>
+        </article>
+        <article class="card">
+            <h3>@Model.TotalAmount.ToString("C")</h3>
+            <p>Total captured</p>
+        </article>
+        <article class="card">
+            <h3>@Model.RefundedAmount.ToString("C")</h3>
+            <p>Refunded</p>
+        </article>
+        <article class="card">
+            <h3>@Model.RefundedCount</h3>
+            <p>Refunded records</p>
+        </article>
+    </div>
+
+    @if (Model.Transactions.Count == 0)
+    {
+        <p>No transactions found.</p>
+    }
+    else
+    {
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Type</th>
+                    <th>Customer</th>
+                    <th>Source</th>
+                    <th>Paid</th>
+                    <th>Status</th>
+                    <th>Amount</th>
+                    <th>Card</th>
+                    <th>Refund</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+            @foreach (var transaction in Model.Transactions)
+            {
+                <tr>
+                    <td>@transaction.SourceType</td>
+                    <td>
+                        <strong>@transaction.CustomerName</strong><br />
+                        <span>@transaction.CustomerEmail</span>
+                    </td>
+                    <td>@transaction.SourceLabel</td>
+                    <td>@(transaction.PaidAtUtc.HasValue ? transaction.PaidAtUtc.Value.ToString("MMM d, yyyy") : "-")</td>
+                    <td>@transaction.StatusLabel</td>
+                    <td>@transaction.Amount.ToString("C")</td>
+                    <td>@(string.IsNullOrWhiteSpace(transaction.CardLast4) ? "-" : $"**** {transaction.CardLast4}")</td>
+                    <td>
+                        @if (transaction.IsRefunded)
+                        {
+                            <span>@(transaction.RefundAmount.HasValue ? transaction.RefundAmount.Value.ToString("C") : "Refunded")</span><br />
+                            @if (transaction.RefundedAtUtc.HasValue)
+                            {
+                                <span>@transaction.RefundedAtUtc.Value.ToString("MMM d, yyyy")</span>
+                            }
+                        }
+                        else
+                        {
+                            <span>-</span>
+                        }
+                    </td>
+                    <td>
+                        <a class="link-button" asp-page="/AssociationAdmin/Transactions/Details" asp-route-sourceType="@transaction.SourceType" asp-route-id="@transaction.SourceId">View</a>
+                    </td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    }
+
+    <a class="btn btn-secondary" href="~/AssociationAdmin">Back to Dashboard</a>
+</section>

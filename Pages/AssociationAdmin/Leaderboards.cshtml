@@ -30,7 +30,7 @@
 
 <section class="section-panel">
     <h2>Association Overall Leaderboard</h2>
-    <p>Overall position is based on rollup points from tournament finishes within this association.</p>
+    <p>Overall position is based on tournament finishes and average finishing position within this association.</p>
 
     @if (Model.AssociationLeaderboard.Count == 0)
     {
@@ -45,12 +45,10 @@
                         <th>Position</th>
                         <th>Player</th>
                         <th>Email</th>
-                        <th>Rollup Points</th>
                         <th>Tournaments</th>
                         <th>Wins</th>
                         <th>Avg Finish</th>
                         <th>Total Score</th>
-                        <th>Stableford</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -60,12 +58,10 @@
                         <td>@row.OverallPosition</td>
                         <td>@row.PlayerName</td>
                         <td>@row.PlayerEmail</td>
-                        <td>@row.TournamentPoints</td>
                         <td>@row.TournamentsPlayed</td>
                         <td>@row.Wins</td>
                         <td>@row.AveragePosition.ToString("0.##")</td>
                         <td>@row.TotalScore</td>
-                        <td>@row.TotalStablefordPoints</td>
                     </tr>
                 }
                 </tbody>
@@ -100,8 +96,6 @@
                             <th>Position</th>
                             <th>Player</th>
                             <th>Total Score</th>
-                            <th>Stableford</th>
-                            <th>Differential</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -111,8 +105,6 @@
                             <td>@row.Position</td>
                             <td>@(row.AssociationPlayer?.DisplayName ?? "Unknown Player")</td>
                             <td>@row.TotalScore</td>
-                            <td>@row.StablefordPoints</td>
-                            <td>@row.ScoreDifferential</td>
                         </tr>
                     }
                     </tbody>

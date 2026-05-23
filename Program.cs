@@ -80,6 +80,7 @@ builder.Services.AddTransient<IEmailSender, SmtpEmailSender>();
 
 // Add custom services
 builder.Services.AddScoped<IAuthorizeNetPaymentService, AuthorizeNetPaymentService>();
+builder.Services.AddScoped<IAuthorizeNetTransactionService, AuthorizeNetTransactionService>();
 builder.Services.AddScoped<IAssociationService, AssociationService>();
 builder.Services.AddScoped<ITournamentService, TournamentService>();
 builder.Services.AddScoped<IRegistrationService, RegistrationService>();

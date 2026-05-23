@@ -20,6 +20,7 @@ namespace GolfAssociationCommunity.Pages.Admin
         public int RegistrationCount { get; private set; }
         public int UserCount { get; private set; }
         public int PlayerCount { get; private set; }
+        public int TransactionCount { get; private set; }
 
         public async Task OnGetAsync()
         {
@@ -28,6 +29,8 @@ namespace GolfAssociationCommunity.Pages.Admin
             RegistrationCount = await _context.Registrations.CountAsync();
             UserCount = await _context.Users.CountAsync();
             PlayerCount = await _context.AssociationPlayers.CountAsync();
+            TransactionCount = await _context.Registrations.CountAsync(registration => registration.AuthorizeNetTransactionId != null)
+                + await _context.SponsorshipPayments.CountAsync(payment => payment.AuthorizeNetTransactionId != null);
         }
     }
 }

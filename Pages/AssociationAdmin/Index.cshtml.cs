@@ -18,6 +18,7 @@ namespace GolfAssociationCommunity.Pages.AssociationAdmin
         public int PlayerCount { get; private set; }
         public int ScoreCount { get; private set; }
         public int SponsorshipPackageCount { get; private set; }
+        public int TransactionCount { get; private set; }
 
         public async Task<Microsoft.AspNetCore.Mvc.IActionResult> OnGetAsync()
         {
@@ -34,6 +35,8 @@ namespace GolfAssociationCommunity.Pages.AssociationAdmin
             PlayerCount = await Context.AssociationPlayers.CountAsync(player => player.GolfAssociationId == associationId && player.IsActive);
             ScoreCount = await Context.PlayerScores.CountAsync(s => s.Tournament != null && s.Tournament.GolfAssociationId == associationId);
             SponsorshipPackageCount = await Context.SponsorshipPackages.CountAsync(sp => sp.GolfAssociationId == associationId);
+            TransactionCount = await Context.Registrations.CountAsync(r => r.Tournament != null && r.Tournament.GolfAssociationId == associationId && r.AuthorizeNetTransactionId != null)
+                + await Context.SponsorshipPayments.CountAsync(sp => sp.GolfAssociationId == associationId && sp.AuthorizeNetTransactionId != null);
 
             return Page();
         }

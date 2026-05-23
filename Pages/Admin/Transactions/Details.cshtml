@@ -1,0 +1,112 @@
+@page "{sourceType}/{id:int}"
+@model GolfAssociationCommunity.Pages.Admin.Transactions.DetailsModel
+@{
+    ViewData["Title"] = "Transaction Details";
+}
+
+<section class="section-panel">
+    <h1>Transaction Details</h1>
+    <p>Review the gateway record, source record, and refund status for this transaction.</p>
+
+    @if (TempData["SuccessMessage"] is string successMessage)
+    {
+        <div class="message success">@successMessage</div>
+    }
+
+    @if (TempData["ErrorMessage"] is string errorMessage)
+    {
+        <div class="message error">@errorMessage</div>
+    }
+
+    @if (Model.Transaction is null)
+    {
+        <p>Transaction not found.</p>
+    }
+    else
+    {
+        <div class="card-grid">
+            <article class="card">
+                <h3>@Model.Transaction.CustomerName</h3>
+                <p>@Model.Transaction.CustomerEmail</p>
+            </article>
+            <article class="card">
+                <h3>@Model.Transaction.Amount.ToString("C")</h3>
+                <p>@Model.Transaction.StatusLabel</p>
+            </article>
+            <article class="card">
+                <h3>@(string.IsNullOrWhiteSpace(Model.Transaction.TransactionId) ? "-" : Model.Transaction.TransactionId)</h3>
+                <p>Authorize.Net transaction</p>
+            </article>
+            <article class="card">
+                <h3>@Model.Transaction.AssociationName</h3>
+                <p>@Model.Transaction.SourceLabel</p>
+            </article>
+        </div>
+
+        <div class="card-grid">
+            <article class="card">
+                <h3>Source Record</h3>
+                <p>Type: @Model.Transaction.SourceType</p>
+                <p>Card: @(string.IsNullOrWhiteSpace(Model.Transaction.CardLast4) ? "-" : $"**** {Model.Transaction.CardLast4}")</p>
+                <p>Paid: @(Model.Transaction.PaidAtUtc.HasValue ? Model.Transaction.PaidAtUtc.Value.ToString("MMM d, yyyy h:mm tt") : "-")</p>
+                <p>Refund: @(Model.Transaction.IsRefunded ? (Model.Transaction.RefundAmount.HasValue ? Model.Transaction.RefundAmount.Value.ToString("C") : "Processed") : "No")</p>
+            </article>
+            <article class="card">
+                <h3>Billing</h3>
+                <p>@Model.Transaction.BillingAddressLine1</p>
+                <p>@Model.Transaction.BillingCity, @Model.Transaction.BillingState @Model.Transaction.BillingZipCode</p>
+                <p>@Model.Transaction.BillingCountry</p>
+            </article>
+            <article class="card">
+                <h3>Gateway</h3>
+                @if (Model.Transaction.GatewayDetails is null)
+                {
+                    <p>Gateway details unavailable.</p>
+                }
+                else
+                {
+                    <p>Status: @Model.Transaction.GatewayDetails.TransactionStatus</p>
+                    <p>Type: @Model.Transaction.GatewayDetails.TransactionType</p>
+                    <p>Card: @(string.IsNullOrWhiteSpace(Model.Transaction.GatewayDetails.CardLast4) ? "-" : $"**** {Model.Transaction.GatewayDetails.CardLast4}")</p>
+                    <p>Batch: @(string.IsNullOrWhiteSpace(Model.Transaction.GatewayDetails.BatchId) ? "-" : Model.Transaction.GatewayDetails.BatchId)</p>
+                    <p>Response: @(string.IsNullOrWhiteSpace(Model.Transaction.GatewayDetails.ResponseDescription) ? "-" : Model.Transaction.GatewayDetails.ResponseDescription)</p>
+                }
+            </article>
+        </div>
+
+        <section class="section-panel">
+            <h2>Refund Transaction</h2>
+            @if (Model.Transaction.IsRefunded)
+            {
+                <p>This transaction has already been refunded.</p>
+            }
+            else if (string.IsNullOrWhiteSpace(Model.Transaction.CardLast4))
+            {
+                <p>A saved card reference is not available, so this transaction cannot be refunded from the application.</p>
+            }
+            else
+            {
+                <form method="post" asp-page-handler="Refund" asp-route-sourceType="@Model.SourceType" asp-route-id="@Model.Id" class="card-grid">
+                    <div>
+                        <label for="amount">Refund Amount</label>
+                        <input id="amount" asp-for="Input.Amount" class="form-control" />
+                        <span asp-validation-for="Input.Amount" class="text-danger"></span>
+                    </div>
+                    <div>
+                        <label for="reason">Reason</label>
+                        <input id="reason" asp-for="Input.Reason" class="form-control" placeholder="Optional internal note" />
+                    </div>
+                    <div>
+                        <label>&nbsp;</label>
+                        <div>
+                            <button type="submit" class="btn">Process Refund</button>
+                        </div>
+                    </div>
+                </form>
+                <p class="text-muted">Leaving the amount blank refunds the full transaction amount.</p>
+            }
+        </section>
+    }
+
+    <a class="btn btn-secondary" href="~/Admin/Transactions">Back to Transactions</a>
+</section>
