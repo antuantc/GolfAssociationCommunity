@@ -145,14 +145,19 @@ else
     {
         <section class="section-panel">
             <h2>Videos</h2>
-            <div class="gallery-grid">
+            <div class="video-grid">
                 @foreach (var item in activeVideos)
                 {
                     var videoSrc = item.AutoPlay ? item.Url + (item.Url.Contains("youtube.com") ? "?autoplay=1&mute=1" : "?autoplay=1&muted=1") : item.Url;
-                    <div class="gallery-item">
-                        <iframe src="@videoSrc" class="gallery-video" allowfullscreen loading="lazy"
-                                title="@item.Caption"
-                                allow="autoplay; encrypted-media"></iframe>
+                    <div class="video-item">
+                        <div class="video-frame-wrap">
+                            <iframe src="@videoSrc" class="gallery-video" allowfullscreen loading="lazy"
+                                    title="@item.Caption"
+                                    allow="autoplay; encrypted-media"></iframe>
+                            <button class="video-fullscreen-btn" onclick="this.previousElementSibling.requestFullscreen()" title="Full screen" aria-label="Full screen">
+                                &#x26F6;
+                            </button>
+                        </div>
                         @if (!string.IsNullOrWhiteSpace(item.Caption))
                         {
                             <p class="gallery-caption">@item.Caption</p>
