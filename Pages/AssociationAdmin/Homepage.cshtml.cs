@@ -105,8 +105,8 @@ namespace GolfAssociationCommunity.Pages.AssociationAdmin
         }
 
         // ── Save hero ────────────────────────────────────────────────────
-
-        public async Task<IActionResult> OnPostSaveHeroAsync()
+        [RequestSizeLimit(100 * 1024 * 1024)]
+        [RequestFormLimits(MultipartBodyLengthLimit = 100 * 1024 * 1024)]        public async Task<IActionResult> OnPostSaveHeroAsync()
         {
             var ctx = await LoadAssociationContextAsync();
             if (ctx is not null) return ctx;
@@ -128,6 +128,13 @@ namespace GolfAssociationCommunity.Pages.AssociationAdmin
                 if (!AllowedVideoExtensions.Contains(ext))
                     ModelState.AddModelError(nameof(HeroVideo), "Only MP4, WebM, or MOV videos are allowed.");
             }
+
+            // Only validate fields belonging to this form; other [BindProperty] fields
+            // (e.g. NewSponsor.Name which is [Required]) are not submitted here and
+            // would otherwise cause ModelState to be invalid.
+            var heroRelevantPrefixes = new[] { "HeroSettings", nameof(HeroImage), nameof(HeroVideo), nameof(ClearHeroVideo) };
+            foreach (var key in ModelState.Keys.Where(k => !heroRelevantPrefixes.Any(p => k.StartsWith(p))).ToList())
+                ModelState.Remove(key);
 
             if (!ModelState.IsValid) { await LoadPageDataAsync(); return Page(); }
 

@@ -94,6 +94,16 @@ builder.Services.AddControllers();
 // Add Razor Pages
 builder.Services.AddRazorPages();
 
+// Allow large file uploads (hero background videos up to 100 MB)
+builder.Services.Configure<Microsoft.AspNetCore.Http.Features.FormOptions>(options =>
+{
+    options.MultipartBodyLengthLimit = 100 * 1024 * 1024; // 100 MB
+});
+builder.WebHost.ConfigureKestrel(options =>
+{
+    options.Limits.MaxRequestBodySize = 100 * 1024 * 1024; // 100 MB
+});
+
 // Add CORS
 builder.Services.AddCors(options =>
 {
