@@ -68,6 +68,7 @@ namespace GolfAssociationCommunity.Models
         public DateTime UpdatedAt { get; set; }
         // Homepage branding
         public string? HeroImageUrl { get; set; }
+        public string? HeroVideoUrl { get; set; }
         public string? Tagline { get; set; }
         public string? Motto { get; set; }
         public int? EstYear { get; set; }

@@ -11,7 +11,10 @@ namespace GolfAssociationCommunity.Pages.AssociationAdmin
     {
         private static readonly HashSet<string> AllowedImageExtensions = new(StringComparer.OrdinalIgnoreCase)
             { ".jpg", ".jpeg", ".png", ".gif", ".webp" };
+        private static readonly HashSet<string> AllowedVideoExtensions = new(StringComparer.OrdinalIgnoreCase)
+            { ".mp4", ".webm", ".mov" };
         private const long MaxFileSizeBytes = 5 * 1024 * 1024;
+        private const long MaxVideoSizeBytes = 100 * 1024 * 1024;
 
         private readonly IWebHostEnvironment _env;
 
@@ -24,6 +27,8 @@ namespace GolfAssociationCommunity.Pages.AssociationAdmin
         // Hero & branding
         [BindProperty] public HeroSettingsInput HeroSettings { get; set; } = new();
         [BindProperty] public IFormFile? HeroImage { get; set; }
+        [BindProperty] public IFormFile? HeroVideo { get; set; }
+        [BindProperty] public bool ClearHeroVideo { get; set; }
 
         // Gallery – photo upload
         [BindProperty] public IFormFile? PhotoUpload { get; set; }
@@ -55,6 +60,7 @@ namespace GolfAssociationCommunity.Pages.AssociationAdmin
             [Range(1800, 2100)]  public int? EstYear { get; set; }
             [StringLength(1000)] public string? Description { get; set; }
             public string? ExistingHeroImageUrl { get; set; }
+            public string? ExistingHeroVideoUrl { get; set; }
         }
 
         public class SponsorInput
@@ -86,7 +92,8 @@ namespace GolfAssociationCommunity.Pages.AssociationAdmin
                 Motto = AssociationData.Motto,
                 EstYear = AssociationData.EstYear,
                 Description = AssociationData.Description,
-                ExistingHeroImageUrl = AssociationData.HeroImageUrl
+                ExistingHeroImageUrl = AssociationData.HeroImageUrl,
+                ExistingHeroVideoUrl = AssociationData.HeroVideoUrl
             };
             Charity = new CharityInput
             {
@@ -113,6 +120,15 @@ namespace GolfAssociationCommunity.Pages.AssociationAdmin
                     ModelState.AddModelError(nameof(HeroImage), "Only JPG, PNG, GIF, or WebP images are allowed.");
             }
 
+            if (HeroVideo != null)
+            {
+                if (HeroVideo.Length > MaxVideoSizeBytes)
+                    ModelState.AddModelError(nameof(HeroVideo), "Video must be 100 MB or smaller.");
+                var ext = Path.GetExtension(HeroVideo.FileName);
+                if (!AllowedVideoExtensions.Contains(ext))
+                    ModelState.AddModelError(nameof(HeroVideo), "Only MP4, WebM, or MOV videos are allowed.");
+            }
+
             if (!ModelState.IsValid) { await LoadPageDataAsync(); return Page(); }
 
             var assoc = await Context.GolfAssociations.FindAsync(CurrentAssociation.Id);
@@ -122,6 +138,17 @@ namespace GolfAssociationCommunity.Pages.AssociationAdmin
             {
                 DeleteFile(assoc.HeroImageUrl);
                 assoc.HeroImageUrl = await SaveFileAsync(HeroImage, "hero");
+            }
+
+            if (ClearHeroVideo)
+            {
+                DeleteFile(assoc.HeroVideoUrl);
+                assoc.HeroVideoUrl = null;
+            }
+            else if (HeroVideo != null && HeroVideo.Length > 0)
+            {
+                DeleteFile(assoc.HeroVideoUrl);
+                assoc.HeroVideoUrl = await SaveFileAsync(HeroVideo, "hero");
             }
 
             assoc.Tagline = string.IsNullOrWhiteSpace(HeroSettings.Tagline) ? null : HeroSettings.Tagline.Trim();

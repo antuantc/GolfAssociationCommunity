@@ -55,6 +55,21 @@
                     }
                     <input asp-for="HeroImage" type="file" accept="image/*" class="form-control" />
                 </div>
+                <div>
+                    <label asp-for="HeroVideo">Hero Background Video <span class="field-note">MP4/WebM/MOV, max 100 MB (optional — plays behind hero text)</span></label>
+                    @if (!string.IsNullOrWhiteSpace(Model.HeroSettings.ExistingHeroVideoUrl))
+                    {
+                        <div class="form-meta" style="align-items:center;gap:1rem;">
+                            <video src="@Model.HeroSettings.ExistingHeroVideoUrl" style="height:72px;border-radius:4px;" muted></video>
+                            <label class="checkbox-label" style="margin:0;">
+                                <input asp-for="ClearHeroVideo" type="checkbox" />
+                                Remove current video
+                            </label>
+                        </div>
+                    }
+                    <input asp-for="HeroVideo" type="file" accept="video/mp4,video/webm,video/quicktime" class="form-control" />
+                    <span asp-validation-for="HeroVideo" class="text-danger"></span>
+                </div>
             </div>
         </div>
         <div class="form-actions">

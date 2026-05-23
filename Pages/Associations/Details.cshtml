@@ -6,6 +6,10 @@
     var assoc = Model.Association;
     var activeVideos = assoc?.MediaItems.Where(m => m.IsActive && m.MediaType == MediaType.Video).OrderBy(m => m.DisplayOrder).ToList();
     var activePhotos = assoc?.MediaItems.Where(m => m.IsActive && m.MediaType == MediaType.Photo).OrderBy(m => m.DisplayOrder).ToList();
+    var heroHasVideo = !string.IsNullOrWhiteSpace(assoc?.HeroVideoUrl);
+    var heroHasImage = !string.IsNullOrWhiteSpace(assoc?.HeroImageUrl);
+    var heroClasses = "assoc-hero" + (heroHasVideo ? " assoc-hero--video" : (heroHasImage ? " assoc-hero--image" : ""));
+    var heroStyle = (!heroHasVideo && heroHasImage) ? $"style=\"background-image:url('{assoc!.HeroImageUrl}');\"" : "";
 }
 
 @if (TempData["SuccessMessage"] != null)
@@ -28,8 +32,13 @@
 else
 {
     @* ── Hero Banner ─────────────────────────────────────────────── *@
-    <div class="assoc-hero@(string.IsNullOrWhiteSpace(assoc.HeroImageUrl) ? "" : " assoc-hero--image")"
-         @(string.IsNullOrWhiteSpace(assoc.HeroImageUrl) ? "" : $"style=\"background-image:url('{assoc.HeroImageUrl}');\"")>
+    <div class="@heroClasses" @heroStyle>
+        @if (heroHasVideo)
+        {
+            <video class="assoc-hero__video-bg" autoplay muted loop playsinline>
+                <source src="@assoc!.HeroVideoUrl" type="video/mp4" />
+            </video>
+        }
         <div class="assoc-hero__overlay">
             @if (!string.IsNullOrWhiteSpace(assoc.Tagline))
             {
