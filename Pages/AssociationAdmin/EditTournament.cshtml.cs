@@ -24,7 +24,11 @@ namespace GolfAssociationCommunity.Pages.AssociationAdmin
         [BindProperty]
         public TournamentInput Input { get; set; } = new();
 
+        [BindProperty]
+        public FlightInput NewFlight { get; set; } = new();
+
         public int TournamentId { get; private set; }
+        public List<TournamentFlight> Flights { get; private set; } = new();
 
         public class TournamentInput
         {
@@ -45,6 +49,18 @@ namespace GolfAssociationCommunity.Pages.AssociationAdmin
             public TournamentStatus Status { get; set; }
         }
 
+        public class FlightInput
+        {
+            [Required]
+            [StringLength(60)]
+            public string Name { get; set; } = string.Empty;
+
+            [StringLength(200)]
+            public string? Description { get; set; }
+
+            public int DisplayOrder { get; set; }
+        }
+
         public async Task<IActionResult> OnGetAsync(int id)
         {
             var contextResult = await LoadAssociationContextAsync();
@@ -53,13 +69,16 @@ namespace GolfAssociationCommunity.Pages.AssociationAdmin
                 return contextResult;
             }
 
-            var tournament = await Context.Tournaments.FirstOrDefaultAsync(t => t.Id == id && t.GolfAssociationId == CurrentAssociation.Id);
+            var tournament = await Context.Tournaments
+                .Include(t => t.Flights.OrderBy(f => f.DisplayOrder).ThenBy(f => f.Name))
+                .FirstOrDefaultAsync(t => t.Id == id && t.GolfAssociationId == CurrentAssociation.Id);
             if (tournament is null)
             {
                 return NotFound();
             }
 
             TournamentId = id;
+            Flights = tournament.Flights.ToList();
             Input = new TournamentInput
             {
                 Name = tournament.Name,
@@ -94,6 +113,10 @@ namespace GolfAssociationCommunity.Pages.AssociationAdmin
             if (!ModelState.IsValid)
             {
                 TournamentId = id;
+                Flights = await Context.TournamentFlights
+                    .Where(f => f.TournamentId == id)
+                    .OrderBy(f => f.DisplayOrder).ThenBy(f => f.Name)
+                    .ToListAsync();
                 return Page();
             }
 
@@ -122,6 +145,52 @@ namespace GolfAssociationCommunity.Pages.AssociationAdmin
             await _tournamentService.UpdateTournamentStatusAsync(id, Input.Status);
 
             TempData["SuccessMessage"] = "Tournament updated successfully.";
+            return RedirectToPage(new { id });
+        }
+
+        public async Task<IActionResult> OnPostAddFlightAsync(int id)
+        {
+            var contextResult = await LoadAssociationContextAsync();
+            if (contextResult is not null) return contextResult;
+
+            var tournament = await Context.Tournaments
+                .FirstOrDefaultAsync(t => t.Id == id && t.GolfAssociationId == CurrentAssociation.Id);
+            if (tournament is null) return NotFound();
+
+            if (string.IsNullOrWhiteSpace(NewFlight.Name))
+            {
+                TempData["ErrorMessage"] = "Flight name is required.";
+                return RedirectToPage(new { id });
+            }
+
+            Context.TournamentFlights.Add(new TournamentFlight
+            {
+                TournamentId = id,
+                Name = NewFlight.Name.Trim(),
+                Description = string.IsNullOrWhiteSpace(NewFlight.Description) ? null : NewFlight.Description.Trim(),
+                DisplayOrder = NewFlight.DisplayOrder
+            });
+            await Context.SaveChangesAsync();
+            TempData["SuccessMessage"] = $"Flight \"{NewFlight.Name.Trim()}\" added.";
+            return RedirectToPage(new { id });
+        }
+
+        public async Task<IActionResult> OnPostDeleteFlightAsync(int id, int flightId)
+        {
+            var contextResult = await LoadAssociationContextAsync();
+            if (contextResult is not null) return contextResult;
+
+            var flight = await Context.TournamentFlights
+                .FirstOrDefaultAsync(f => f.Id == flightId && f.TournamentId == id);
+            if (flight is null) return NotFound();
+
+            var tournament = await Context.Tournaments
+                .FirstOrDefaultAsync(t => t.Id == id && t.GolfAssociationId == CurrentAssociation.Id);
+            if (tournament is null) return NotFound();
+
+            Context.TournamentFlights.Remove(flight);
+            await Context.SaveChangesAsync();
+            TempData["SuccessMessage"] = $"Flight \"{flight.Name}\" removed.";
             return RedirectToPage(new { id });
         }
     }

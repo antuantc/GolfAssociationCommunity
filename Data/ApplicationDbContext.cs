@@ -23,6 +23,7 @@ namespace GolfAssociationCommunity.Data
         public DbSet<PlayerScore> PlayerScores { get; set; } = null!;
         public DbSet<Leaderboard> Leaderboards { get; set; } = null!;
         public DbSet<AdminAuditEvent> AdminAuditEvents { get; set; } = null!;
+        public DbSet<TournamentFlight> TournamentFlights { get; set; } = null!;
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
@@ -204,6 +205,18 @@ namespace GolfAssociationCommunity.Data
                 .WithOne(s => s.GolfAssociation)
                 .HasForeignKey(s => s.GolfAssociationId)
                 .OnDelete(DeleteBehavior.Cascade);
+
+            builder.Entity<Tournament>()
+                .HasMany(t => t.Flights)
+                .WithOne(f => f.Tournament)
+                .HasForeignKey(f => f.TournamentId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            builder.Entity<Registration>()
+                .HasOne(r => r.TournamentFlight)
+                .WithMany()
+                .HasForeignKey(r => r.TournamentFlightId)
+                .OnDelete(DeleteBehavior.SetNull);
         }
     }
 }

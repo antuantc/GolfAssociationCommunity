@@ -83,6 +83,20 @@
                             <span asp-validation-for="Input.Handicap" class="text-danger"></span>
                                     <div class="field-note">Required. Use your most recent verified handicap.</div>
                                 </div>
+                                @if (Model.TournamentFlights.Count > 0)
+                                {
+                                    <div>
+                                        <label asp-for="Input.FlightId">Flight <span class="field-note">(required)</span></label>
+                                        <select asp-for="Input.FlightId" class="form-control">
+                                            <option value="">— Select your flight —</option>
+                                            @foreach (var f in Model.TournamentFlights)
+                                            {
+                                                <option value="@f.Id">@f.Name@(string.IsNullOrWhiteSpace(f.Description) ? "" : $" — {f.Description}")</option>
+                                            }
+                                        </select>
+                                        <span asp-validation-for="Input.FlightId" class="text-danger"></span>
+                                    </div>
+                                }
                             </div>
                         </div>
 

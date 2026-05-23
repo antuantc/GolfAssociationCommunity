@@ -45,6 +45,7 @@ namespace GolfAssociationCommunity.Pages.AssociationAdmin
         public string? SelectedFlight { get; private set; }
         public int CurrentTotalScore { get; private set; }
         public int CurrentStablefordPoints { get; private set; }
+        public List<TournamentFlight> TournamentFlights { get; private set; } = new();
 
         public class PlayerOption
         {
@@ -134,8 +135,25 @@ namespace GolfAssociationCommunity.Pages.AssociationAdmin
                 return Page();
             }
 
+            // Load flights for this tournament (needed for flight name matching)
+            TournamentFlights = await Context.TournamentFlights
+                .Where(f => f.TournamentId == TournamentId.Value)
+                .OrderBy(f => f.DisplayOrder).ThenBy(f => f.Name)
+                .ToListAsync();
+
             // Save flight assignment on registration
-            registeredPlayer.Flight = string.IsNullOrWhiteSpace(FlightInput) ? null : FlightInput.Trim();
+            if (TournamentFlights.Count > 0)
+            {
+                // Flight dropdown mode — match by name
+                var selectedFlight = TournamentFlights.FirstOrDefault(f => f.Name == FlightInput);
+                registeredPlayer.TournamentFlightId = selectedFlight?.Id;
+                registeredPlayer.Flight = selectedFlight?.Name ?? (string.IsNullOrWhiteSpace(FlightInput) ? null : FlightInput.Trim());
+            }
+            else
+            {
+                registeredPlayer.TournamentFlightId = null;
+                registeredPlayer.Flight = string.IsNullOrWhiteSpace(FlightInput) ? null : FlightInput.Trim();
+            }
 
             var existingScores = await Context.PlayerScores
                 .Where(score => score.TournamentId == TournamentId.Value
@@ -260,6 +278,11 @@ namespace GolfAssociationCommunity.Pages.AssociationAdmin
                 return;
             }
 
+            TournamentFlights = await Context.TournamentFlights
+                .Where(f => f.TournamentId == TournamentId.Value)
+                .OrderBy(f => f.DisplayOrder).ThenBy(f => f.Name)
+                .ToListAsync();
+
             Players = await Context.Registrations
                 .Where(registration => registration.TournamentId == TournamentId.Value
                     && registration.AssociationPlayerId != null
@@ -298,10 +321,11 @@ namespace GolfAssociationCommunity.Pages.AssociationAdmin
 
             // Load flight assignment from registration
             var registration = await Context.Registrations
+                .Include(r => r.TournamentFlight)
                 .FirstOrDefaultAsync(r => r.TournamentId == TournamentId.Value
                     && r.AssociationPlayerId == AssociationPlayerId.Value
                     && r.Status == RegistrationStatus.Registered);
-            SelectedFlight = registration?.Flight;
+            SelectedFlight = registration?.TournamentFlight?.Name ?? registration?.Flight;
             if (FlightInput == null)   // null = GET request (not yet bound by model binder)
                 FlightInput = SelectedFlight;
 

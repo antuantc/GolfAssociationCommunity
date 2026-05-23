@@ -295,6 +295,7 @@ namespace GolfAssociationCommunity.Services
                 var registrations = await _context.Registrations
                     .Where(r => r.TournamentId == tournamentId && r.Status == RegistrationStatus.Registered && r.AssociationPlayerId != null)
                     .Include(r => r.AssociationPlayer)
+                    .Include(r => r.TournamentFlight)
                     .ToListAsync();
 
                 var leaderboardData = new List<TournamentLeaderboardScoreRow>();
@@ -324,7 +325,7 @@ namespace GolfAssociationCommunity.Services
                         AssociationPlayerId = registration.AssociationPlayerId!.Value,
                         TotalScore = totalScore,
                         TiebreakerScores = tiebreakerScores,
-                        Flight = registration.Flight
+                        Flight = registration.TournamentFlight?.Name ?? registration.Flight
                     });
                 }
 

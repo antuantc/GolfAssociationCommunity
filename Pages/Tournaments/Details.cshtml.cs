@@ -30,6 +30,7 @@ namespace GolfAssociationCommunity.Pages.Tournaments
         public int RegistrationCount { get; set; }
         public bool CanRegister { get; set; }
         public List<Leaderboard> Leaderboard { get; set; } = new();
+        public List<TournamentFlight> TournamentFlights { get; set; } = new();
 
         [BindProperty]
         public GuestRegistrationInput Input { get; set; } = new();
@@ -48,6 +49,8 @@ namespace GolfAssociationCommunity.Pages.Tournaments
             [Required(ErrorMessage = "Handicap is required.")]
             [Range(-10, 60, ErrorMessage = "Handicap must be between -10 and 60.")]
             public decimal? Handicap { get; set; }
+
+            public int? FlightId { get; set; }
 
             [Required]
             [CreditCard]
@@ -118,6 +121,7 @@ namespace GolfAssociationCommunity.Pages.Tournaments
 
             RegistrationCount = await _registrationService.GetRegistrationCountAsync(id, RegistrationStatus.Registered);
             Leaderboard = (await _leaderboardService.GetTournamentLeaderboardAsync(id)).ToList();
+            TournamentFlights = Tournament.Flights.OrderBy(f => f.DisplayOrder).ThenBy(f => f.Name).ToList();
             CanRegister = (!Tournament.RegistrationDeadline.HasValue || Tournament.RegistrationDeadline.Value >= DateTime.UtcNow)
                 && RegistrationCount < Tournament.MaxPlayers;
 
@@ -151,10 +155,38 @@ namespace GolfAssociationCommunity.Pages.Tournaments
                 }
                 RegistrationCount = await _registrationService.GetRegistrationCountAsync(tournamentId, RegistrationStatus.Registered);
                 Leaderboard = (await _leaderboardService.GetTournamentLeaderboardAsync(tournamentId)).ToList();
+                TournamentFlights = tournament.Flights.OrderBy(f => f.DisplayOrder).ThenBy(f => f.Name).ToList();
                 CanRegister = true;
                 Input.CardNumber = string.Empty;
                 Input.Cvv = string.Empty;
                 return Page();
+            }
+
+            // Validate flight selection when tournament has flights
+            TournamentFlight? selectedFlight = null;
+            var tournamentFlights = tournament.Flights.OrderBy(f => f.DisplayOrder).ThenBy(f => f.Name).ToList();
+            if (tournamentFlights.Count > 0)
+            {
+                if (!Input.FlightId.HasValue)
+                {
+                    ModelState.AddModelError(string.Empty, "Please select a flight to complete your registration.");
+                    Tournament = tournament;
+                    AssociationId = associationId;
+                    if (associationId.HasValue && tournament.GolfAssociation != null)
+                    {
+                        ViewData["PublicAssociationId"] = tournament.GolfAssociation.Id;
+                        ViewData["PublicAssociationName"] = tournament.GolfAssociation.Name;
+                        ViewData["PublicThemeKey"] = BrandingThemes.Normalize(tournament.GolfAssociation.ThemeKey);
+                    }
+                    RegistrationCount = await _registrationService.GetRegistrationCountAsync(tournamentId, RegistrationStatus.Registered);
+                    Leaderboard = (await _leaderboardService.GetTournamentLeaderboardAsync(tournamentId)).ToList();
+                    TournamentFlights = tournamentFlights;
+                    CanRegister = true;
+                    Input.CardNumber = string.Empty;
+                    Input.Cvv = string.Empty;
+                    return Page();
+                }
+                selectedFlight = tournamentFlights.FirstOrDefault(f => f.Id == Input.FlightId.Value);
             }
 
             var expirationDate = BuildAuthorizeNetExpirationDate(Input.CardExpiry);
@@ -172,6 +204,7 @@ namespace GolfAssociationCommunity.Pages.Tournaments
                 }
                 RegistrationCount = await _registrationService.GetRegistrationCountAsync(tournamentId, RegistrationStatus.Registered);
                 Leaderboard = (await _leaderboardService.GetTournamentLeaderboardAsync(tournamentId)).ToList();
+                TournamentFlights = tournamentFlights;
                 CanRegister = true;
                 Input.CardNumber = string.Empty;
                 Input.Cvv = string.Empty;
@@ -225,7 +258,9 @@ namespace GolfAssociationCommunity.Pages.Tournaments
                 BillingCity = paymentBillingAddress.City,
                 BillingState = paymentBillingAddress.State,
                 BillingZipCode = paymentBillingAddress.ZipCode,
-                BillingCountry = paymentBillingAddress.Country
+                BillingCountry = paymentBillingAddress.Country,
+                TournamentFlightId = selectedFlight?.Id,
+                Flight = selectedFlight?.Name
             };
 
             try

@@ -40,6 +40,7 @@ namespace GolfAssociationCommunity.Services
                 return await _context.Tournaments
                     .Include(t => t.GolfAssociation)
                     .Include(t => t.Registrations)
+                    .Include(t => t.Flights.OrderBy(f => f.DisplayOrder).ThenBy(f => f.Name))
                     .FirstOrDefaultAsync(t => t.Id == id);
             }
             catch (Exception ex)

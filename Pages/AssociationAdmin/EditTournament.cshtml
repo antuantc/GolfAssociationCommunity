@@ -68,6 +68,69 @@
     </form>
 </section>
 
+<section class="section-panel">
+    <h2>Flights</h2>
+    <p class="field-note">Define flights to group players in the leaderboard. Players must select a flight when registering. Leave empty to run this tournament without flights.</p>
+
+    @if (TempData["ErrorMessage"] is string err)
+    {
+        <div class="message error">@err</div>
+    }
+
+    @if (Model.Flights.Count > 0)
+    {
+        <div class="table-scroll" style="margin-bottom:1.5rem;">
+            <table class="table">
+                <thead>
+                    <tr><th>Order</th><th>Name</th><th>Description</th><th></th></tr>
+                </thead>
+                <tbody>
+                @foreach (var flight in Model.Flights)
+                {
+                    <tr>
+                        <td>@flight.DisplayOrder</td>
+                        <td>@flight.Name</td>
+                        <td>@(flight.Description ?? "—")</td>
+                        <td>
+                            <form method="post" asp-page-handler="DeleteFlight" asp-route-id="@Model.TournamentId" asp-route-flightId="@flight.Id"
+                                  class="inline-form" onsubmit="return confirm('Remove flight \'@flight.Name\'?');">
+                                <button type="submit" class="link-button">Remove</button>
+                            </form>
+                        </td>
+                    </tr>
+                }
+                </tbody>
+            </table>
+        </div>
+    }
+    else
+    {
+        <p style="margin-bottom:1rem;">No flights defined yet.</p>
+    }
+
+    <form method="post" asp-page-handler="AddFlight" asp-route-id="@Model.TournamentId" class="form-shell">
+        <h3 class="form-section-title">Add Flight</h3>
+        <div class="form-grid">
+            <div>
+                <label asp-for="NewFlight.Name">Flight Name</label>
+                <input asp-for="NewFlight.Name" class="form-control" placeholder="e.g. A, B, Championship, Senior" />
+                <span asp-validation-for="NewFlight.Name" class="text-danger"></span>
+            </div>
+            <div>
+                <label asp-for="NewFlight.Description">Description <span class="field-note">(optional)</span></label>
+                <input asp-for="NewFlight.Description" class="form-control" placeholder="e.g. Handicap 0–12" />
+            </div>
+            <div>
+                <label asp-for="NewFlight.DisplayOrder">Display Order</label>
+                <input asp-for="NewFlight.DisplayOrder" type="number" class="form-control" value="0" />
+            </div>
+        </div>
+        <div class="form-actions">
+            <button type="submit" class="btn">Add Flight</button>
+        </div>
+    </form>
+</section>
+
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
 }

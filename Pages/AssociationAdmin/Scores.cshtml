@@ -82,9 +82,22 @@
                 <h3 class="form-section-title">Flight <span class="field-note">(optional — groups players in leaderboard)</span></h3>
                 <div class="form-grid" style="grid-template-columns:1fr 2fr;max-width:500px;">
                     <div>
-                        <label asp-for="FlightInput">Flight Name</label>
-                        <input asp-for="FlightInput" class="form-control" placeholder="e.g. A, B, Championship" maxlength="50" />
-                        <span class="field-note">Leave blank if this tournament uses no flights.</span>
+                        <label asp-for="FlightInput">Flight</label>
+                        @if (Model.TournamentFlights.Count > 0)
+                        {
+                            <select asp-for="FlightInput" class="form-control">
+                                <option value="">— No flight —</option>
+                                @foreach (var f in Model.TournamentFlights)
+                                {
+                                    <option value="@f.Name">@f.Name@(string.IsNullOrWhiteSpace(f.Description) ? "" : $" — {f.Description}")</option>
+                                }
+                            </select>
+                        }
+                        else
+                        {
+                            <input asp-for="FlightInput" class="form-control" placeholder="e.g. A, B, Championship" maxlength="50" />
+                            <span class="field-note">Leave blank if this tournament uses no flights.</span>
+                        }
                     </div>
                 </div>
             </div>

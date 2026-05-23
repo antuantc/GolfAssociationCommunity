@@ -178,6 +178,7 @@ namespace GolfAssociationCommunity.Models
         public DateTime UpdatedAt { get; set; }
         public ICollection<Registration> Registrations { get; set; } = new List<Registration>();
         public ICollection<PlayerScore> PlayerScores { get; set; } = new List<PlayerScore>();
+        public ICollection<TournamentFlight> Flights { get; set; } = new List<TournamentFlight>();
     }
 
     public class Registration
@@ -209,6 +210,8 @@ namespace GolfAssociationCommunity.Models
         public string? WithdrawalReason { get; set; }
         public DateTime? WithdrawalDate { get; set; }
         public string? Flight { get; set; }
+        public int? TournamentFlightId { get; set; }
+        public TournamentFlight? TournamentFlight { get; set; }
     }
 
     public class PlayerScore
@@ -287,5 +290,15 @@ namespace GolfAssociationCommunity.Models
         public string Actor { get; set; } = string.Empty;
         public string Details { get; set; } = string.Empty;
         public DateTime AtUtc { get; set; }
+    }
+
+    public class TournamentFlight
+    {
+        public int Id { get; set; }
+        public int TournamentId { get; set; }
+        public Tournament? Tournament { get; set; }
+        public string Name { get; set; } = string.Empty;
+        public string? Description { get; set; }
+        public int DisplayOrder { get; set; }
     }
 }
