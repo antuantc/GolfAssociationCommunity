@@ -32,6 +32,7 @@ namespace GolfAssociationCommunity.Pages.AssociationAdmin
         // Gallery – video embed
         [BindProperty] public string? VideoUrl { get; set; }
         [BindProperty] public string? VideoCaption { get; set; }
+        [BindProperty] public bool VideoAutoPlay { get; set; }
 
         // Sponsors
         [BindProperty] public SponsorInput NewSponsor { get; set; } = new();
@@ -210,6 +211,7 @@ namespace GolfAssociationCommunity.Pages.AssociationAdmin
                 Caption = string.IsNullOrWhiteSpace(VideoCaption) ? null : VideoCaption.Trim(),
                 DisplayOrder = nextOrder + 1,
                 IsActive = true,
+                AutoPlay = VideoAutoPlay,
                 CreatedAt = DateTime.UtcNow
             });
             await Context.SaveChangesAsync();

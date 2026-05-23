@@ -4,6 +4,8 @@
 @{
     ViewData["Title"] = Model.Association?.Name ?? "Association";
     var assoc = Model.Association;
+    var activeVideos = assoc?.MediaItems.Where(m => m.IsActive && m.MediaType == MediaType.Video).OrderBy(m => m.DisplayOrder).ToList();
+    var activePhotos = assoc?.MediaItems.Where(m => m.IsActive && m.MediaType == MediaType.Photo).OrderBy(m => m.DisplayOrder).ToList();
 }
 
 @if (TempData["SuccessMessage"] != null)
@@ -64,10 +66,6 @@ else
 
     @* ── Stats Bar ────────────────────────────────────────────────── *@
     <div class="assoc-stats-bar">
-        <div class="assoc-stat">
-            <span class="assoc-stat__num">@Model.ActivePlayerCount</span>
-            <span class="assoc-stat__label">Active Members</span>
-        </div>
         <div class="assoc-stat">
             <span class="assoc-stat__num">@assoc.Tournaments.Count</span>
             <span class="assoc-stat__label">Tournaments</span>
@@ -142,23 +140,39 @@ else
         </section>
     }
 
-    @* ── Gallery ──────────────────────────────────────────────────── *@
-    @if (assoc.MediaItems.Any(m => m.IsActive))
+    @* ── Videos ───────────────────────────────────────────────────── *@
+    @if (activeVideos != null && activeVideos.Count > 0)
+    {
+        <section class="section-panel">
+            <h2>Videos</h2>
+            <div class="gallery-grid">
+                @foreach (var item in activeVideos)
+                {
+                    var videoSrc = item.AutoPlay ? item.Url + (item.Url.Contains("youtube.com") ? "?autoplay=1&mute=1" : "?autoplay=1&muted=1") : item.Url;
+                    <div class="gallery-item">
+                        <iframe src="@videoSrc" class="gallery-video" allowfullscreen loading="lazy"
+                                title="@item.Caption"
+                                allow="autoplay; encrypted-media"></iframe>
+                        @if (!string.IsNullOrWhiteSpace(item.Caption))
+                        {
+                            <p class="gallery-caption">@item.Caption</p>
+                        }
+                    </div>
+                }
+            </div>
+        </section>
+    }
+
+    @* ── Photo Gallery ─────────────────────────────────────────────── *@
+    @if (activePhotos != null && activePhotos.Count > 0)
     {
         <section class="section-panel">
             <h2>Gallery</h2>
             <div class="gallery-grid">
-                @foreach (var item in assoc.MediaItems.Where(m => m.IsActive).OrderBy(m => m.DisplayOrder))
+                @foreach (var item in activePhotos)
                 {
                     <div class="gallery-item">
-                        @if (item.MediaType == MediaType.Photo)
-                        {
-                            <img src="@item.Url" alt="@item.Caption" class="gallery-photo" loading="lazy" />
-                        }
-                        else
-                        {
-                            <iframe src="@item.Url" class="gallery-video" allowfullscreen loading="lazy" title="@item.Caption"></iframe>
-                        }
+                        <img src="@item.Url" alt="@item.Caption" class="gallery-photo" loading="lazy" />
                         @if (!string.IsNullOrWhiteSpace(item.Caption))
                         {
                             <p class="gallery-caption">@item.Caption</p>

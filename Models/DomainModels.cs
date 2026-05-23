@@ -266,6 +266,8 @@ namespace GolfAssociationCommunity.Models
         public string? Caption { get; set; }
         public int DisplayOrder { get; set; }
         public bool IsActive { get; set; } = true;
+        /// <summary>Applies only to Video items. When true, appends autoplay parameters to the embed URL.</summary>
+        public bool AutoPlay { get; set; } = false;
         public DateTime CreatedAt { get; set; }
     }
 

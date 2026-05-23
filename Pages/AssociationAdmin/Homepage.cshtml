@@ -98,6 +98,13 @@
                     <label asp-for="VideoUrl">YouTube or Vimeo URL</label>
                     <input asp-for="VideoUrl" type="url" class="form-control" placeholder="https://www.youtube.com/watch?v=..." />
                 </div>
+                <div>
+                    <label class="checkbox-label">
+                        <input asp-for="VideoAutoPlay" type="checkbox" />
+                        Auto-play when page loads
+                    </label>
+                    <p class="field-note">Note: browsers may block autoplay unless the video is muted.</p>
+                </div>
                 <div class="form-actions">
                     <button type="submit" class="btn">Add Video</button>
                 </div>
@@ -105,30 +112,52 @@
         </div>
     </div>
 
-    @if (Model.MediaItems.Count == 0)
+    @{
+        var adminPhotos = Model.MediaItems.Where(m => m.MediaType == GolfAssociationCommunity.Models.MediaType.Photo).ToList();
+        var adminVideos = Model.MediaItems.Where(m => m.MediaType == GolfAssociationCommunity.Models.MediaType.Video).ToList();
+    }
+
+    @if (adminPhotos.Count == 0 && adminVideos.Count == 0)
     {
         <p>No gallery items yet. Upload photos or add video links above.</p>
     }
-    else
+
+    @if (adminPhotos.Count > 0)
     {
+        <h3 style="margin-top:1.5rem;">Photos</h3>
         <div class="gallery-admin-grid">
-            @foreach (var item in Model.MediaItems)
+            @foreach (var item in adminPhotos)
             {
                 <div class="gallery-admin-item">
-                    @if (item.MediaType == GolfAssociationCommunity.Models.MediaType.Photo)
-                    {
-                        <img src="@item.Url" alt="@item.Caption" class="gallery-admin-thumb" />
-                    }
-                    else
-                    {
-                        <div class="gallery-admin-video-icon">▶ Video</div>
-                    }
+                    <img src="@item.Url" alt="@item.Caption" class="gallery-admin-thumb" />
                     @if (!string.IsNullOrWhiteSpace(item.Caption))
                     {
                         <p class="field-note" style="margin:0.25rem 0;">@item.Caption</p>
                     }
                     <form method="post" asp-page-handler="DeleteMedia" asp-route-id="@item.Id"
-                          onsubmit="return confirm('Remove this item?')">
+                          onsubmit="return confirm('Remove this photo?')">
+                        <button type="submit" class="btn btn-secondary" style="margin-top:0.5rem;padding:0.35rem 0.75rem;font-size:0.85rem;">Remove</button>
+                    </form>
+                </div>
+            }
+        </div>
+    }
+
+    @if (adminVideos.Count > 0)
+    {
+        <h3 style="margin-top:1.5rem;">Videos</h3>
+        <div class="gallery-admin-grid">
+            @foreach (var item in adminVideos)
+            {
+                <div class="gallery-admin-item">
+                    <div class="gallery-admin-video-icon">&#9654; Video</div>
+                    @if (!string.IsNullOrWhiteSpace(item.Caption))
+                    {
+                        <p class="field-note" style="margin:0.25rem 0;">@item.Caption</p>
+                    }
+                    <p class="field-note" style="margin:0;">Auto-play: @(item.AutoPlay ? "Yes" : "No")</p>
+                    <form method="post" asp-page-handler="DeleteMedia" asp-route-id="@item.Id"
+                          onsubmit="return confirm('Remove this video?')">
                         <button type="submit" class="btn btn-secondary" style="margin-top:0.5rem;padding:0.35rem 0.75rem;font-size:0.85rem;">Remove</button>
                     </form>
                 </div>
