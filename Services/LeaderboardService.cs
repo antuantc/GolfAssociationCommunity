@@ -79,12 +79,32 @@ namespace GolfAssociationCommunity.Services
         {
             try
             {
-                return await _context.Leaderboards
+                var leaderboards = await _context.Leaderboards
                     .Where(l => l.TournamentId == tournamentId)
                     .Include(l => l.AssociationPlayer)
                     .Include(l => l.Tournament)
                     .OrderBy(l => l.Position)
                     .ToListAsync();
+
+                // Load tiebreaker hole scores (HoleNumber -1 to -4, ordered hardest first)
+                var tiebreakerScores = await _context.PlayerScores
+                    .Where(ps => ps.TournamentId == tournamentId && ps.HoleNumber < 0)
+                    .Select(ps => new { ps.AssociationPlayerId, ps.HoleNumber, ps.Score })
+                    .ToListAsync();
+
+                var tiebreakersByPlayer = tiebreakerScores
+                    .GroupBy(ps => ps.AssociationPlayerId)
+                    .ToDictionary(
+                        g => g.Key,
+                        g => g.OrderByDescending(ps => ps.HoleNumber).Select(ps => ps.Score).ToList());
+
+                foreach (var entry in leaderboards)
+                {
+                    if (tiebreakersByPlayer.TryGetValue(entry.AssociationPlayerId, out var scores))
+                        entry.TiebreakerScores = scores;
+                }
+
+                return leaderboards;
             }
             catch (Exception ex)
             {

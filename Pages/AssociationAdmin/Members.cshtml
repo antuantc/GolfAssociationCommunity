@@ -1,0 +1,135 @@
+@page
+@model GolfAssociationCommunity.Pages.AssociationAdmin.MembersModel
+@{
+    ViewData["Title"] = "Officers & Members";
+}
+
+<section class="section-panel">
+    <h1>Officers &amp; Members</h1>
+    @if (TempData["SuccessMessage"] is string success)
+    {
+        <div class="message success">@success</div>
+    }
+</section>
+
+<section class="section-panel">
+    <h2>@(Model.IsEditing ? "Edit Entry" : "Add Entry")</h2>
+
+    <form method="post" asp-page-handler="Save" enctype="multipart/form-data" class="form-shell">
+        <div asp-validation-summary="ModelOnly" class="message error"></div>
+        <input type="hidden" asp-for="Input.ExistingPictureUrl" />
+
+        <div class="form-section">
+            <div class="form-grid">
+                <div>
+                    <label asp-for="Input.Name">Name</label>
+                    <input asp-for="Input.Name" class="form-control" />
+                    <span asp-validation-for="Input.Name" class="text-danger"></span>
+                </div>
+                <div>
+                    <label asp-for="Input.Role">Role / Title</label>
+                    <input asp-for="Input.Role" class="form-control" placeholder="e.g. President, Treasurer, Member" />
+                    <span asp-validation-for="Input.Role" class="text-danger"></span>
+                </div>
+                <div>
+                    <label asp-for="Input.DisplayOrder">Display Order</label>
+                    <input asp-for="Input.DisplayOrder" type="number" class="form-control" />
+                </div>
+                <div>
+                    <label>
+                        <input asp-for="Input.IsActive" type="checkbox" />
+                        Active (shown publicly)
+                    </label>
+                </div>
+            </div>
+            <div>
+                <label asp-for="Input.Bio">Bio (optional)</label>
+                <textarea asp-for="Input.Bio" class="form-control" rows="3"></textarea>
+                <span asp-validation-for="Input.Bio" class="text-danger"></span>
+            </div>
+            <div>
+                <label asp-for="Picture">Photo (JPG, PNG, GIF, WebP &mdash; max 5 MB)</label>
+                @if (!string.IsNullOrWhiteSpace(Model.Input.ExistingPictureUrl))
+                {
+                    <div class="form-meta">
+                        <img src="@Model.Input.ExistingPictureUrl" alt="Current photo" style="height:80px;width:80px;object-fit:cover;border-radius:4px;" />
+                        <span class="field-note">Upload a new photo to replace the current one.</span>
+                    </div>
+                }
+                <input asp-for="Picture" type="file" accept="image/*" class="form-control" />
+                <span asp-validation-for="Picture" class="text-danger"></span>
+            </div>
+        </div>
+
+        <div class="form-actions">
+            <button type="submit" class="btn">@(Model.IsEditing ? "Save Changes" : "Add Entry")</button>
+            @if (Model.IsEditing)
+            {
+                <a href="~/AssociationAdmin/Members" class="btn btn-secondary">Cancel</a>
+            }
+        </div>
+    </form>
+</section>
+
+<section class="section-panel">
+    <h2>Current Officers &amp; Members</h2>
+
+    @if (Model.Officers.Count == 0)
+    {
+        <p>No officers or members added yet.</p>
+    }
+    else
+    {
+        <div class="table-scroll">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Photo</th>
+                        <th>Name</th>
+                        <th>Role</th>
+                        <th>Order</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var officer in Model.Officers)
+                    {
+                        <tr>
+                            <td>
+                                @if (!string.IsNullOrWhiteSpace(officer.PictureUrl))
+                                {
+                                    <img src="@officer.PictureUrl" alt="@officer.Name" style="height:48px;width:48px;object-fit:cover;border-radius:50%;" />
+                                }
+                                else
+                                {
+                                    <span class="pill">No photo</span>
+                                }
+                            </td>
+                            <td>@officer.Name</td>
+                            <td>@officer.Role</td>
+                            <td>@officer.DisplayOrder</td>
+                            <td>
+                                @if (officer.IsActive)
+                                {
+                                    <span class="pill">Active</span>
+                                }
+                                else
+                                {
+                                    <span class="pill">Inactive</span>
+                                }
+                            </td>
+                            <td class="form-actions">
+                                <a href="~/AssociationAdmin/Members?EditId=@officer.Id" class="btn btn-secondary">Edit</a>
+                                <form method="post" asp-page-handler="Delete" asp-route-id="@officer.Id"
+                                      onsubmit="return confirm('Remove @officer.Name?')">
+                                    <button type="submit" class="btn btn-secondary">Remove</button>
+                                </form>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</section>

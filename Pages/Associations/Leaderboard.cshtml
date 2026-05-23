@@ -41,6 +41,7 @@
                 }
                 else
                 {
+                    var hasTiebreakers = Model.TournamentLeaderboard.Any(r => r.TiebreakerScores.Count > 0);
                     <div class="table-scroll">
                         <table class="table">
                             <thead>
@@ -48,6 +49,10 @@
                                     <th>Position</th>
                                     <th>Player</th>
                                     <th>Total Score</th>
+                                    @if (hasTiebreakers)
+                                    {
+                                        <th title="Scores on hardest handicap holes used as tiebreakers">Hdcp Hole Scores (TB)</th>
+                                    }
                                 </tr>
                             </thead>
                             <tbody>
@@ -57,6 +62,10 @@
                                         <td>@entry.Position</td>
                                         <td>@(entry.AssociationPlayer?.DisplayName ?? "Unknown Player")</td>
                                         <td>@entry.TotalScore</td>
+                                        @if (hasTiebreakers)
+                                        {
+                                            <td>@(entry.TiebreakerScores.Count > 0 ? string.Join(", ", entry.TiebreakerScores) : "—")</td>
+                                        }
                                     </tr>
                                 }
                             </tbody>

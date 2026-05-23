@@ -33,7 +33,7 @@ namespace GolfAssociationCommunity.Pages.AssociationAdmin
             UpcomingTournamentCount = await Context.Tournaments.CountAsync(t => t.GolfAssociationId == associationId && t.StartDate > DateTime.UtcNow);
             RegistrationCount = await Context.Registrations.CountAsync(r => r.Tournament != null && r.Tournament.GolfAssociationId == associationId);
             PlayerCount = await Context.AssociationPlayers.CountAsync(player => player.GolfAssociationId == associationId && player.IsActive);
-            ScoreCount = await Context.PlayerScores.CountAsync(s => s.Tournament != null && s.Tournament.GolfAssociationId == associationId);
+            ScoreCount = await Context.PlayerScores.CountAsync(s => s.HoleNumber == 0 && s.Tournament != null && s.Tournament.GolfAssociationId == associationId);
             SponsorshipPackageCount = await Context.SponsorshipPackages.CountAsync(sp => sp.GolfAssociationId == associationId);
             TransactionCount = await Context.Registrations.CountAsync(r => r.Tournament != null && r.Tournament.GolfAssociationId == associationId && r.AuthorizeNetTransactionId != null)
                 + await Context.SponsorshipPayments.CountAsync(sp => sp.GolfAssociationId == associationId && sp.AuthorizeNetTransactionId != null);

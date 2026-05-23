@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Identity;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace GolfAssociationCommunity.Models
 {
@@ -64,6 +65,22 @@ namespace GolfAssociationCommunity.Models
         public ICollection<Tournament> Tournaments { get; set; } = new List<Tournament>();
         public ICollection<SponsorshipPackage> SponsorshipPackages { get; set; } = new List<SponsorshipPackage>();
         public ICollection<SponsorshipPayment> SponsorshipPayments { get; set; } = new List<SponsorshipPayment>();
+        public ICollection<AssociationOfficer> OfficersAndMembers { get; set; } = new List<AssociationOfficer>();
+    }
+
+    public class AssociationOfficer
+    {
+        public int Id { get; set; }
+        public int GolfAssociationId { get; set; }
+        public GolfAssociation? GolfAssociation { get; set; }
+        public string Name { get; set; } = string.Empty;
+        public string Role { get; set; } = string.Empty;
+        public string? Bio { get; set; }
+        public string? PictureUrl { get; set; }
+        public int DisplayOrder { get; set; }
+        public bool IsActive { get; set; } = true;
+        public DateTime CreatedAt { get; set; }
+        public DateTime UpdatedAt { get; set; }
     }
 
     public class AssociationPlayer
@@ -211,6 +228,10 @@ namespace GolfAssociationCommunity.Models
         public int StablefordPoints { get; set; }
         public int ScoreDifferential { get; set; }
         public DateTime UpdatedAt { get; set; }
+
+        /// <summary>Tiebreaker hole scores (hardest handicap hole first). Not persisted — populated at query time.</summary>
+        [NotMapped]
+        public List<int> TiebreakerScores { get; set; } = new();
     }
 
     public class AdminAuditEvent

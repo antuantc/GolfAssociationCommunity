@@ -13,6 +13,7 @@ namespace GolfAssociationCommunity.Data
 
         public DbSet<GolfAssociation> GolfAssociations { get; set; } = null!;
         public DbSet<AssociationPlayer> AssociationPlayers { get; set; } = null!;
+        public DbSet<AssociationOfficer> AssociationOfficers { get; set; } = null!;
         public DbSet<Tournament> Tournaments { get; set; } = null!;
         public DbSet<SponsorshipPackage> SponsorshipPackages { get; set; } = null!;
         public DbSet<SponsorshipPayment> SponsorshipPayments { get; set; } = null!;
@@ -24,6 +25,12 @@ namespace GolfAssociationCommunity.Data
         protected override void OnModelCreating(ModelBuilder builder)
         {
             base.OnModelCreating(builder);
+
+            builder.Entity<GolfAssociation>()
+                .HasMany(ga => ga.OfficersAndMembers)
+                .WithOne(o => o.GolfAssociation)
+                .HasForeignKey(o => o.GolfAssociationId)
+                .OnDelete(DeleteBehavior.Cascade);
 
             builder.Entity<GolfAssociation>()
                 .HasMany(ga => ga.Members)
