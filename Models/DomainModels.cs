@@ -179,6 +179,7 @@ namespace GolfAssociationCommunity.Models
     public class PlayerScore
     {
         public const int RoundTotalEntryHoleNumber = 0;
+        public const int MaxTiebreakerEntries = 4;
 
         public int Id { get; set; }
         public int TournamentId { get; set; }

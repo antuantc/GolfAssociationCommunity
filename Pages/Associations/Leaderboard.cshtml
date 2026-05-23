@@ -1,0 +1,111 @@
+@page "{associationId:int}"
+@model GolfAssociationCommunity.Pages.Associations.LeaderboardModel
+@{
+    ViewData["Title"] = Model.Association?.Name is null ? "Leaderboard" : $"{Model.Association.Name} Leaderboard";
+}
+
+<section class="section-panel">
+    @if (Model.Association == null)
+    {
+        <h1>Association not found</h1>
+        <p>The association you requested does not exist or is not active.</p>
+        <a href="~/" class="btn btn-secondary">Back to associations</a>
+    }
+    else
+    {
+        <h1>@Model.Association.Name Leaderboard</h1>
+
+        <div class="form-actions">
+            <form method="get">
+                <input type="hidden" name="associationId" value="@Model.Association.Id" />
+                <label for="tournamentId">View Tournament Leaderboard</label>
+                <select id="tournamentId" name="TournamentId" class="form-control" onchange="this.form.submit()">
+                    <option value="">-- All tournaments (association overall) --</option>
+                    @foreach (var tournament in Model.Tournaments)
+                    {
+                        <option value="@tournament.Id" selected="@(Model.TournamentId == tournament.Id)">@tournament.Name (@tournament.StartDate.ToString("MMM d, yyyy"))</option>
+                    }
+                </select>
+            </form>
+        </div>
+
+        @if (Model.SelectedTournament != null)
+        {
+            <section class="section-panel">
+                <h2>@Model.SelectedTournament.Name</h2>
+                <p>@Model.SelectedTournament.StartDate.ToString("MMM d, yyyy") &ndash; @Model.SelectedTournament.EndDate.ToString("MMM d, yyyy")</p>
+
+                @if (Model.TournamentLeaderboard.Count == 0)
+                {
+                    <p>No scores have been recorded for this tournament yet.</p>
+                }
+                else
+                {
+                    <div class="table-scroll">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Position</th>
+                                    <th>Player</th>
+                                    <th>Total Score</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var entry in Model.TournamentLeaderboard)
+                                {
+                                    <tr>
+                                        <td>@entry.Position</td>
+                                        <td>@(entry.AssociationPlayer?.DisplayName ?? "Unknown Player")</td>
+                                        <td>@entry.TotalScore</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+            </section>
+        }
+
+        <section class="section-panel">
+            <h2>Association Overall Standings</h2>
+            <p>Overall position is based on tournament finishes and average finishing position.</p>
+
+            @if (Model.AssociationLeaderboard.Count == 0)
+            {
+                <p>No leaderboard data is available yet.</p>
+            }
+            else
+            {
+                <div class="table-scroll">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Position</th>
+                                <th>Player</th>
+                                <th>Tournaments</th>
+                                <th>Wins</th>
+                                <th>Avg Finish</th>
+                                <th>Total Score</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var row in Model.AssociationLeaderboard)
+                            {
+                                <tr>
+                                    <td>@row.OverallPosition</td>
+                                    <td>@row.PlayerName</td>
+                                    <td>@row.TournamentsPlayed</td>
+                                    <td>@row.Wins</td>
+                                    <td>@row.AveragePosition.ToString("0.##")</td>
+                                    <td>@row.TotalScore</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+        </section>
+
+        <a href="~/Associations/Details/@Model.Association.Id" class="btn btn-secondary">Back to association</a>
+    }
+</section>

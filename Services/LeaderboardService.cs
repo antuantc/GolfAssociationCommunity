@@ -4,6 +4,26 @@ using Microsoft.EntityFrameworkCore;
 
 namespace GolfAssociationCommunity.Services
 {
+    public class RecentTournamentLeaderboard
+    {
+        public int TournamentId { get; set; }
+        public string TournamentName { get; set; } = string.Empty;
+        public string TournamentDates { get; set; } = string.Empty;
+        public List<Leaderboard> TopEntries { get; set; } = new();
+    }
+
+    public class GlobalLeaderboardRow
+    {
+        public int OverallPosition { get; set; }
+        public string PlayerName { get; set; } = string.Empty;
+        public string PlayerEmail { get; set; } = string.Empty;
+        public int TournamentPoints { get; set; }
+        public int TournamentsPlayed { get; set; }
+        public int Wins { get; set; }
+        public decimal AveragePosition { get; set; }
+        public int TotalScore { get; set; }
+    }
+
     public class AssociationLeaderboardRow
     {
         public int AssociationPlayerId { get; set; }
@@ -21,7 +41,7 @@ namespace GolfAssociationCommunity.Services
     {
         public int AssociationPlayerId { get; set; }
         public int TotalScore { get; set; }
-        public int? TiebreakerHoleHandicap { get; set; }
+        public List<int> TiebreakerScores { get; set; } = new();
     }
 
     /// <summary>
@@ -31,6 +51,8 @@ namespace GolfAssociationCommunity.Services
     {
         Task<IEnumerable<Leaderboard>> GetTournamentLeaderboardAsync(int tournamentId);
         Task<IEnumerable<AssociationLeaderboardRow>> GetAssociationLeaderboardAsync(int associationId);
+        Task<IEnumerable<RecentTournamentLeaderboard>> GetRecentTournamentLeaderboardsAsync(int associationId, int tournamentCount = 3, int topN = 5);
+        Task<IEnumerable<GlobalLeaderboardRow>> GetGlobalLeaderboardAsync(int topN = 10);
         Task<Leaderboard?> GetPlayerLeaderboardPositionAsync(int tournamentId, int associationPlayerId);
         Task UpdateLeaderboardAsync(int tournamentId);
         Task<bool> RecalculateLeaderboardAsync(int tournamentId);
@@ -120,6 +142,91 @@ namespace GolfAssociationCommunity.Services
             }
         }
 
+        public async Task<IEnumerable<RecentTournamentLeaderboard>> GetRecentTournamentLeaderboardsAsync(int associationId, int tournamentCount = 3, int topN = 5)
+        {
+            try
+            {
+                var recentTournamentIds = await _context.Tournaments
+                    .Where(t => t.GolfAssociationId == associationId)
+                    .OrderByDescending(t => t.StartDate)
+                    .Select(t => new { t.Id, t.Name, t.StartDate, t.EndDate })
+                    .Take(tournamentCount)
+                    .ToListAsync();
+
+                var result = new List<RecentTournamentLeaderboard>();
+                foreach (var t in recentTournamentIds)
+                {
+                    var entries = await _context.Leaderboards
+                        .Where(l => l.TournamentId == t.Id)
+                        .Include(l => l.AssociationPlayer)
+                        .OrderBy(l => l.Position)
+                        .Take(topN)
+                        .ToListAsync();
+
+                    if (entries.Count == 0) continue;
+
+                    result.Add(new RecentTournamentLeaderboard
+                    {
+                        TournamentId = t.Id,
+                        TournamentName = t.Name,
+                        TournamentDates = $"{t.StartDate:MMM d, yyyy} \u2013 {t.EndDate:MMM d, yyyy}",
+                        TopEntries = entries
+                    });
+                }
+
+                return result;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error retrieving recent tournament leaderboards for association ID: {AssociationId}", associationId);
+                throw;
+            }
+        }
+
+        public async Task<IEnumerable<GlobalLeaderboardRow>> GetGlobalLeaderboardAsync(int topN = 10)
+        {
+            try
+            {
+                var rows = await _context.Leaderboards
+                    .Include(l => l.AssociationPlayer)
+                    .ToListAsync();
+
+                var aggregated = rows
+                    .GroupBy(l => string.IsNullOrWhiteSpace(l.AssociationPlayer?.Email)
+                        ? $"name:{BuildPlayerName(l.AssociationPlayer)}"
+                        : l.AssociationPlayer!.Email.Trim().ToLowerInvariant())
+                    .Select(group => new GlobalLeaderboardRow
+                    {
+                        PlayerName = group
+                            .Select(e => e.AssociationPlayer?.DisplayName)
+                            .FirstOrDefault(n => !string.IsNullOrWhiteSpace(n)) ?? group.Key,
+                        PlayerEmail = group.Key.StartsWith("name:") ? string.Empty : group.Key,
+                        TournamentPoints = group.Sum(e => CalculateTournamentPoints(e.Position)),
+                        TournamentsPlayed = group.Count(),
+                        Wins = group.Count(e => e.Position == 1),
+                        AveragePosition = Math.Round((decimal)group.Average(e => e.Position), 2),
+                        TotalScore = group.Sum(e => e.TotalScore)
+                    })
+                    .OrderByDescending(r => r.TournamentPoints)
+                    .ThenBy(r => r.AveragePosition)
+                    .ThenByDescending(r => r.Wins)
+                    .ThenBy(r => r.TotalScore)
+                    .ThenBy(r => r.PlayerName)
+                    .Take(topN)
+                    .ToList();
+
+                for (int i = 0; i < aggregated.Count; i++)
+                    aggregated[i].OverallPosition = i + 1;
+
+                return aggregated;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error retrieving global leaderboard");
+                throw;
+            }
+        }
+
         public async Task<Leaderboard?> GetPlayerLeaderboardPositionAsync(int tournamentId, int associationPlayerId)
         {
             try
@@ -160,7 +267,7 @@ namespace GolfAssociationCommunity.Services
                 foreach (var registration in registrations)
                 {
                     int totalScore = 0;
-                    int? tiebreakerHoleHandicap = null;
+                    var tiebreakerScores = new List<int>();
 
                     var playerScores = await _context.PlayerScores
                         .Where(ps => ps.TournamentId == tournamentId && ps.AssociationPlayerId == registration.AssociationPlayerId)
@@ -168,27 +275,26 @@ namespace GolfAssociationCommunity.Services
 
                     if (playerScores.Any())
                     {
-                        totalScore = playerScores.Sum(ps => ps.Score);
-                        tiebreakerHoleHandicap = playerScores
-                            .Where(score => score.TiebreakerHoleHandicap.HasValue)
-                            .OrderByDescending(score => score.Round)
-                            .ThenByDescending(score => score.UpdatedAt)
-                            .Select(score => score.TiebreakerHoleHandicap)
-                            .FirstOrDefault();
+                        totalScore = playerScores.Where(ps => ps.IsRoundTotalEntry).Sum(ps => ps.Score);
+                        tiebreakerScores = playerScores
+                            .Where(ps => ps.HoleNumber >= -PlayerScore.MaxTiebreakerEntries && ps.HoleNumber < 0)
+                            .OrderByDescending(ps => ps.HoleNumber)
+                            .Select(ps => ps.Score)
+                            .ToList();
                     }
 
                     leaderboardData.Add(new TournamentLeaderboardScoreRow
                     {
                         AssociationPlayerId = registration.AssociationPlayerId!.Value,
                         TotalScore = totalScore,
-                        TiebreakerHoleHandicap = tiebreakerHoleHandicap
+                        TiebreakerScores = tiebreakerScores
                     });
                 }
 
-                // Primary: total score ascending. Tiebreaker: score on hardest handicap hole ascending.
+                // Primary: total score ascending. Tiebreaker: sequential scores on hardest handicap holes.
                 var sortedData = leaderboardData
                     .OrderBy(x => x.TotalScore)
-                    .ThenBy(x => x.TiebreakerHoleHandicap ?? int.MaxValue)
+                    .ThenBy(x => x, new TiebreakerScoreComparer())
                     .ThenBy(x => x.AssociationPlayerId);
 
                 // Clear existing leaderboard entries for this tournament
@@ -283,6 +389,23 @@ namespace GolfAssociationCommunity.Services
             }
 
             return Math.Max(1, 25 - (position - 1));
+        }
+    }
+
+    internal sealed class TiebreakerScoreComparer : IComparer<TournamentLeaderboardScoreRow>
+    {
+        public int Compare(TournamentLeaderboardScoreRow? x, TournamentLeaderboardScoreRow? y)
+        {
+            var xs = x?.TiebreakerScores ?? new List<int>();
+            var ys = y?.TiebreakerScores ?? new List<int>();
+            int len = Math.Max(xs.Count, ys.Count);
+            for (int i = 0; i < len; i++)
+            {
+                int xv = i < xs.Count ? xs[i] : int.MaxValue;
+                int yv = i < ys.Count ? ys[i] : int.MaxValue;
+                if (xv != yv) return xv.CompareTo(yv);
+            }
+            return 0;
         }
     }
 }

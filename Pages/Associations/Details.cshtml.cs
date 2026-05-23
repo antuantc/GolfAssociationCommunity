@@ -8,14 +8,17 @@ namespace GolfAssociationCommunity.Pages.Associations
     public class DetailsModel : PageModel
     {
         private readonly IAssociationService _associationService;
+        private readonly ILeaderboardService _leaderboardService;
 
-        public DetailsModel(IAssociationService associationService)
+        public DetailsModel(IAssociationService associationService, ILeaderboardService leaderboardService)
         {
             _associationService = associationService;
+            _leaderboardService = leaderboardService;
         }
 
         public GolfAssociation? Association { get; set; }
         public List<SponsorshipPackage> ActiveSponsorshipPackages { get; private set; } = new();
+        public List<RecentTournamentLeaderboard> RecentLeaderboards { get; private set; } = new();
 
         public async Task<IActionResult> OnGetAsync(int id)
         {
@@ -42,6 +45,7 @@ namespace GolfAssociationCommunity.Pages.Associations
                 .OrderBy(sp => sp.DisplayOrder)
                 .ThenByDescending(sp => sp.Amount)
                 .ToList();
+            RecentLeaderboards = (await _leaderboardService.GetRecentTournamentLeaderboardsAsync(id, 3, 5)).ToList();
             return true;
         }
     }

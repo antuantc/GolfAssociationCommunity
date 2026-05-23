@@ -52,7 +52,13 @@ namespace GolfAssociationCommunity.Pages.AssociationAdmin
         {
             public int? TotalScore { get; set; }
             public int? StablefordPoints { get; set; }
-            public int? TiebreakerHoleHandicap { get; set; }
+            public List<TiebreakerEntry> Tiebreakers { get; set; } =
+                Enumerable.Range(0, PlayerScore.MaxTiebreakerEntries).Select(_ => new TiebreakerEntry()).ToList();
+
+            public class TiebreakerEntry
+            {
+                public int? Score { get; set; }
+            }
         }
 
         public async Task<IActionResult> OnGetAsync()
@@ -130,6 +136,9 @@ namespace GolfAssociationCommunity.Pages.AssociationAdmin
                     && score.Round == Round)
                 .ToListAsync();
 
+            var existingRoundTotal = existingScores.FirstOrDefault(s => s.IsRoundTotalEntry);
+            var existingTiebreakers = existingScores.Where(s => s.HoleNumber < 0).ToList();
+
             if (!Input.TotalScore.HasValue)
             {
                 if (existingScores.Count > 0)
@@ -139,17 +148,17 @@ namespace GolfAssociationCommunity.Pages.AssociationAdmin
             }
             else
             {
-                var roundScore = existingScores.OrderBy(score => score.HoleNumber).FirstOrDefault();
-                if (roundScore == null)
+                // Round total entry
+                var roundScore = existingRoundTotal ?? new PlayerScore
                 {
-                    roundScore = new PlayerScore
-                    {
-                        TournamentId = TournamentId.Value,
-                        AssociationPlayerId = AssociationPlayerId.Value,
-                        Round = Round,
-                        CreatedAt = DateTime.UtcNow
-                    };
+                    TournamentId = TournamentId.Value,
+                    AssociationPlayerId = AssociationPlayerId.Value,
+                    Round = Round,
+                    CreatedAt = DateTime.UtcNow
+                };
 
+                if (existingRoundTotal == null)
+                {
                     Context.PlayerScores.Add(roundScore);
                 }
 
@@ -157,13 +166,50 @@ namespace GolfAssociationCommunity.Pages.AssociationAdmin
                 roundScore.Score = Input.TotalScore.Value;
                 roundScore.HolePar = 0;
                 roundScore.HandicapStrokes = 0;
-                roundScore.TiebreakerHoleHandicap = Input.TiebreakerHoleHandicap;
+                roundScore.TiebreakerHoleHandicap = null;
                 roundScore.StablefordPoints = Input.StablefordPoints ?? 0;
                 roundScore.UpdatedAt = DateTime.UtcNow;
 
-                if (existingScores.Count > 1)
+                // Remove any accidental duplicate round total records
+                var extraRoundTotals = existingScores.Where(s => s.IsRoundTotalEntry && s != roundScore).ToList();
+                if (extraRoundTotals.Count > 0)
                 {
-                    Context.PlayerScores.RemoveRange(existingScores.Where(score => score != roundScore));
+                    Context.PlayerScores.RemoveRange(extraRoundTotals);
+                }
+
+                // Tiebreaker entries: upsert each of the 4 slots
+                for (int i = 0; i < PlayerScore.MaxTiebreakerEntries; i++)
+                {
+                    int holeNumber = -(i + 1);
+                    var existing = existingTiebreakers.FirstOrDefault(s => s.HoleNumber == holeNumber);
+                    var inputScore = Input.Tiebreakers[i].Score;
+
+                    if (inputScore.HasValue)
+                    {
+                        if (existing == null)
+                        {
+                            existing = new PlayerScore
+                            {
+                                TournamentId = TournamentId.Value,
+                                AssociationPlayerId = AssociationPlayerId.Value,
+                                Round = Round,
+                                HoleNumber = holeNumber,
+                                CreatedAt = DateTime.UtcNow
+                            };
+                            Context.PlayerScores.Add(existing);
+                        }
+
+                        existing.Score = inputScore.Value;
+                        existing.TiebreakerHoleHandicap = i + 1;
+                        existing.HolePar = 0;
+                        existing.HandicapStrokes = 0;
+                        existing.StablefordPoints = 0;
+                        existing.UpdatedAt = DateTime.UtcNow;
+                    }
+                    else if (existing != null)
+                    {
+                        Context.PlayerScores.Remove(existing);
+                    }
                 }
             }
 
@@ -251,17 +297,23 @@ namespace GolfAssociationCommunity.Pages.AssociationAdmin
 
             if (existingScores.Count > 0)
             {
-                var roundScore = existingScores.OrderBy(score => score.HoleNumber).First();
+                var roundTotalEntry = existingScores.FirstOrDefault(s => s.IsRoundTotalEntry);
+                var tiebreakers = Enumerable.Range(0, PlayerScore.MaxTiebreakerEntries).Select(i =>
+                {
+                    var entry = existingScores.FirstOrDefault(s => s.HoleNumber == -(i + 1));
+                    return new RoundScoreInput.TiebreakerEntry { Score = entry?.Score };
+                }).ToList();
+
                 Input = new RoundScoreInput
                 {
-                    TotalScore = existingScores.Sum(score => score.Score),
-                    StablefordPoints = existingScores.Sum(score => score.StablefordPoints),
-                    TiebreakerHoleHandicap = roundScore.TiebreakerHoleHandicap
+                    TotalScore = roundTotalEntry?.Score,
+                    StablefordPoints = roundTotalEntry?.StablefordPoints,
+                    Tiebreakers = tiebreakers
                 };
             }
 
-            CurrentTotalScore = existingScores.Sum(score => score.Score);
-            CurrentStablefordPoints = existingScores.Sum(score => score.StablefordPoints);
+            CurrentTotalScore = existingScores.Where(s => s.IsRoundTotalEntry).Sum(s => s.Score);
+            CurrentStablefordPoints = existingScores.Where(s => s.IsRoundTotalEntry).Sum(s => s.StablefordPoints);
         }
     }
 }

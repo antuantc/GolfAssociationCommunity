@@ -32,3 +32,40 @@
         </div>
     }
 </section>
+
+@if (Model.GlobalLeaderboard.Count > 0)
+{
+    <section class="section-panel">
+        <h2>Top Players &mdash; All Associations</h2>
+        <p class="field-note">Ranked by tournament finish points accumulated across all associations and tournaments.</p>
+        <div class="table-scroll">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Player</th>
+                        <th>Email</th>
+                        <th>Tournaments</th>
+                        <th>Wins</th>
+                        <th>Avg Finish</th>
+                        <th>Total Score</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var row in Model.GlobalLeaderboard)
+                    {
+                        <tr>
+                            <td>@row.OverallPosition</td>
+                            <td>@row.PlayerName</td>
+                            <td>@row.PlayerEmail</td>
+                            <td>@row.TournamentsPlayed</td>
+                            <td>@row.Wins</td>
+                            <td>@row.AveragePosition.ToString("0.##")</td>
+                            <td>@row.TotalScore</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </section>
+}

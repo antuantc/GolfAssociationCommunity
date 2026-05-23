@@ -18,7 +18,7 @@
             <div class="form-grid">
                 <div>
                     <label asp-for="TournamentId">Tournament</label>
-                    <select asp-for="TournamentId" class="form-control">
+                    <select asp-for="TournamentId" class="form-control" onchange="this.form.submit()">
                         <option value="">Select tournament</option>
                         @foreach (var tournament in Model.Tournaments)
                         {
@@ -75,7 +75,7 @@
             <div asp-validation-summary="ModelOnly" class="message error"></div>
 
             <div class="form-section">
-                <p class="field-note">Enter one total per round for now. If tournament totals tie, the lower tiebreaker hole handicap wins when provided.</p>
+                <p class="field-note">Enter one total per round. If totals tie, the scores on the hardest handicap holes are used as sequential tiebreakers.</p>
                 <div class="form-grid">
                     <div>
                         <label asp-for="Input.TotalScore">Round Score</label>
@@ -90,11 +90,20 @@
                             <span asp-validation-for="Input.StablefordPoints" class="text-danger"></span>
                         </div>
                     }
-                    <div>
-                        <label asp-for="Input.TiebreakerHoleHandicap">Tiebreaker Hole Handicap</label>
-                        <input asp-for="Input.TiebreakerHoleHandicap" type="number" min="1" max="18" class="form-control" />
-                        <span asp-validation-for="Input.TiebreakerHoleHandicap" class="text-danger"></span>
-                    </div>
+                </div>
+            </div>
+
+            <div class="form-section">
+                <h3 class="form-section-title">Tiebreaker Hole Scores <span class="field-note">(optional &mdash; enter score on each hole ranked by difficulty)</span></h3>
+                <div class="form-grid">
+                    @for (int i = 0; i < PlayerScore.MaxTiebreakerEntries; i++)
+                    {
+                        string label = i switch { 0 => "Hole Handicap #1 (Hardest)", 1 => "Hole Handicap #2", 2 => "Hole Handicap #3", _ => "Hole Handicap #4" };
+                        <div>
+                            <label>@label</label>
+                            <input asp-for="Input.Tiebreakers[i].Score" type="number" min="1" max="15" class="form-control" />
+                        </div>
+                    }
                 </div>
             </div>
 

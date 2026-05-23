@@ -74,6 +74,42 @@
             </div>
         }
 
+        @if (Model.RecentLeaderboards.Count > 0)
+        {
+            <div class="section-panel">
+                <h2>Recent Tournament Leaderboards</h2>
+                @foreach (var lb in Model.RecentLeaderboards)
+                {
+                    <div class="section-panel">
+                        <h3>@lb.TournamentName</h3>
+                        <p class="field-note">@lb.TournamentDates</p>
+                        <div class="table-scroll">
+                            <table class="table">
+                                <thead>
+                                    <tr>
+                                        <th>#</th>
+                                        <th>Player</th>
+                                        <th>Score</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var entry in lb.TopEntries)
+                                    {
+                                        <tr>
+                                            <td>@entry.Position</td>
+                                            <td>@(entry.AssociationPlayer?.DisplayName ?? "Unknown")</td>
+                                            <td>@entry.TotalScore</td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                        <a class="btn btn-secondary" href="~/Associations/Leaderboard/@Model.Association.Id?TournamentId=@lb.TournamentId">Full results</a>
+                    </div>
+                }
+            </div>
+        }
+
         <div class="section-panel">
             <h2>Tournaments</h2>
             @if (Model.Association.Tournaments == null || Model.Association.Tournaments.Count == 0)
@@ -113,7 +149,10 @@
             }
         </div>
 
-        <a href="~/" class="btn btn-secondary">Back to associations</a>
+        <div class="form-actions">
+            <a href="~/Associations/Leaderboard/@Model.Association.Id" class="btn">View Leaderboard</a>
+            <a href="~/" class="btn btn-secondary">Back to associations</a>
+        </div>
     }
 </section>
 

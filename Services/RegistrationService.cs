@@ -260,7 +260,8 @@ namespace GolfAssociationCommunity.Services
 
         private async Task<int?> ResolveAssociationPlayerIdAsync(Registration registration)
         {
-            if (string.IsNullOrWhiteSpace(registration.GuestEmail) && string.IsNullOrWhiteSpace(registration.GuestName))
+            // Email is required to uniquely identify a player.
+            if (string.IsNullOrWhiteSpace(registration.GuestEmail))
             {
                 return null;
             }
@@ -276,22 +277,10 @@ namespace GolfAssociationCommunity.Services
             }
 
             var normalizedEmail = registration.GuestEmail.Trim().ToUpperInvariant();
-            AssociationPlayer? player = null;
 
-            if (!string.IsNullOrWhiteSpace(normalizedEmail))
-            {
-                player = await _context.AssociationPlayers
-                    .FirstOrDefaultAsync(existing => existing.GolfAssociationId == tournamentAssociationId.Value
-                        && existing.Email.ToUpper() == normalizedEmail);
-            }
-
-            if (player == null && !string.IsNullOrWhiteSpace(registration.GuestName))
-            {
-                var normalizedName = registration.GuestName.Trim().ToUpperInvariant();
-                player = await _context.AssociationPlayers
-                    .FirstOrDefaultAsync(existing => existing.GolfAssociationId == tournamentAssociationId.Value
-                        && existing.DisplayName.ToUpper() == normalizedName);
-            }
+            var player = await _context.AssociationPlayers
+                .FirstOrDefaultAsync(existing => existing.GolfAssociationId == tournamentAssociationId.Value
+                    && existing.Email.ToUpper() == normalizedEmail);
 
             if (player == null)
             {
@@ -311,12 +300,10 @@ namespace GolfAssociationCommunity.Services
                 return player.Id;
             }
 
+            // Update display name and handicap from latest registration; email stays as the key.
             player.DisplayName = string.IsNullOrWhiteSpace(registration.GuestName)
                 ? player.DisplayName
                 : registration.GuestName.Trim();
-            player.Email = string.IsNullOrWhiteSpace(registration.GuestEmail)
-                ? player.Email
-                : registration.GuestEmail.Trim();
             player.HandicapIndex = registration.Handicap ?? player.HandicapIndex;
             player.IsActive = true;
             player.UpdatedAt = DateTime.UtcNow;
