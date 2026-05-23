@@ -1,12 +1,16 @@
 using GolfAssociationCommunity.Data;
 using GolfAssociationCommunity.Models;
+using GolfAssociationCommunity.Services;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 using System.ComponentModel.DataAnnotations;
 
 namespace GolfAssociationCommunity.Pages.AssociationAdmin
 {
+    [RequestSizeLimit(100 * 1024 * 1024)]
+    [RequestFormLimits(MultipartBodyLengthLimit = 100 * 1024 * 1024)]
     public class HomepageModel : AssociationAdminPageModel
     {
         private static readonly HashSet<string> AllowedImageExtensions = new(StringComparer.OrdinalIgnoreCase)
@@ -17,11 +21,13 @@ namespace GolfAssociationCommunity.Pages.AssociationAdmin
         private const long MaxVideoSizeBytes = 100 * 1024 * 1024;
 
         private readonly IWebHostEnvironment _env;
+        private readonly UploadSettings _uploads;
 
-        public HomepageModel(UserManager<ApplicationUser> userManager, ApplicationDbContext context, IWebHostEnvironment env)
+        public HomepageModel(UserManager<ApplicationUser> userManager, ApplicationDbContext context, IWebHostEnvironment env, IOptions<UploadSettings> uploads)
             : base(userManager, context)
         {
             _env = env;
+            _uploads = uploads.Value;
         }
 
         // Hero & branding
@@ -105,8 +111,8 @@ namespace GolfAssociationCommunity.Pages.AssociationAdmin
         }
 
         // ── Save hero ────────────────────────────────────────────────────
-        [RequestSizeLimit(100 * 1024 * 1024)]
-        [RequestFormLimits(MultipartBodyLengthLimit = 100 * 1024 * 1024)]        public async Task<IActionResult> OnPostSaveHeroAsync()
+
+        public async Task<IActionResult> OnPostSaveHeroAsync()
         {
             var ctx = await LoadAssociationContextAsync();
             if (ctx is not null) return ctx;
@@ -367,20 +373,23 @@ namespace GolfAssociationCommunity.Pages.AssociationAdmin
 
         private async Task<string> SaveFileAsync(IFormFile file, string subfolder)
         {
-            var dir = Path.Combine(_env.WebRootPath, "uploads", subfolder);
+            var dir = Path.Combine(_uploads.PhysicalRoot, subfolder);
             Directory.CreateDirectory(dir);
             var ext = Path.GetExtension(file.FileName);
             var fileName = $"{CurrentAssociation.Id}_{Guid.NewGuid():N}{ext}";
             var path = Path.Combine(dir, fileName);
             await using var stream = new FileStream(path, FileMode.Create);
             await file.CopyToAsync(stream);
-            return $"/uploads/{subfolder}/{fileName}";
+            return $"{_uploads.RequestPath}/{subfolder}/{fileName}";
         }
 
         private void DeleteFile(string? url)
         {
             if (string.IsNullOrWhiteSpace(url)) return;
-            var path = Path.Combine(_env.WebRootPath, url.TrimStart('/').Replace('/', Path.DirectorySeparatorChar));
+            var relative = url.StartsWith(_uploads.RequestPath)
+                ? url.Substring(_uploads.RequestPath.Length).TrimStart('/')
+                : url.TrimStart('/');
+            var path = Path.Combine(_uploads.PhysicalRoot, relative.Replace('/', Path.DirectorySeparatorChar));
             if (System.IO.File.Exists(path)) System.IO.File.Delete(path);
         }
 

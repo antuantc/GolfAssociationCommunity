@@ -1,8 +1,10 @@
 using GolfAssociationCommunity.Data;
 using GolfAssociationCommunity.Models;
+using GolfAssociationCommunity.Services;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 using System.ComponentModel.DataAnnotations;
 
 namespace GolfAssociationCommunity.Pages.AssociationAdmin
@@ -14,11 +16,13 @@ namespace GolfAssociationCommunity.Pages.AssociationAdmin
         private const long MaxFileSizeBytes = 5 * 1024 * 1024; // 5 MB
 
         private readonly IWebHostEnvironment _env;
+        private readonly UploadSettings _uploads;
 
-        public MembersModel(UserManager<ApplicationUser> userManager, ApplicationDbContext context, IWebHostEnvironment env)
+        public MembersModel(UserManager<ApplicationUser> userManager, ApplicationDbContext context, IWebHostEnvironment env, IOptions<UploadSettings> uploads)
             : base(userManager, context)
         {
             _env = env;
+            _uploads = uploads.Value;
         }
 
         [BindProperty(SupportsGet = true)]
@@ -176,7 +180,7 @@ namespace GolfAssociationCommunity.Pages.AssociationAdmin
 
         private async Task<string?> SavePictureAsync(IFormFile file)
         {
-            var uploadsDir = Path.Combine(_env.WebRootPath, "uploads", "members");
+            var uploadsDir = Path.Combine(_uploads.PhysicalRoot, "members");
             Directory.CreateDirectory(uploadsDir);
 
             var ext = Path.GetExtension(file.FileName);
@@ -186,13 +190,16 @@ namespace GolfAssociationCommunity.Pages.AssociationAdmin
             await using var stream = new FileStream(filePath, FileMode.Create);
             await file.CopyToAsync(stream);
 
-            return $"/uploads/members/{fileName}";
+            return $"{_uploads.RequestPath}/members/{fileName}";
         }
 
         private void DeletePicture(string? pictureUrl)
         {
             if (string.IsNullOrWhiteSpace(pictureUrl)) return;
-            var filePath = Path.Combine(_env.WebRootPath, pictureUrl.TrimStart('/').Replace('/', Path.DirectorySeparatorChar));
+            var relative = pictureUrl.StartsWith(_uploads.RequestPath)
+                ? pictureUrl.Substring(_uploads.RequestPath.Length).TrimStart('/')
+                : pictureUrl.TrimStart('/');
+            var filePath = Path.Combine(_uploads.PhysicalRoot, relative.Replace('/', Path.DirectorySeparatorChar));
             if (System.IO.File.Exists(filePath))
                 System.IO.File.Delete(filePath);
         }

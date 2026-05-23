@@ -3,6 +3,7 @@ using System.Net.Sockets;
 using GolfAssociationCommunity.Data;
 using GolfAssociationCommunity.Models;
 using GolfAssociationCommunity.Services;
+using Microsoft.Extensions.FileProviders;
 using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.Data.Sqlite;
 using Microsoft.AspNetCore.Identity;
@@ -104,6 +105,21 @@ builder.WebHost.ConfigureKestrel(options =>
     options.Limits.MaxRequestBodySize = 100 * 1024 * 1024; // 100 MB
 });
 
+// Persistent uploads — stored OUTSIDE wwwroot so deployments never wipe them.
+// Override "UploadsPath" in appsettings.Production.json to an absolute path on the server.
+var configuredUploadsPath = builder.Configuration["UploadsPath"];
+var uploadPhysicalRoot = string.IsNullOrWhiteSpace(configuredUploadsPath)
+    ? Path.Combine(builder.Environment.ContentRootPath, "persistent-uploads")
+    : configuredUploadsPath;
+Directory.CreateDirectory(uploadPhysicalRoot);
+builder.Services.Configure<UploadSettings>(opts =>
+{
+    opts.PhysicalRoot = uploadPhysicalRoot;
+    opts.RequestPath = "/uploads";
+});
+
+Log.Information("Uploads folder: {UploadsPath}", uploadPhysicalRoot);
+
 // Add CORS
 builder.Services.AddCors(options =>
 {
@@ -155,6 +171,13 @@ app.Use(async (context, next) =>
 app.UseHttpsRedirection();
 
 app.UseStaticFiles();
+
+// Serve persistent uploads from outside wwwroot
+app.UseStaticFiles(new StaticFileOptions
+{
+    FileProvider = new PhysicalFileProvider(uploadPhysicalRoot),
+    RequestPath = "/uploads"
+});
 
 app.UseRouting();
 
