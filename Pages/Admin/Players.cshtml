@@ -1,0 +1,83 @@
+@page
+@model GolfAssociationCommunity.Pages.Admin.PlayersModel
+@{
+    ViewData["Title"] = "Manage Players";
+}
+
+<section class="section-panel">
+    <h1>Manage Players</h1>
+    <p>Search players across all associations and remove them everywhere when needed.</p>
+
+    <form method="get" class="form-shell">
+        <div class="form-section">
+            <div class="form-grid">
+                <div>
+                    <label for="search">Search</label>
+                    <input id="search" name="Search" value="@Model.Search" class="form-control" placeholder="Name, email, association" />
+                </div>
+            </div>
+            <div class="form-actions">
+                <button type="submit" class="btn">Apply Filters</button>
+                <a class="btn btn-secondary" href="~/Admin/Players">Reset</a>
+            </div>
+        </div>
+    </form>
+
+    @if (TempData["SuccessMessage"] is string message)
+    {
+        <div class="message success">@message</div>
+    }
+
+    @if (Model.Players.Count == 0)
+    {
+        <p>No players found.</p>
+    }
+    else
+    {
+        <div class="table-scroll">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Player</th>
+                        <th>Email</th>
+                        <th>Associations</th>
+                        <th>Active</th>
+                        <th>Archived</th>
+                        <th>Registrations</th>
+                        <th>Scores</th>
+                        <th>Leaderboards</th>
+                        <th>Last Updated</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                @foreach (var player in Model.Players)
+                {
+                    <tr>
+                        <td>@player.DisplayName</td>
+                        <td>@player.Email</td>
+                        <td>
+                            @foreach (var association in player.Associations)
+                            {
+                                <div>@association.AssociationName @(association.IsActive ? "(Active)" : "(Archived)")</div>
+                            }
+                        </td>
+                        <td>@player.ActiveCount</td>
+                        <td>@player.ArchivedCount</td>
+                        <td>@player.RegistrationCount</td>
+                        <td>@player.ScoreCount</td>
+                        <td>@player.LeaderboardCount</td>
+                        <td>@(player.LastUpdatedAt.HasValue ? player.LastUpdatedAt.Value.ToString("MMM d, yyyy h:mm tt") : "-")</td>
+                        <td>
+                            <form method="post" asp-page-handler="Delete" asp-route-emailKey="@player.EmailKey" class="inline-form" onsubmit="return confirm('Delete this player from every association? This will remove linked player records across the platform.');">
+                                <input type="hidden" name="Search" value="@Model.Search" />
+                                <button type="submit" class="link-button">Delete All</button>
+                            </form>
+                        </td>
+                    </tr>
+                }
+                </tbody>
+            </table>
+        </div>
+    }
+</section>

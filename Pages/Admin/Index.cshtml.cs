@@ -19,6 +19,7 @@ namespace GolfAssociationCommunity.Pages.Admin
         public int TournamentCount { get; private set; }
         public int RegistrationCount { get; private set; }
         public int UserCount { get; private set; }
+        public int PlayerCount { get; private set; }
 
         public async Task OnGetAsync()
         {
@@ -26,6 +27,7 @@ namespace GolfAssociationCommunity.Pages.Admin
             TournamentCount = await _context.Tournaments.CountAsync();
             RegistrationCount = await _context.Registrations.CountAsync();
             UserCount = await _context.Users.CountAsync();
+            PlayerCount = await _context.AssociationPlayers.CountAsync();
         }
     }
 }
