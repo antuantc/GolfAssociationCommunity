@@ -317,6 +317,27 @@ using (var scope = app.Services.CreateScope())
             }
         }
 
+        // Force-reset the admin password when AdminSeed:ForceResetPassword = true.
+        // Usage: set this flag + AdminSeed:Password in Azure App Settings, restart the app,
+        // then remove the flag (or set it to false) to prevent repeated resets on every startup.
+        var forceReset = app.Configuration.GetValue<bool>("AdminSeed:ForceResetPassword");
+        if (adminUser is not null && forceReset)
+        {
+            var resetToken = await userManager.GeneratePasswordResetTokenAsync(adminUser);
+            var resetResult = await userManager.ResetPasswordAsync(adminUser, resetToken, adminPassword);
+            if (!resetResult.Succeeded)
+            {
+                Log.Error("Failed to force-reset admin password for {Email}: {Errors}", adminEmail, string.Join("; ", resetResult.Errors.Select(e => e.Description)));
+            }
+            else
+            {
+                // Also ensure EmailConfirmed so the account is never locked out.
+                adminUser.EmailConfirmed = true;
+                await userManager.UpdateAsync(adminUser);
+                Log.Warning("Admin password force-reset for {Email}. Remove AdminSeed:ForceResetPassword from config.", adminEmail);
+            }
+        }
+
         if (adminUser is not null && !await userManager.IsInRoleAsync(adminUser, adminRole))
         {
             var addRoleResult = await userManager.AddToRoleAsync(adminUser, adminRole);
