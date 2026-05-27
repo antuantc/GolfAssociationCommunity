@@ -69,12 +69,20 @@ public class ForgotPasswordModel : PageModel
                 values: new { area = "Identity", code },
                 protocol: Request.Scheme);
 
-            await _emailSender.SendEmailAsync(
-                Input.Email,
-                "Reset Password",
-                $"Please reset your password by <a href='{HtmlEncoder.Default.Encode(callbackUrl!)}'>clicking here</a>.");
+            try
+            {
+                await _emailSender.SendEmailAsync(
+                    Input.Email,
+                    "Reset Password",
+                    $"Please reset your password by <a href='{HtmlEncoder.Default.Encode(callbackUrl!)}'>clicking here</a>.");
 
-            _logger.LogInformation("Password reset email sent to {Email}.", Input.Email);
+                _logger.LogInformation("Password reset email sent to {Email}.", Input.Email);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to send password reset email to {Email}.", Input.Email);
+                // Still redirect — don't expose the SMTP error to the user or reveal account existence.
+            }
         }
 
         return RedirectToPage("./ForgotPasswordConfirmation");

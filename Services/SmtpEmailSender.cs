@@ -77,7 +77,17 @@ public class SmtpEmailSender : IEmailSender
 
         message.To.Add(email);
 
-        await client.SendMailAsync(message);
-        _logger.LogInformation("Email sent to {Email} with subject {Subject}", email, subject);
+        try
+        {
+            await client.SendMailAsync(message);
+            _logger.LogInformation("Email sent to {Email} with subject {Subject}", email, subject);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex,
+                "SMTP send failed. Host={Host} Port={Port} SSL={Ssl} From={From} To={To} Subject={Subject}",
+                host, port, enableSsl, fromAddress, email, subject);
+            throw;
+        }
     }
 }
