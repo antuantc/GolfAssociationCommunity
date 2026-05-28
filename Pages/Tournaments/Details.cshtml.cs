@@ -1,6 +1,7 @@
 using GolfAssociationCommunity.Models;
 using GolfAssociationCommunity.Services;
 using System.ComponentModel.DataAnnotations;
+using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 
@@ -12,17 +13,23 @@ namespace GolfAssociationCommunity.Pages.Tournaments
         private readonly IRegistrationService _registrationService;
         private readonly ILeaderboardService _leaderboardService;
         private readonly IAuthorizeNetPaymentService _authorizeNetPaymentService;
+        private readonly IEmailSender _emailSender;
+        private readonly ILogger<DetailsModel> _logger;
 
         public DetailsModel(
             ITournamentService tournamentService,
             IRegistrationService registrationService,
             ILeaderboardService leaderboardService,
-            IAuthorizeNetPaymentService authorizeNetPaymentService)
+            IAuthorizeNetPaymentService authorizeNetPaymentService,
+            IEmailSender emailSender,
+            ILogger<DetailsModel> logger)
         {
             _tournamentService = tournamentService;
             _registrationService = registrationService;
             _leaderboardService = leaderboardService;
             _authorizeNetPaymentService = authorizeNetPaymentService;
+            _emailSender = emailSender;
+            _logger = logger;
         }
 
         public Tournament? Tournament { get; set; }
@@ -278,7 +285,142 @@ namespace GolfAssociationCommunity.Pages.Tournaments
             var successTransactionReference = BuildTransactionReference(paymentResult.TransactionId);
             TempData["SuccessMessage"] =
                 $"Payment approved and registration completed. Transaction reference: {successTransactionReference}.";
+
+            string? playerEmailError = null;
+            try
+            {
+                await SendRegistrationConfirmationEmailAsync(tournament, registration, successTransactionReference);
+            }
+            catch (Exception ex)
+            {
+                playerEmailError = ex.Message;
+                _logger.LogError(ex, "Failed to send registration confirmation email to {Email}", registration.GuestEmail);
+            }
+
+            try
+            {
+                await SendAdminRegistrationNotificationAsync(tournament, registration, successTransactionReference, playerEmailError);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to send admin registration notification for tournament {TournamentId}", tournament.Id);
+            }
+
             return RedirectToPage(new { id = tournamentId, associationId });
+        }
+
+        private async Task SendRegistrationConfirmationEmailAsync(Tournament tournament, Registration registration, string transactionReference)
+        {
+            var tournamentDate = tournament.StartDate.ToString("dddd, MMMM d, yyyy");
+            var location = string.IsNullOrWhiteSpace(tournament.Location) ? "TBD" : tournament.Location;
+            var golfCourse = string.IsNullOrWhiteSpace(tournament.GolfCourse) ? string.Empty : $" &mdash; {tournament.GolfCourse}";
+            var flightLine = string.IsNullOrWhiteSpace(registration.Flight)
+                ? string.Empty
+                : $"<tr><td style='padding:4px 0;color:#555;'>Flight</td><td style='padding:4px 0;font-weight:600;'>{registration.Flight}</td></tr>";
+
+            var body = $"""
+                <!DOCTYPE html>
+                <html lang="en">
+                <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
+                <body style="margin:0;padding:0;background:#f4f4f4;font-family:Arial,sans-serif;">
+                  <table width="100%" cellpadding="0" cellspacing="0" style="background:#f4f4f4;padding:32px 0;">
+                    <tr><td align="center">
+                      <table width="600" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:8px;overflow:hidden;max-width:600px;width:100%;">
+                        <tr><td style="background:#1a6b3a;padding:28px 32px;">
+                          <h1 style="margin:0;color:#ffffff;font-size:22px;">Registration Confirmed</h1>
+                        </td></tr>
+                        <tr><td style="padding:32px;">
+                          <p style="margin:0 0 8px;font-size:16px;color:#222;">Hi {registration.GuestName},</p>
+                          <p style="margin:0 0 24px;font-size:15px;color:#444;">Your registration for <strong>{tournament.Name}</strong> has been confirmed and payment has been received.</p>
+                          <table cellpadding="0" cellspacing="0" style="width:100%;border-top:1px solid #e0e0e0;border-bottom:1px solid #e0e0e0;margin-bottom:24px;">
+                            <tr><td style="padding:4px 0;color:#555;">Tournament</td><td style="padding:4px 0;font-weight:600;">{tournament.Name}</td></tr>
+                            <tr><td style="padding:4px 0;color:#555;">Date</td><td style="padding:4px 0;font-weight:600;">{tournamentDate}</td></tr>
+                            <tr><td style="padding:4px 0;color:#555;">Location</td><td style="padding:4px 0;font-weight:600;">{location}{golfCourse}</td></tr>
+                            {flightLine}
+                            <tr><td style="padding:4px 0;color:#555;">Entry Fee Paid</td><td style="padding:4px 0;font-weight:600;">{registration.RegistrationFee:C}</td></tr>
+                            <tr><td style="padding:4px 0;color:#555;">Transaction</td><td style="padding:4px 0;font-weight:600;">{transactionReference}</td></tr>
+                          </table>
+                          <p style="margin:0;font-size:13px;color:#888;">Please keep this email as your receipt. If you have any questions, contact the association directly.</p>
+                        </td></tr>
+                      </table>
+                    </td></tr>
+                  </table>
+                </body>
+                </html>
+                """;
+
+            await _emailSender.SendEmailAsync(
+                registration.GuestEmail,
+                $"Registration Confirmed \u2014 {tournament.Name}",
+                body);
+        }
+
+        private async Task SendAdminRegistrationNotificationAsync(
+            Tournament tournament,
+            Registration registration,
+            string transactionReference,
+            string? playerEmailError)
+        {
+            var adminEmail = tournament.GolfAssociation?.ContactEmail;
+            if (string.IsNullOrWhiteSpace(adminEmail))
+            {
+                _logger.LogWarning(
+                    "No ContactEmail configured for association {AssociationId}; skipping admin registration notification.",
+                    tournament.GolfAssociationId);
+                return;
+            }
+
+            var tournamentDate = tournament.StartDate.ToString("dddd, MMMM d, yyyy");
+            var location = string.IsNullOrWhiteSpace(tournament.Location) ? "TBD" : tournament.Location;
+            var golfCourse = string.IsNullOrWhiteSpace(tournament.GolfCourse) ? string.Empty : $" &mdash; {tournament.GolfCourse}";
+            var flightLine = string.IsNullOrWhiteSpace(registration.Flight)
+                ? string.Empty
+                : $"<tr><td style='padding:4px 0;color:#555;'>Flight</td><td style='padding:4px 0;font-weight:600;'>{registration.Flight}</td></tr>";
+
+            var notificationStatus = playerEmailError is null
+                ? "<span style='color:#1a6b3a;font-weight:600;'>&#10003; Sent successfully</span>"
+                : $"<span style='color:#c0392b;font-weight:600;'>&#10007; Failed to send</span><br><span style='font-size:12px;color:#888;'>{playerEmailError}</span>";
+
+            var body = $"""
+                <!DOCTYPE html>
+                <html lang="en">
+                <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
+                <body style="margin:0;padding:0;background:#f4f4f4;font-family:Arial,sans-serif;">
+                  <table width="100%" cellpadding="0" cellspacing="0" style="background:#f4f4f4;padding:32px 0;">
+                    <tr><td align="center">
+                      <table width="600" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:8px;overflow:hidden;max-width:600px;width:100%;">
+                        <tr><td style="background:#1a6b3a;padding:28px 32px;">
+                          <h1 style="margin:0;color:#ffffff;font-size:22px;">New Tournament Registration</h1>
+                        </td></tr>
+                        <tr><td style="padding:32px;">
+                          <p style="margin:0 0 24px;font-size:15px;color:#444;">A new registration has been completed for <strong>{tournament.Name}</strong>.</p>
+                          <h2 style="margin:0 0 8px;font-size:16px;color:#222;">Registration Details</h2>
+                          <table cellpadding="0" cellspacing="0" style="width:100%;border-top:1px solid #e0e0e0;border-bottom:1px solid #e0e0e0;margin-bottom:24px;">
+                            <tr><td style="padding:4px 0;color:#555;">Player Name</td><td style="padding:4px 0;font-weight:600;">{registration.GuestName}</td></tr>
+                            <tr><td style="padding:4px 0;color:#555;">Player Email</td><td style="padding:4px 0;font-weight:600;">{registration.GuestEmail}</td></tr>
+                            <tr><td style="padding:4px 0;color:#555;">Handicap</td><td style="padding:4px 0;font-weight:600;">{registration.Handicap?.ToString() ?? "N/A"}</td></tr>
+                            <tr><td style="padding:4px 0;color:#555;">Tournament</td><td style="padding:4px 0;font-weight:600;">{tournament.Name}</td></tr>
+                            <tr><td style="padding:4px 0;color:#555;">Date</td><td style="padding:4px 0;font-weight:600;">{tournamentDate}</td></tr>
+                            <tr><td style="padding:4px 0;color:#555;">Location</td><td style="padding:4px 0;font-weight:600;">{location}{golfCourse}</td></tr>
+                            {flightLine}
+                            <tr><td style="padding:4px 0;color:#555;">Entry Fee</td><td style="padding:4px 0;font-weight:600;">{registration.RegistrationFee:C}</td></tr>
+                            <tr><td style="padding:4px 0;color:#555;">Transaction</td><td style="padding:4px 0;font-weight:600;">{transactionReference}</td></tr>
+                            <tr><td style="padding:4px 0;color:#555;">Registered At</td><td style="padding:4px 0;font-weight:600;">{registration.RegistrationDate:yyyy-MM-dd HH:mm} UTC</td></tr>
+                          </table>
+                          <h2 style="margin:0 0 8px;font-size:16px;color:#222;">Player Notification</h2>
+                          <p style="margin:0 0 24px;font-size:14px;color:#444;">{notificationStatus}</p>
+                        </td></tr>
+                      </table>
+                    </td></tr>
+                  </table>
+                </body>
+                </html>
+                """;
+
+            await _emailSender.SendEmailAsync(
+                adminEmail,
+                $"New Registration \u2014 {tournament.Name} ({registration.GuestName})",
+                body);
         }
 
         private static string BuildTransactionReference(string? transactionId)
