@@ -291,41 +291,66 @@ namespace GolfAssociationCommunity.Services
                     return;
                 }
 
-                // Get all players registered for the tournament
+                // Load all scores for this tournament up front
+                var allScores = await _context.PlayerScores
+                    .Where(ps => ps.TournamentId == tournamentId)
+                    .ToListAsync();
+
+                // Determine the full set of player IDs to rank:
+                // - players with a Registered registration, OR
+                // - players who have any score entries (covers CSV-imported players without registrations)
                 var registrations = await _context.Registrations
-                    .Where(r => r.TournamentId == tournamentId && r.Status == RegistrationStatus.Registered && r.AssociationPlayerId != null)
-                    .Include(r => r.AssociationPlayer)
+                    .Where(r => r.TournamentId == tournamentId && r.AssociationPlayerId != null)
                     .Include(r => r.TournamentFlight)
                     .ToListAsync();
 
+                var registeredPlayerIds = registrations
+                    .Where(r => r.Status == RegistrationStatus.Registered)
+                    .Select(r => r.AssociationPlayerId!.Value)
+                    .ToHashSet();
+
+                var allRegById = registrations
+                    .Where(r => r.AssociationPlayerId != null)
+                    .ToDictionary(r => r.AssociationPlayerId!.Value);
+
+                var scoredPlayerIds = allScores
+                    .Select(s => s.AssociationPlayerId)
+                    .Distinct()
+                    .ToHashSet();
+
+                // Union: registered players + anyone with a score
+                var allPlayerIds = registeredPlayerIds.Union(scoredPlayerIds).ToList();
+
                 var leaderboardData = new List<TournamentLeaderboardScoreRow>();
 
-                // Calculate scores for each player
-                foreach (var registration in registrations)
+                foreach (var playerId in allPlayerIds)
                 {
-                    int totalScore = 0;
-                    var tiebreakerScores = new List<int>();
+                    var playerScores = allScores
+                        .Where(ps => ps.AssociationPlayerId == playerId)
+                        .ToList();
 
-                    var playerScores = await _context.PlayerScores
-                        .Where(ps => ps.TournamentId == tournamentId && ps.AssociationPlayerId == registration.AssociationPlayerId)
-                        .ToListAsync();
+                    // Prefer explicit round-total rows (HoleNumber=0); fall back to summing individual holes
+                    var roundTotals = playerScores.Where(ps => ps.IsRoundTotalEntry).ToList();
+                    int totalScore = roundTotals.Count > 0
+                        ? roundTotals.Sum(ps => ps.Score)
+                        : playerScores.Where(ps => ps.HoleNumber > 0).Sum(ps => ps.Score);
 
-                    if (playerScores.Any())
-                    {
-                        totalScore = playerScores.Where(ps => ps.IsRoundTotalEntry).Sum(ps => ps.Score);
-                        tiebreakerScores = playerScores
-                            .Where(ps => ps.HoleNumber >= -PlayerScore.MaxTiebreakerEntries && ps.HoleNumber < 0)
-                            .OrderByDescending(ps => ps.HoleNumber)
-                            .Select(ps => ps.Score)
-                            .ToList();
-                    }
+                    var tiebreakerScores = playerScores
+                        .Where(ps => ps.HoleNumber >= -PlayerScore.MaxTiebreakerEntries && ps.HoleNumber < 0)
+                        .OrderByDescending(ps => ps.HoleNumber)
+                        .Select(ps => ps.Score)
+                        .ToList();
+
+                    // Resolve flight from registration if present
+                    allRegById.TryGetValue(playerId, out var reg);
+                    var flight = reg?.TournamentFlight?.Name ?? reg?.Flight;
 
                     leaderboardData.Add(new TournamentLeaderboardScoreRow
                     {
-                        AssociationPlayerId = registration.AssociationPlayerId!.Value,
+                        AssociationPlayerId = playerId,
                         TotalScore = totalScore,
                         TiebreakerScores = tiebreakerScores,
-                        Flight = registration.TournamentFlight?.Name ?? registration.Flight
+                        Flight = flight
                     });
                 }
 
