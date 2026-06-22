@@ -1,0 +1,191 @@
+@page
+@model GolfAssociationCommunity.Pages.AssociationAdmin.CsvImportModel
+@{
+    ViewData["Title"] = "CSV Import";
+}
+
+<div class="hero">
+    <div class="hero-copy">
+        <h1>CSV Import</h1>
+        <p>Bulk-import players, scores, registrations, and leaderboard entries from CSV files.</p>
+    </div>
+</div>
+
+@if (!ModelState.IsValid)
+{
+    <div class="alert alert-danger">
+        @foreach (var e in ModelState.Values.SelectMany(v => v.Errors))
+        {
+            <p>@e.ErrorMessage</p>
+        }
+    </div>
+}
+
+@if (Model.Result != null)
+{
+    var r = Model.Result;
+    var hasErrors = r.Errors.Count > 0;
+    <section class="section-panel">
+        <h2>Import Result — @r.Type</h2>
+        <div class="card-grid">
+            <article class="card">
+                <h3>@r.TotalRows</h3>
+                <p>Rows Processed</p>
+            </article>
+            <article class="card">
+                <h3 style="color:var(--success-text)">@r.Inserted</h3>
+                <p>Inserted</p>
+            </article>
+            <article class="card">
+                <h3 style="color:#1e5fa8">@r.Updated</h3>
+                <p>Updated</p>
+            </article>
+            <article class="card">
+                <h3>@r.Skipped</h3>
+                <p>Skipped</p>
+            </article>
+            <article class="card">
+                <h3 style="color:var(--error-text)">@r.Errors.Count</h3>
+                <p>Errors</p>
+            </article>
+        </div>
+        @if (r.Errors.Count > 0)
+        {
+            <h3 class="field-note" style="color:var(--error-text);margin-top:1.5rem">Errors</h3>
+            <ul class="import-messages import-messages--error">
+                @foreach (var msg in r.Errors) { <li>@msg</li> }
+            </ul>
+        }
+        @if (r.Warnings.Count > 0)
+        {
+            <h3 class="field-note" style="margin-top:1rem">Warnings</h3>
+            <ul class="import-messages import-messages--warn">
+                @foreach (var msg in r.Warnings) { <li>@msg</li> }
+            </ul>
+        }
+    </section>
+}
+
+@* ── Players ──────────────────────────────────────────────────────────── *@
+<section class="section-panel">
+    <div class="import-card-header">
+        <div>
+            <h2>Players</h2>
+            <p class="field-note">
+                Upserts players by email. Existing players are updated; new ones are created.
+            </p>
+            <p class="field-note">
+                Required columns: <code>DisplayName</code>, <code>Email</code><br />
+                Optional: <code>HandicapIndex</code>, <code>IsActive</code> (true/false, default true)
+            </p>
+        </div>
+        <a class="btn btn-secondary btn-sm" href="?handler=Template&type=players" download>
+            &#8659; Download Template
+        </a>
+    </div>
+    <form method="post" enctype="multipart/form-data" asp-page-handler="ImportPlayers">
+        @Html.AntiForgeryToken()
+        <div class="import-file-row">
+            <input type="file" name="file" accept=".csv" class="form-control" required />
+            <button type="submit" class="btn">Import Players</button>
+        </div>
+    </form>
+</section>
+
+@* ── Scores ───────────────────────────────────────────────────────────── *@
+<section class="section-panel">
+    <div class="import-card-header">
+        <div>
+            <h2>Scores</h2>
+            <p class="field-note">
+                Upserts hole-by-hole or round-total scores. Leaderboard is automatically
+                recalculated after import.
+            </p>
+            <p class="field-note">
+                Required: <code>TournamentName</code>, <code>PlayerEmail</code>,
+                <code>Round</code>, <code>HoleNumber</code> (0 = round total),
+                <code>Score</code><br />
+                Optional: <code>HolePar</code>, <code>HandicapStrokes</code>,
+                <code>StablefordPoints</code>, <code>TiebreakerHoleHandicap</code>
+            </p>
+        </div>
+        <a class="btn btn-secondary btn-sm" href="?handler=Template&type=scores" download>
+            &#8659; Download Template
+        </a>
+    </div>
+    <form method="post" enctype="multipart/form-data" asp-page-handler="ImportScores">
+        @Html.AntiForgeryToken()
+        <div class="import-file-row">
+            <input type="file" name="file" accept=".csv" class="form-control" required />
+            <button type="submit" class="btn">Import Scores</button>
+        </div>
+    </form>
+</section>
+
+@* ── Registrations ────────────────────────────────────────────────────── *@
+<section class="section-panel">
+    <div class="import-card-header">
+        <div>
+            <h2>Registrations</h2>
+            <p class="field-note">
+                Upserts tournament registrations for existing players.
+                New registrations are created; existing ones have their flight/status/handicap updated.
+            </p>
+            <p class="field-note">
+                Required: <code>TournamentName</code>, <code>PlayerEmail</code><br />
+                Optional: <code>PlayerName</code>, <code>Handicap</code>,
+                <code>Flight</code>, <code>Status</code>
+                (Pending / Registered / Withdrew / Disqualified)
+            </p>
+        </div>
+        <a class="btn btn-secondary btn-sm" href="?handler=Template&type=registrations" download>
+            &#8659; Download Template
+        </a>
+    </div>
+    <form method="post" enctype="multipart/form-data" asp-page-handler="ImportRegistrations">
+        @Html.AntiForgeryToken()
+        <div class="import-file-row">
+            <input type="file" name="file" accept=".csv" class="form-control" required />
+            <button type="submit" class="btn">Import Registrations</button>
+        </div>
+    </form>
+</section>
+
+@* ── Leaderboard ──────────────────────────────────────────────────────── *@
+<section class="section-panel">
+    <div class="import-card-header">
+        <div>
+            <h2>Leaderboard</h2>
+            <p class="field-note">
+                Directly upserts leaderboard positions. Use this to seed results from
+                an external scoring system. Existing entries are overwritten.
+            </p>
+            <p class="field-note">
+                Required: <code>TournamentName</code>, <code>PlayerEmail</code>,
+                <code>Position</code>, <code>TotalScore</code><br />
+                Optional: <code>StablefordPoints</code>, <code>ScoreDifferential</code>,
+                <code>Flight</code>
+            </p>
+        </div>
+        <a class="btn btn-secondary btn-sm" href="?handler=Template&type=leaderboard" download>
+            &#8659; Download Template
+        </a>
+    </div>
+    <form method="post" enctype="multipart/form-data" asp-page-handler="ImportLeaderboard">
+        @Html.AntiForgeryToken()
+        <div class="import-file-row">
+            <input type="file" name="file" accept=".csv" class="form-control" required />
+            <button type="submit" class="btn">Import Leaderboard</button>
+        </div>
+    </form>
+</section>
+
+<style>
+.import-card-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem; flex-wrap: wrap; margin-bottom: 1rem; }
+.import-file-row { display: flex; gap: 0.75rem; align-items: center; flex-wrap: wrap; margin-top: 0.75rem; }
+.import-file-row input[type="file"] { flex: 1; min-width: 220px; }
+.btn-sm { padding: 0.3rem 0.75rem; font-size: 0.8rem; white-space: nowrap; }
+.import-messages { margin: 0.5rem 0 0; padding-left: 1.25rem; font-size: 0.88rem; }
+.import-messages--error { color: var(--error-text); }
+.import-messages--warn { color: #7a5800; }
+</style>
