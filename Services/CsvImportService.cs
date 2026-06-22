@@ -184,6 +184,86 @@ namespace GolfAssociationCommunity.Services
             }
             await _db.SaveChangesAsync();
 
+            // Auto-register players who have scores but no Registered registration,
+            // and upsert round-total (HoleNumber=0) entries so the leaderboard calculator
+            // can sum them correctly.
+            foreach (var tournamentId in affectedTournaments)
+            {
+                // Load all non-tiebreaker, non-total hole scores for this tournament
+                var holeScores = await _db.PlayerScores
+                    .Where(s => s.TournamentId == tournamentId && s.HoleNumber > 0)
+                    .ToListAsync();
+
+                // Ensure a Registered registration exists for every scored player
+                var scoredPlayerIds = holeScores.Select(s => s.AssociationPlayerId).Distinct().ToList();
+                var existingRegs = await _db.Registrations
+                    .Where(r => r.TournamentId == tournamentId && r.AssociationPlayerId != null)
+                    .ToListAsync();
+                var registeredPlayerIds = existingRegs.Select(r => r.AssociationPlayerId!.Value).ToHashSet();
+
+                foreach (var pid in scoredPlayerIds)
+                {
+                    if (!registeredPlayerIds.Contains(pid))
+                    {
+                        _db.Registrations.Add(new Registration
+                        {
+                            TournamentId = tournamentId,
+                            AssociationPlayerId = pid,
+                            Status = RegistrationStatus.Registered,
+                            PaymentConfirmed = true,
+                            RegistrationDate = now,
+                            UpdatedAt = now
+                        });
+                        registeredPlayerIds.Add(pid);
+                    }
+                    else
+                    {
+                        // Ensure existing registration is in Registered status
+                        var reg = existingRegs.First(r => r.AssociationPlayerId == pid);
+                        if (reg.Status != RegistrationStatus.Registered)
+                        {
+                            reg.Status = RegistrationStatus.Registered;
+                            reg.UpdatedAt = now;
+                        }
+                    }
+                }
+                await _db.SaveChangesAsync();
+
+                // Upsert round-total (HoleNumber=0) entries by summing hole scores per player+round
+                var roundTotals = holeScores
+                    .GroupBy(s => new { s.AssociationPlayerId, s.Round })
+                    .Select(g => new { g.Key.AssociationPlayerId, g.Key.Round, Total = g.Sum(s => s.Score) });
+
+                var existingTotals = await _db.PlayerScores
+                    .Where(s => s.TournamentId == tournamentId && s.HoleNumber == PlayerScore.RoundTotalEntryHoleNumber)
+                    .ToListAsync();
+                var totalIndex = existingTotals.ToDictionary(s => $"{s.AssociationPlayerId}:{s.Round}");
+
+                foreach (var rt in roundTotals)
+                {
+                    var key = $"{rt.AssociationPlayerId}:{rt.Round}";
+                    if (totalIndex.TryGetValue(key, out var existing3))
+                    {
+                        existing3.Score = rt.Total;
+                        existing3.UpdatedAt = now;
+                    }
+                    else
+                    {
+                        _db.PlayerScores.Add(new PlayerScore
+                        {
+                            TournamentId = tournamentId,
+                            AssociationPlayerId = rt.AssociationPlayerId,
+                            Round = rt.Round,
+                            HoleNumber = PlayerScore.RoundTotalEntryHoleNumber,
+                            Score = rt.Total,
+                            CreatedAt = now,
+                            UpdatedAt = now
+                        });
+                    }
+                }
+                await _db.SaveChangesAsync();
+            }
+
             // Recalculate leaderboards for affected tournaments
             foreach (var tournamentId in affectedTournaments)
             {

@@ -113,6 +113,14 @@
                             <input type="hidden" name="CurrentPage" value="@Model.PageNumber" />
                             <button type="submit" class="link-button">Withdraw</button>
                         </form>
+                        <form method="post" asp-page-handler="Delete" asp-route-id="@registration.Id" class="inline-form"
+                              onsubmit="return confirm('Delete this registration? This cannot be undone.')">
+                            <input type="hidden" name="Search" value="@Model.Search" />
+                            <input type="hidden" name="StatusFilter" value="@Model.StatusFilter" />
+                            <input type="hidden" name="PaymentFilter" value="@Model.PaymentFilter" />
+                            <input type="hidden" name="CurrentPage" value="@Model.PageNumber" />
+                            <button type="submit" class="link-button danger">Delete</button>
+                        </form>
                     </td>
                 </tr>
             }

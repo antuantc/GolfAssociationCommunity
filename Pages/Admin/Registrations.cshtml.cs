@@ -84,6 +84,22 @@ namespace GolfAssociationCommunity.Pages.Admin
             return RedirectToPage(GetStateRouteValues());
         }
 
+        public async Task<IActionResult> OnPostDeleteAsync(int id)
+        {
+            var registration = await _context.Registrations.FindAsync(id);
+            if (registration is null)
+            {
+                TempData["SuccessMessage"] = "Registration not found.";
+                return RedirectToPage(GetStateRouteValues());
+            }
+
+            _context.Registrations.Remove(registration);
+            await _context.SaveChangesAsync();
+            TempData["SuccessMessage"] = "Registration deleted.";
+            await AuditAsync("Deleted registration", id, null);
+            return RedirectToPage(GetStateRouteValues());
+        }
+
         public async Task<IActionResult> OnPostSetStatusAsync(int id, RegistrationStatus status)
         {
             var registration = await _context.Registrations.FindAsync(id);

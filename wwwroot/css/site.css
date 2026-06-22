@@ -231,6 +231,11 @@ body {
     padding: 0;
 }
 
+.table .link-button.danger,
+.section-panel .link-button.danger {
+    color: #c0392b;
+}
+
 .btn {
     background: var(--brand-accent);
 }
