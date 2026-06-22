@@ -1,97 +1,132 @@
-# Golf Association Community
+﻿# Golf Association Community
 
-A comprehensive ASP.NET Core web application for managing golf associations, tournaments, player registrations, sponsorships, and real-time leaderboards with integrated payment processing via Authorize.Net.
+A multi-tenant ASP.NET Core web application for managing golf associations, tournaments, player registrations, sponsorships, and real-time leaderboards. Each association gets its own fully branded public site with per-association CSS theming. A central hub page aggregates stats across all associations.
 
 ## Features
 
+### 🌐 Per-Association Public Sites
+- Each association has a standalone public-facing website at `/Associations/Details/{id}`
+- Bold, dark, sports-site aesthetic inspired by professional golf association websites
+- 10 selectable CSS themes per association (links-classic, sunrise-tee, sand-wedge, ocean-fairway, pine-bogey, sunset-backnine, masters-azalea, st-andrews, desert-dunes, midnight-drivingrange)
+- Dedicated sticky header with nav: HOME / TOURNAMENTS / RESULTS / REGISTER / SPONSORS / ABOUT / YEAR SCHEDULE
+- Announcement topbar with current season display
+- Footer with next upcoming tournament info
+
+### 📊 Association Hub (Main Index)
+- Central landing page listing all active associations
+- Per-association stats cards: tournament count, upcoming count, next event
+- Rollup stats bar: total associations, total tournaments, total players ranked
+- Global cross-association leaderboard (top 10 players)
+
 ### 🏌️ Association Management
 - Multi-tenant support for independent golf associations
-- Association admin capabilities
-- Member management and handicap tracking
-- Association profile and branding
+- Association admin portal with full CRUD
+- Association branding: logo, hero image/video, motto, tagline, colors, theme key
+- Per-association Authorize.Net credentials
+- Establishment year, city, state, location tracking
+- Media gallery (videos and photos)
+- Officers & members section
+- Charity/cause section
 
 ### 🏆 Tournament Management
-- Multiple tournament formats (Stroke, Stableford, Best Ball, Scramble, Fourball)
-- Tournament lifecycle management (Scheduled → Registration → In Progress → Completed)
-- Tournament admins for data entry
-- Venue and course information tracking
-- Registration deadlines and slot management
+- Multiple tournament formats: Stroke, Stableford, Best Ball, Scramble, Fourball
+- Tournament lifecycle: Scheduled → Registration Open → In Progress → Completed / Cancelled
+- Flights support for tournament grouping
+- Venue and golf course tracking
+- Registration deadlines and max slot management
+- Year schedule view per association
 
 ### 📋 Player Registration
-- Online tournament registration
-- Integrated payment processing via Authorize.Net
-- Registration status tracking (Pending, Registered, Withdrew, Disqualified)
-- Duplicate registration prevention
-- Payment confirmation and transaction tracking
+- Online tournament registration (members and guests)
+- Authorize.Net credit card payment processing at registration
+- Guest registration with email-based deduplication
+- Registration status tracking: Pending, Registered, Withdrew, Disqualified
+- Billing address and card last-4 capture for receipts
+- Handicap capture at registration time
 
 ### 💳 Payment Processing
-- Authorize.Net integration for secure credit card processing
-- Support for both registration fees and sponsorship payments
-- Refund capability
-- Payment confirmation and transaction ID tracking
-- Comprehensive error handling and logging
+- Authorize.Net integration: per-association API credentials
+- Registration and sponsorship payment flows
+- Refund tracking with original transaction ID reference
+- Transaction history per association and per record
+- Comprehensive error handling and Serilog logging
 
-### 📊 Scoring & Leaderboards
-- Hole-by-hole score recording
-- Support for multiple rounds
+### 📈 Scoring & Leaderboards
+- Hole-by-hole score recording with tiebreaker hole handicap
+- Multiple rounds support
 - Automatic Stableford point calculation
-- Real-time leaderboard generation
-- Score differential tracking
-- Leaderboard position management
+- Real-time leaderboard generation and recalculation
+- Flight-based leaderboard grouping on association homepage
+- Season standings: cross-tournament cumulative rankings per association
+- Global leaderboard: cross-association player rankings
 
 ### 💰 Sponsorship Management
-- Tiered sponsorship levels (Bronze, Silver, Gold, Platinum, Title)
-- Tournament and association-level sponsorship
+- Tiered sponsorship packages per association (Bronze, Silver, Gold, Platinum, Title)
+- Tournament-level and association-level sponsorships
 - Sponsor payment tracking via Authorize.Net
-- Status workflow management
+- Sponsor logo and website display on association homepage
 
-### 👤 User Management
-- Extended ASP.NET Identity with golf-specific data
-- Role-based authorization (Site Admin, Association Admin, Player)
-- User profile with handicap tracking
-- Address and contact information management
+### 👥 Player & Member Management
+- `AssociationPlayer` model: tracks active players independently of Identity users
+- Identity-based membership via `AssociationMembers` join table
+- Role-based authorization: Site Admin, Association Admin, Tournament Admin, Player
+- Handicap tracking per player
+- Association officer roles and display
 
 ## Technology Stack
 
-- **Framework**: ASP.NET Core 8.0
-- **Database**: SQLite with Entity Framework Core
-- **Authentication**: ASP.NET Identity
-- **Payment Processing**: Authorize.Net
-- **Logging**: Serilog
-- **ORM**: Entity Framework Core
+| Layer | Technology |
+|-------|-----------|
+| Framework | ASP.NET Core 8.0 Razor Pages |
+| Database | SQLite (dev) / SQL Server (prod) with EF Core |
+| Authentication | ASP.NET Core Identity |
+| Payment Processing | Authorize.Net |
+| Logging | Serilog (file sink, daily rolling) |
+| ORM | Entity Framework Core 8 |
+| CSS | Custom properties + 10 per-association themes |
 
 ## Project Structure
 
 ```
 GolfAssociationCommunity/
 ├── Models/
-│   ├── ApplicationUser.cs
-│   ├── GolfAssociation.cs
-│   ├── Tournament.cs
-│   ├── Registration.cs
-│   ├── PlayerScore.cs
-│   ├── Leaderboard.cs
-│   └── Sponsorship.cs
+│   ├── DomainModels.cs          # All domain entities and enums
+│   └── BrandingThemes.cs        # Theme definitions
 ├── Data/
-│   └── ApplicationDbContext.cs
+│   └── ApplicationDbContext.cs  # EF Core context, all configurations
 ├── Services/
-│   ├── AuthorizeNetPaymentService.cs
-│   ├── AssociationService.cs
-│   ├── TournamentService.cs
-│   ├── RegistrationService.cs
-│   ├── ScoreService.cs
-│   └── LeaderboardService.cs
+│   ├── AssociationService.cs    # Association CRUD + membership
+│   ├── TournamentService.cs     # Tournament management
+│   ├── RegistrationService.cs   # Registration + payment workflow
+│   ├── ScoreService.cs          # Score recording + Stableford
+│   ├── LeaderboardService.cs    # Real-time standings + global/season rankings
+│   ├── AuthorizeNetPaymentService.cs    # Payment + refund processing
+│   ├── AuthorizeNetTransactionService.cs # Transaction history
+│   ├── AdminAuditService.cs     # Admin action audit trail
+│   ├── SmtpEmailSender.cs       # Email notifications
+│   └── UploadSettings.cs        # File upload configuration
+├── Pages/
+│   ├── Index.cshtml             # Hub: all associations + rollup stats
+│   ├── Associations/
+│   │   ├── Details.cshtml       # Public association homepage (themed)
+│   │   ├── Tournaments.cshtml   # Public tournament schedule
+│   │   ├── Leaderboard.cshtml   # Public tournament leaderboard
+│   │   └── Sponsor.cshtml       # Sponsor payment page
+│   ├── Admin/                   # Site admin pages
+│   └── AssociationAdmin/        # Association admin portal
+├── Migrations/                  # EF Core migration history
+├── wwwroot/
+│   └── css/site.css             # Global styles + all pub-* theme classes
 ├── Program.cs
-├── appsettings.json
-└── GolfAssociationCommunity.csproj
+└── appsettings.json
 ```
 
 ## Getting Started
 
 ### Prerequisites
 - .NET 8.0 SDK
-- SQLite (file-based, created automatically)
-- Authorize.Net merchant account
+- `dotnet-ef` CLI tool
+- Authorize.Net sandbox account (for payment testing)
 
 ### Installation
 
@@ -101,241 +136,122 @@ GolfAssociationCommunity/
    cd GolfAssociationCommunity
    ```
 
-2. **Configure the database connection**
-   
-   Update `appsettings.json`:
+2. **Configure database** — `appsettings.json`:
    ```json
    "ConnectionStrings": {
-       "DefaultConnection": "Data Source=golfassociation.db"
+     "DefaultConnection": "Data Source=golfassociation.db"
    }
    ```
 
-3. **Configure Authorize.Net credentials**
-   
-   Update `appsettings.json`:
+3. **Configure Authorize.Net** (can be set per-association in admin portal):
    ```json
    "AuthorizeNet": {
-     "ApiLoginId": "YOUR_AUTHORIZE_NET_API_LOGIN_ID",
-     "TransactionKey": "YOUR_AUTHORIZE_NET_TRANSACTION_KEY",
+     "ApiLoginId": "YOUR_LOGIN_ID",
+     "TransactionKey": "YOUR_TRANSACTION_KEY",
      "IsSandbox": true
    }
    ```
 
-4. **Apply database schema**
+4. **Apply migrations**
    ```bash
    dotnet ef database update
    ```
 
-5. **Build and run the application**
+5. **Run**
    ```bash
-   dotnet build
    dotnet run
    ```
-
-   The application will be available at `https://localhost:5001`
+   Available at `https://localhost:5001`
 
 ## Database Migrations
 
-Use these commands whenever your EF Core model changes.
-
-### One-time setup for EF CLI
-
-Install the EF CLI tool if `dotnet ef` is not available:
-
 ```bash
+# Install EF CLI (once)
 dotnet tool install --global dotnet-ef
-```
 
-### First run on a fresh clone
-
-If migrations already exist in the repo:
-
-```bash
+# First run — apply all existing migrations
 dotnet ef database update
-```
 
-This creates the SQLite database file and all tables.
-
-### After changing models
-
-1. Create a new migration:
-
-```bash
-dotnet ef migrations add <DescriptiveMigrationName>
-```
-
-2. Apply it:
-
-```bash
+# After changing a model — create + apply
+dotnet ef migrations add <MigrationName>
 dotnet ef database update
-```
 
-### Useful checks
-
-```bash
+# Check status
 dotnet ef migrations list
-dotnet ef database update
-```
 
-If your local schema gets out of sync during development, delete `golfassociation.db` and run `dotnet ef database update` again.
-
-## Troubleshooting
-
-### Error: SQLite Error 1: no such table: GolfAssociations
-
-Cause:
-- The database file exists, but schema migrations have not been applied.
-
-Fix:
-
-```bash
-dotnet ef database update
-```
-
-If `dotnet ef` is not recognized:
-
-```bash
-dotnet tool install --global dotnet-ef
-```
-
-### Error: No migrations were applied. The database is already up to date, but tables are missing
-
-Cause:
-- No migration files exist in the project (nothing to apply).
-
-Fix:
-
-```bash
-dotnet ef migrations add InitialCreate
-dotnet ef database update
-```
-
-Commit the generated files in the `Migrations/` folder so other environments can build the schema.
-
-### Error: Build failed when running dotnet ef commands
-
-Cause:
-- EF CLI always builds the project first.
-
-Fix:
-
-```bash
-dotnet build
-```
-
-Resolve compile errors, then re-run your EF command.
-
-### Reset local development database
-
-Use only for local development when you can discard data:
-
-```bash
+# Reset local dev database (destructive)
 dotnet ef database drop --force
 dotnet ef database update
 ```
 
-## Database Schema
+## Theming
 
-### Key Entities
+Each association can select one of 10 themes in the Association Admin → Branding page. The theme key is stored on `GolfAssociation.ThemeKey` and applied as `<body class="theme-{key} pub-site">` on public association pages.
 
-- **ApplicationUser** - Extended Identity user with golf-specific fields
-- **GolfAssociation** - Represents independent golf associations with members
-- **Tournament** - Golf tournament with format, status, and registration tracking
-- **Registration** - Player registration for tournaments with payment tracking
-- **PlayerScore** - Hole-by-hole scoring with Stableford calculations
-- **Leaderboard** - Real-time tournament rankings and standings
-- **Sponsorship** - Tournament/association sponsorships with payment tracking
+Available themes:
 
-## API Services
+| Key | Name |
+|-----|------|
+| `links-classic` | Links Classic (dark green) |
+| `sunrise-tee` | Sunrise Tee (warm amber) |
+| `sand-wedge` | Sand Wedge (tan/earth) |
+| `ocean-fairway` | Ocean Fairway (teal/blue) |
+| `pine-bogey` | Pine Bogey (forest green) |
+| `sunset-backnine` | Sunset Back Nine (deep red) |
+| `masters-azalea` | Masters Azalea (augusta green) |
+| `st-andrews` | St Andrews (slate/grey) |
+| `desert-dunes` | Desert Dunes (warm sand) |
+| `midnight-drivingrange` | Midnight Driving Range (charcoal) |
 
-### Payment Service
+## Key Service Interfaces
+
+### AssociationService
 ```csharp
-Task<(bool Success, string TransactionId, string? ErrorMessage)> 
-    ProcessRegistrationPaymentAsync(...)
-
-Task<(bool Success, string TransactionId, string? ErrorMessage)> 
-    ProcessSponsorshipPaymentAsync(...)
-
-Task<(bool Success, string? ErrorMessage)> 
-    RefundTransactionAsync(string transactionId, decimal amount)
-```
-
-### Association Service
-```csharp
-Task<GolfAssociation?> GetAssociationByIdAsync(int id)
-Task<GolfAssociation> CreateAssociationAsync(GolfAssociation association)
-Task<IEnumerable<ApplicationUser>> GetAssociationMembersAsync(int associationId)
+Task<GolfAssociation?> GetAssociationByIdAsync(int id)          // includes Players, Tournaments, Sponsors, Media...
+Task<IEnumerable<GolfAssociation>> GetAllActiveAssociationsAsync()
+Task<GolfAssociation> CreateAssociationAsync(GolfAssociation a)
+Task<GolfAssociation?> UpdateAssociationAsync(int id, GolfAssociation a)
+Task<bool> DeleteAssociationAsync(int id)
+Task<IEnumerable<ApplicationUser>> GetAssociationMembersAsync(int id)
 Task<bool> AddMemberToAssociationAsync(int associationId, string userId)
+Task<bool> RemoveMemberFromAssociationAsync(int associationId, string userId)
+Task<int> GetMemberCountAsync(int associationId)
 ```
 
-### Tournament Service
-```csharp
-Task<Tournament?> GetTournamentByIdAsync(int id)
-Task<IEnumerable<Tournament>> GetUpcomingTournamentsAsync(int associationId)
-Task<Tournament> CreateTournamentAsync(Tournament tournament)
-Task<bool> UpdateTournamentStatusAsync(int id, TournamentStatus newStatus)
-```
-
-### Registration Service
-```csharp
-Task<Registration?> GetPlayerTournamentRegistrationAsync(int tournamentId, string playerId)
-Task<Registration> CreateRegistrationAsync(Registration registration)
-Task<bool> ConfirmPaymentAsync(int id, string authorizeNetTransactionId)
-Task<bool> WithdrawRegistrationAsync(int id, string reason)
-```
-
-### Score Service
-```csharp
-Task<PlayerScore> RecordScoreAsync(PlayerScore score)
-Task<IEnumerable<PlayerScore>> GetPlayerTournamentScoresAsync(int tournamentId, string playerId)
-Task<int> CalculateStablefordPointsAsync(int[] holeScores, int[] holePars, int[] handicapStrokes)
-```
-
-### Leaderboard Service
+### LeaderboardService
 ```csharp
 Task<IEnumerable<Leaderboard>> GetTournamentLeaderboardAsync(int tournamentId)
+Task<IEnumerable<AssociationLeaderboardRow>> GetAssociationLeaderboardAsync(int associationId)
+Task<IEnumerable<RecentTournamentLeaderboard>> GetRecentTournamentLeaderboardsAsync(int associationId, int tournamentCount, int topN)
+Task<IEnumerable<GlobalLeaderboardRow>> GetGlobalLeaderboardAsync(int topN)
 Task UpdateLeaderboardAsync(int tournamentId)
 Task<bool> RecalculateAllLeaderboardsAsync()
 ```
 
-## Next Steps
+### RegistrationService
+```csharp
+Task<Registration?> GetRegistrationByIdAsync(int id)
+Task<Registration?> GetGuestTournamentRegistrationAsync(int tournamentId, string guestEmail)
+Task<Registration> CreateRegistrationAsync(Registration registration)
+Task<bool> ConfirmPaymentAsync(int id, string transactionId)
+Task<bool> WithdrawRegistrationAsync(int id, string reason)
+Task<bool> CanGuestRegisterAsync(int tournamentId, string guestEmail)
+```
 
-1. **Create Controllers** - Implement API or MVC controllers for CRUD operations
-2. **Build Views** - Create Razor Pages or Angular/React frontend
-3. **Admin Dashboard** - Implement site admin and association admin dashboards
-4. **Authentication UI** - Create login/registration pages
-5. **Testing** - Add unit and integration tests
-6. **Deployment** - Configure for Azure or your hosting platform
+## Troubleshooting
 
-## Logging
+**SQLite Error 1: no such table**
+```bash
+dotnet ef database update
+```
 
-The application uses Serilog for comprehensive logging:
-- Console output in development
-- File-based logging with daily rolling files
-- Log files located in `logs/` directory
-- Configurable log levels in `appsettings.json`
+**Build fails on `dotnet ef` commands**
+```bash
+dotnet build   # fix any compile errors first
+```
 
-## Security Considerations
-
-- Always use HTTPS in production
-- Store Authorize.Net credentials in secure configuration (not in code)
-- Implement rate limiting on payment endpoints
-- Enable multi-factor authentication for admin accounts
-- Regular security audits of payment processing
-- GDPR compliance for user data storage
-
-## Contributing
-
-Contributions are welcome! Please follow standard GitHub fork → branch → PR workflow.
-
-## License
-
-This project is licensed under the MIT License - see the LICENSE file for details.
-
-## Support
-
-For issues, questions, or feature requests, please open an issue on the GitHub repository.
-
----
-
-**Project Status**: Foundation Complete - Ready for Controller/UI Development
+**Schema out of sync in development**
+```bash
+dotnet ef database drop --force
+dotnet ef database update
+```

@@ -39,6 +39,10 @@ ScaffoldingReadMe.txt
 # dotenv environment variables file
 .env
 
+# Source/staging assets not needed in production
+# (logos go to wwwroot/images/associations/ for serving)
+/Images/
+
 # Others
 ~$*
 *~

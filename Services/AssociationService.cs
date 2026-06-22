@@ -38,6 +38,7 @@ namespace GolfAssociationCommunity.Services
             {
                 return await _context.GolfAssociations
                     .Include(ga => ga.Members)
+                    .Include(ga => ga.Players)
                     .Include(ga => ga.Tournaments)
                     .Include(ga => ga.SponsorshipPackages)
                     .Include(ga => ga.SponsorshipPayments)

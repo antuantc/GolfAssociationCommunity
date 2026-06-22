@@ -18,7 +18,8 @@ namespace GolfAssociationCommunity.Models
                 new("masters-azalea", "Masters Azalea", "Tournament-week greens with azalea pink accents."),
                 new("st-andrews", "St Andrews Stone", "Stone, slate, and moss tones inspired by old course architecture."),
                 new("desert-dunes", "Desert Dunes", "Desert course palette with amber sand and cactus green."),
-                new("midnight-drivingrange", "Midnight Driving Range", "Evening range look with deep navy and electric highlights.")
+                new("midnight-drivingrange", "Midnight Driving Range", "Evening range look with deep navy and electric highlights."),
+                new("iowa-asian-golf", "Iowa Asian Golf", "Deep Iowa fairway greens with IAGA signature red — matching iowaasiangolf.com.")
             };
 
         public static bool IsValid(string? key)

@@ -1,36 +1,81 @@
 @page
 @model IndexModel
 @{
-    ViewData["Title"] = "Choose an Association";
+    ViewData["Title"] = "Golf Association Community";
 }
+
 <div class="hero hero--video">
-    <video class="hero-video-bg" autoplay muted loop playsinline poster="/images/golf-hero-poster.jpg">
+    <video class="hero-video-bg" autoplay muted loop playsinline>
         <source src="/videos/golf-bg.mp4" type="video/mp4" />
     </video>
     <div class="hero-video-overlay"></div>
     <div class="hero-copy">
-        <h1>Choose an Association</h1>
-        <p>Select a golf association to enter its public site, browse only its tournaments, and register as a player.</p>
+        <h1>Golf Association Community</h1>
+        <p>Your hub for competitive golf. Browse associations, view tournament schedules, check standings, and register to play.</p>
     </div>
 </div>
+
+@* Stats rollup across all associations *@
+@if (Model.TotalAssociations > 0)
+{
+    <div class="hub-stats-bar">
+        <div class="hub-stat">
+            <span class="hub-stat__num">@Model.TotalAssociations</span>
+            <span class="hub-stat__label">ASSOCIATIONS</span>
+        </div>
+        <div class="hub-stat">
+            <span class="hub-stat__num">@Model.TotalTournaments+</span>
+            <span class="hub-stat__label">TOURNAMENTS</span>
+        </div>
+        <div class="hub-stat">
+            <span class="hub-stat__num">@Model.GlobalLeaderboard.Count+</span>
+            <span class="hub-stat__label">PLAYERS RANKED</span>
+        </div>
+    </div>
+}
+
 <section class="section-panel">
     <h2>Active Golf Associations</h2>
-    @if (Model.Associations.Count == 0)
+    @if (Model.AssociationStats.Count == 0)
     {
         <p>No active associations are available right now.</p>
     }
     else
     {
-        <div class="card-grid">
-            @foreach (var association in Model.Associations)
+        <div class="hub-assoc-grid">
+            @foreach (var stat in Model.AssociationStats)
             {
-                <article class="card">
-                    <h3>@association.Name</h3>
-                    <p>@association.Description</p>
-                    <div class="card-meta">
-                        <span>@association.City, @association.State</span>
+                var a = stat.Association;
+                var loc = string.Join(", ", new[] { a.City, a.State }.Where(s => !string.IsNullOrWhiteSpace(s)));
+                <article class="hub-assoc-card" style="--card-accent: var(--brand-accent);">
+                    @if (!string.IsNullOrWhiteSpace(a.HeroImageUrl))
+                    {
+                        <div class="hub-assoc-card__img" style="background-image:url('@a.HeroImageUrl')"></div>
+                    }
+                    else
+                    {
+                        <div class="hub-assoc-card__img hub-assoc-card__img--gradient"></div>
+                    }
+                    <div class="hub-assoc-card__body">
+                        @if (a.EstYear.HasValue && a.EstYear.Value > 1800)
+                        {
+                            <p class="hub-assoc-card__est">EST. @a.EstYear</p>
+                        }
+                        <h3 class="hub-assoc-card__name">@a.Name</h3>
+                        @if (!string.IsNullOrWhiteSpace(loc)) { <p class="hub-assoc-card__loc">@loc</p> }
+                        @if (!string.IsNullOrWhiteSpace(a.Description)) { <p class="hub-assoc-card__desc">@a.Description</p> }
+                        <div class="hub-assoc-card__counts">
+                            <span>@stat.TournamentCount Tournaments</span>
+                            @if (stat.UpcomingCount > 0) { <span class="hub-badge-upcoming">@stat.UpcomingCount Upcoming</span> }
+                        </div>
+                        @if (stat.NextTournament != null)
+                        {
+                            <p class="hub-assoc-card__next">
+                                <strong>Next:</strong> @stat.NextTournament.Name &mdash; @stat.NextTournament.StartDate.ToString("MMM d, yyyy")
+                            </p>
+                        }
+                        <a class="hub-assoc-card__cta" href="~/Associations/Details/@a.Id">VIEW ASSOCIATION &rarr;</a>
                     </div>
-                    <a class="card-link" href="~/Associations/Details/@association.Id">View details</a>
                 </article>
             }
         </div>
@@ -41,14 +86,13 @@
 {
     <section class="section-panel">
         <h2>Top Players &mdash; All Associations</h2>
-        <p class="field-note">Ranked by tournament finish points accumulated across all associations and tournaments.</p>
+        <p class="field-note">Ranked by tournament finish points accumulated across all associations.</p>
         <div class="table-scroll">
             <table class="table">
                 <thead>
                     <tr>
                         <th>#</th>
                         <th>Player</th>
-                        <th>Email</th>
                         <th>Tournaments</th>
                         <th>Wins</th>
                         <th>Avg Finish</th>
@@ -61,7 +105,6 @@
                         <tr>
                             <td>@row.OverallPosition</td>
                             <td>@row.PlayerName</td>
-                            <td>@row.PlayerEmail</td>
                             <td>@row.TournamentsPlayed</td>
                             <td>@row.Wins</td>
                             <td>@row.AveragePosition.ToString("0.##")</td>
@@ -73,3 +116,4 @@
         </div>
     </section>
 }
+

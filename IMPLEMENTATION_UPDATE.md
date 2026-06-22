@@ -1,254 +1,108 @@
-# Updated Backend Implementation
+﻿# Implementation Updates
 
-## ✅ New Features Added
+## June 2026 — Public Association Sites Redesign
 
-### 1. **SQLite Database Support**
-- Added `Microsoft.EntityFrameworkCore.Sqlite` NuGet package
-- Updated `Program.cs` to detect and configure database provider
-- Development config uses SQLite for quick setup
-- Production config uses SQL Server
-- **Benefits:**
-  - No database server needed for development
-  - File-based storage (easy to version control)
-  - Perfect for prototyping and testing
-
-**Quick Start with SQLite:**
-```bash
-dotnet ef database update
-dotnet run
-# Database automatically created as GolfAssociation.db
-```
+### Overview
+Each association now has a fully redesigned public-facing website that mirrors the structure and aesthetic of professional golf association sites (bold dark headers, large hero, prominent stats, flight-based leaderboards).
 
 ---
 
-### 2. **Multiple Payment Processors**
+## What Changed
 
-#### **PayPal Integration** ✨
-- Full PayPal Checkout API integration
-- Order creation, capture, and refund support
-- Sandbox and production modes
-- International payment support
-- Features:
-  - Credit/debit cards
-  - PayPal wallet
-  - Buy Now, Pay Later
-  - Buyer protection
+### `Pages/Associations/Details.cshtml` — Complete Redesign
+The association public homepage was rebuilt from scratch. New section layout (top to bottom):
 
-**Configuration:**
-```json
-{
-  "PaymentProcessor": "PayPal",
-  "PayPal": {
-    "ClientId": "YOUR_PAYPAL_CLIENT_ID",
-    "ClientSecret": "YOUR_PAYPAL_CLIENT_SECRET",
-    "Mode": "sandbox"
-  }
-}
-```
+1. **Hero** (`pub-hero`) — video or image background, uppercase headline ("WHERE [ASSOCIATION] LIVES."), tagline, two CTAs (Register / Year Schedule), motto, flight chips from latest tournament
+2. **Flight Leaders** (`flight-section`) — dark panel showing the most recent tournament's leaderboard grouped by flight. Each flight gets a card with a compact table (POS / PLAYER / TOTAL). Shows "LIVE UPDATES" pill.
+3. **Top 5 Players** (`season-section`) — avatar circles (initials) for the top 5 season standings players
+4. **Stats Bar** (`pub-stats-bar`) — active members, tournaments, courses played, years active
+5. **Upcoming Events** (`schedule-section`) — next 3 tournament cards with date, name, course, REGISTER NOW link
+6. **Latest Result** (`result-section`) — dark panel, tournament name, top 8 finishers with position/player/score/flight
+7. **Videos** — gallery section (unchanged structure)
+8. **Photo Gallery** — gallery section (unchanged structure)
+9. **Officers & Members** — officer cards (unchanged structure)
+10. **Charity** — association charity section (unchanged structure)
+11. **Sponsors** — sponsor logos in grid (unchanged structure)
+12. **Sponsorship Packages** — package tier cards (unchanged structure)
+13. **Join CTA** (`join-cta`) — gradient background, "TEE IT UP WITH US" headline, register/contact buttons, establishment year
 
-#### **Venmo Integration** 💰
-- Peer-to-peer payment links
-- Deep linking to Venmo app
-- Mobile-optimized payment flow
-- US market focused
-- Features:
-  - Quick payment requests
-  - Social payment experience
-  - No card needed (uses bank account)
-
-**Configuration:**
-```json
-{
-  "PaymentProcessor": "Venmo",
-  "Venmo": {
-    "AccessToken": "YOUR_VENMO_ACCESS_TOKEN",
-    "PhoneNumber": "YOUR_VENMO_PHONE_NUMBER"
-  }
-}
-```
-
-#### **Authorize.Net** (Existing, Enhanced)
-- Updated to use unified payment interface
-- Works alongside PayPal and Venmo
-- Traditional credit card processing
-
----
-
-### 3. **Unified Payment Service Interface**
-
-New flexible architecture supporting all payment processors:
-
+### `Pages/Associations/Details.cshtml.cs` — New Properties
 ```csharp
-// Same interface for all processors
-public interface IPaymentService
-{
-    Task<(bool Success, string TransactionId, string? ErrorMessage)> 
-        ProcessRegistrationPaymentAsync(int registrationId, decimal amount);
-    
-    Task<(bool Success, string? ErrorMessage)> 
-        RefundTransactionAsync(string transactionId, decimal amount);
-    
-    Task<(bool Success, string? PaymentUrl, string? ErrorMessage)> 
-        GetPaymentUrlAsync(string type, int entityId, decimal amount);
-}
+public int ActiveMembersCount { get; private set; }        // AssociationPlayer where IsActive
+public int CoursesPlayedCount { get; private set; }        // distinct GolfCourse from tournaments
+public RecentTournamentLeaderboard? LatestResult { get; private set; }
+public Dictionary<string, List<Leaderboard>> FlightLeaders { get; private set; }  // grouped by Flight
+public List<AssociationLeaderboardRow> SeasonStandings { get; private set; }      // top 5
 ```
 
-**Benefits:**
-- Switch payment processors with config change
-- Support multiple processors simultaneously
-- Easy to add new payment methods
-- Consistent error handling
+`GetRecentTournamentLeaderboardsAsync` now called with `topN = 20` (up from 5) to support flight grouping.
 
----
+`ViewData` keys set for footer use:
+- `NextTournamentName`, `NextTournamentDate`, `NextTournamentCourse`, `NextTournamentLocation`, `NextTournamentId`
 
-## 📦 New NuGet Packages
+### `Pages/Shared/_Layout.cshtml` — Dual Layout Mode
+Association pages (`IsAssociationPage = true`) get a fully custom layout:
+- `pub-topbar` — announcement bar with association name + season
+- `pub-header` — sticky dark header with `pub-nav` (HOME / TOURNAMENTS / RESULTS / REGISTER / SPONSORS / ABOUT / YEAR SCHEDULE)
+- `pub-main` — main content wrapper
+- `pub-footer` — 4-column footer: brand + CTA | quick links | next event | legal
 
-| Package | Version | Purpose |
-|---------|---------|---------|
-| `Microsoft.EntityFrameworkCore.Sqlite` | 8.0.0 | SQLite database support |
-| `PayPalCheckoutSdk` | 1.0.1 | PayPal payment processing |
-| `RestSharp` | 107.3.0 | HTTP client for Venmo API |
+All other pages retain the original `site-header` + `container` + `site-footer` layout.
 
----
+### `Services/AssociationService.cs` — Players Include
+`GetAssociationByIdAsync` now includes `.Include(ga => ga.Players)` in its eager-load chain so `ActiveMembersCount` can be computed from `AssociationPlayers`.
 
-## 🔧 Configuration Options
+### `Pages/Index.cshtml` + `Pages/Index.cshtml.cs` — Hub Rollup
 
-### Environment Variables
-```bash
-# Database
-DatabaseProvider=SQLite
-ConnectionStrings__DefaultConnection=Data Source=GolfAssociation.db
-
-# Payment Processor
-PaymentProcessor=PayPal
-PayPal__ClientId=...
-PayPal__ClientSecret=...
-PayPal__Mode=sandbox
-```
-
-### appsettings.json
-See `CONFIGURATION_GUIDE.md` for complete configuration examples
-
----
-
-## 📝 Files Created/Updated
-
-### New Files
-- ✅ `Services/IPaymentService.cs` - Unified payment interface
-- ✅ `Services/PayPalPaymentService.cs` - PayPal implementation
-- ✅ `Services/VenmoPaymentService.cs` - Venmo implementation
-- ✅ `CONFIGURATION_GUIDE.md` - Setup and configuration docs
-
-### Updated Files
-- ✅ `GolfAssociationCommunity.csproj` - Added NuGet packages
-- ✅ `Program.cs` - SQLite/SQL Server provider detection, payment processor DI
-- ✅ `appsettings.json` - Added payment configs
-- ✅ `appsettings.Development.json` - SQLite + PayPal defaults
-- ✅ `Services/AuthorizeNetPaymentService.cs` - Updated for interface
-
----
-
-## 🚀 Quick Start
-
-### Development (SQLite + PayPal Sandbox)
-```bash
-# 1. Update appsettings.Development.json with PayPal credentials
-# 2. Create database
-dotnet ef database update
-
-# 3. Run application
-dotnet run
-
-# 4. Test at https://localhost:5001/swagger
-```
-
-### Production (SQL Server + Authorize.Net)
-```bash
-# 1. Update appsettings.json with your settings
-# 2. Create SQL Server database
-# 3. Run migrations
-dotnet ef database update --context ApplicationDbContext
-
-# 4. Deploy and run
-dotnet run --configuration Release
-```
-
----
-
-## 💡 Usage Examples
-
-### Switch to Venmo
-Update `appsettings.json`:
-```json
-{
-  "PaymentProcessor": "Venmo",
-  "Venmo": {
-    "AccessToken": "abc123...",
-    "PhoneNumber": "+1-555-123-4567"
-  }
-}
-```
-
-### Use Multiple Processors
-Inject specific services:
+**New page model class:**
 ```csharp
-// In controller
-public PaymentsController(
-    IPayPalPaymentService paypal,
-    IVenmoPaymentService venmo,
-    IAuthorizeNetPaymentService authNet)
-{
-    _paypal = paypal;
-    _venmo = venmo;
-    _authNet = authNet;
+public class AssociationCardStats {
+    public GolfAssociation Association { get; set; }
+    public int TournamentCount { get; set; }
+    public int UpcomingCount { get; set; }
+    public Tournament? NextTournament { get; set; }
 }
-
-// Let user choose
-if (selectedProcessor == "paypal")
-    var result = await _paypal.ProcessRegistrationPaymentAsync(...);
 ```
 
-### Get Payment URL
-```csharp
-var (success, url, error) = await paymentService.GetPaymentUrlAsync(
-    type: "registration",
-    entityId: registrationId,
-    amount: 99.99
-);
+**New properties on `IndexModel`:**
+- `AssociationStats` — one `AssociationCardStats` per active association
+- `TotalTournaments` — sum of all tournaments across associations
+- `TotalAssociations` — count of active associations
 
-// Redirect user to payment URL
-return Redirect(url);
-```
+**Hub page sections:**
+1. Rollup stats bar: Associations / Tournaments / Players Ranked
+2. Association cards grid — shows name, location, est. year, description, tournament counts, next event, "VIEW ASSOCIATION →" link
+3. Global leaderboard table (email column removed for public display)
 
----
+### `wwwroot/css/site.css` — New CSS
+~4.4KB of hub-page styles appended (`hub-stats-bar`, `hub-stat`, `hub-assoc-grid`, `hub-assoc-card`, `hub-badge-upcoming`, etc.) on top of the ~20KB of pub-site styles added in the prior session.
 
-## 🔐 Security Considerations
-
-1. **Never commit credentials** - Use user secrets or environment variables
-2. **Use HTTPS only** - All payment endpoints require HTTPS
-3. **Sandbox testing** - Always test in sandbox before production
-4. **Rate limiting** - Implement rate limiting on payment endpoints
-5. **Webhook verification** - Verify payment webhooks are authentic
+**Total site.css size: ~44KB**
 
 ---
 
-## 📚 Next Steps
+## May 2026 — Initial Backend + Payments
 
-1. **Set up payment credentials** - See `CONFIGURATION_GUIDE.md`
-2. **Create payment controllers** - Implement registration/sponsorship payment endpoints
-3. **Add payment UI** - Build checkout forms/buttons
-4. **Test payment flow** - Use Swagger UI or Postman
-5. **Implement webhooks** - Handle payment completion callbacks
-6. **Deploy** - Configure production payment processor
+### Authorize.Net Per-Association Credentials
+Each `GolfAssociation` record stores its own `AuthorizeNetApiLoginId`, `AuthorizeNetTransactionKey`, and `AuthorizeNetIsSandbox` flag. The payment service resolves credentials from the association first, falling back to global `appsettings.json` values.
+
+### Guest Registration
+Guests (non-members) can register for tournaments using just an email address. `GetGuestTournamentRegistrationAsync` and `CanGuestRegisterAsync` prevent duplicate guest registrations.
+
+### AssociationPlayer Model
+A separate `AssociationPlayer` entity (distinct from ASP.NET Identity users) tracks the active playing roster per association. Used for leaderboard entries, score recording, and public member counts.
+
+### Refund Tracking
+`Registration` and `SponsorshipPayment` records store the original transaction ID and a refund transaction ID for full audit trail.
+
+### Admin Audit Log
+Every significant admin action (user creation, association changes, payment voids) is written to `AdminAuditEvent` via `IAdminAuditService`.
+
+### Serilog File Logging
+Daily rolling log files written to `logs/golf-association-{date}.txt`.
 
 ---
 
-## ⚠️ Important Notes
+## Database Migrations Added (chronological)
 
-- **Venmo**: US market only, requires phone number, best for peer-to-peer
-- **PayPal**: Supports international payments, recommended for production
-- **Authorize.Net**: Traditional card processor, good backup option
-- **SQLite**: Development only, not suitable for production
-- **SQL Server**: Production database, requires server setup
-
-See `CONFIGURATION_GUIDE.md` for detailed setup instructions.
+See `DATABASE_CONFIGURATION.md` for the full migration table.

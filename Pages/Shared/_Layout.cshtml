@@ -6,71 +6,189 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@ViewData["Title"] - Golf Association Community</title>
+    <title>@ViewData["Title"] - @(ViewData["PublicAssociationName"]?.ToString() ?? "Golf Association Community")</title>
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
 </head>
-    @{ 
-        var publicThemeKey = GolfAssociationCommunity.Models.BrandingThemes.Normalize(ViewData["PublicThemeKey"]?.ToString());
-        var publicAssociationId = ViewData["PublicAssociationId"] as int?;
-        if (publicAssociationId is null && ViewData["PublicAssociationId"] != null)
-        {
-            publicAssociationId = Convert.ToInt32(ViewData["PublicAssociationId"]);
-        }
-        var publicAssociationName = ViewData["PublicAssociationName"]?.ToString();
-    }
-<body class="theme-@publicThemeKey">
-    <header class="site-header">
-        <div class="container">
-            @if (publicAssociationId.HasValue && !string.IsNullOrWhiteSpace(publicAssociationName))
-            {
-                <a class="brand" href="~/Associations/Details/@publicAssociationId">@publicAssociationName</a>
-            }
-            else
-            {
-                <a class="brand" href="~/">Golf Association Community</a>
-            }
-            <nav class="site-nav">
-                @if (publicAssociationId.HasValue)
-                {
-                    <a href="~/Associations/Details/@publicAssociationId">Association Home</a>
-                    <a href="~/Associations/Tournaments?associationId=@publicAssociationId">Tournaments</a>
-                    <a href="~/">All Associations</a>
-                }
-                else
-                {
-                    <a href="~/">Home</a>
-                }
-                @if (SignInManager.IsSignedIn(User))
-                {
-                    @if (User.IsInRole("AssociationAdmin"))
-                    {
-                        <a href="~/AssociationAdmin">Association Portal</a>
-                    }
-                    @if (User.IsInRole("Admin"))
-                    {
-                        <a href="~/Admin">Admin Dashboard</a>
-                    }
-                    <a href="~/Identity/Account/Manage">My Account</a>
-                    <form method="post" action="~/Identity/Account/Logout" class="inline-form">
-                        @Html.AntiForgeryToken()
-                        <button type="submit" class="link-button">Logout</button>
-                    </form>
-                }
-                else
-                {
-                    <a href="~/Identity/Account/Login">Admin Login</a>
-                }
-            </nav>
+@{
+    var publicThemeKey = GolfAssociationCommunity.Models.BrandingThemes.Normalize(ViewData["PublicThemeKey"]?.ToString());
+    var publicAssociationId = ViewData["PublicAssociationId"] as int?;
+    if (publicAssociationId is null && ViewData["PublicAssociationId"] != null)
+        publicAssociationId = Convert.ToInt32(ViewData["PublicAssociationId"]);
+    var publicAssociationName = ViewData["PublicAssociationName"]?.ToString();
+    var publicAssociationLogoUrl = ViewData["PublicAssociationLogoUrl"]?.ToString();
+    var isAssocPage = publicAssociationId.HasValue;
+    var nextTournamentName = ViewData["NextTournamentName"]?.ToString();
+    var nextTournamentDate = ViewData["NextTournamentDate"]?.ToString();
+    var nextTournamentCourse = ViewData["NextTournamentCourse"]?.ToString();
+    var nextTournamentLocation = ViewData["NextTournamentLocation"]?.ToString();
+    var nextTournamentId = ViewData["NextTournamentId"] as int?;
+    if (nextTournamentId is null && ViewData["NextTournamentId"] != null)
+        nextTournamentId = Convert.ToInt32(ViewData["NextTournamentId"]);
+    var currentYear = DateTime.UtcNow.Year;
+}
+<body class="theme-@publicThemeKey@(isAssocPage ? " pub-site" : "")">
+    @if (isAssocPage)
+    {
+        <div class="pub-topbar">
+            <div class="pub-container pub-topbar__inner">
+                <span class="pub-topbar__name">@publicAssociationName?.ToUpperInvariant()</span>
+                <span class="pub-topbar__sep">|</span>
+                <span class="pub-topbar__season">@currentYear SEASON</span>
+            </div>
         </div>
-    </header>
-    <main class="container">
+        <header class="pub-header">
+            <div class="pub-container pub-header__inner">
+                <a class="pub-brand" href="~/Associations/Details/@publicAssociationId">
+                    @if (!string.IsNullOrWhiteSpace(publicAssociationLogoUrl))
+                    {
+                        <img src="@publicAssociationLogoUrl" alt="@publicAssociationName" class="pub-brand__logo" />
+                    }
+                    else
+                    {
+                        @publicAssociationName
+                    }
+                </a>
+                <button class="pub-nav-toggle" aria-label="Toggle navigation"
+                        onclick="document.getElementById('pub-nav').classList.toggle('pub-nav--open')">&#9776;</button>
+                <nav class="pub-nav" id="pub-nav">
+                    <a href="~/Associations/Details/@publicAssociationId">HOME</a>
+                    <a href="~/Associations/Tournaments?associationId=@publicAssociationId">TOURNAMENTS</a>
+                    <a href="~/Associations/Leaderboard/@publicAssociationId">RESULTS</a>
+                    @if (nextTournamentId.HasValue)
+                    {
+                        <a href="~/Tournaments/Details/@nextTournamentId?associationId=@publicAssociationId">REGISTER</a>
+                    }
+                    <a href="~/Associations/Details/@publicAssociationId#sponsors">SPONSORS</a>
+                    <a href="~/Associations/Details/@publicAssociationId#about">ABOUT</a>
+                    <a href="~/Associations/Tournaments?associationId=@publicAssociationId">@currentYear SCHEDULE</a>
+                    @if (SignInManager.IsSignedIn(User))
+                    {
+                        @if (User.IsInRole("AssociationAdmin"))
+                        {
+                            <a href="~/AssociationAdmin" class="pub-nav__admin">&#9965; ADMIN</a>
+                        }
+                        @if (User.IsInRole("Admin"))
+                        {
+                            <a href="~/Admin" class="pub-nav__admin">&#9965; ADMIN</a>
+                        }
+                    }
+                </nav>
+            </div>
+        </header>
+    }
+    else
+    {
+        <header class="site-header">
+            <div class="container">
+                <a class="brand" href="~/">Golf Association Community</a>
+                <nav class="site-nav">
+                    <a href="~/">Home</a>
+                    @if (SignInManager.IsSignedIn(User))
+                    {
+                        @if (User.IsInRole("AssociationAdmin"))
+                        {
+                            <a href="~/AssociationAdmin">Association Portal</a>
+                        }
+                        @if (User.IsInRole("Admin"))
+                        {
+                            <a href="~/Admin">Admin Dashboard</a>
+                        }
+                        <a href="~/Identity/Account/Manage">My Account</a>
+                        <form method="post" action="~/Identity/Account/Logout" class="inline-form">
+                            @Html.AntiForgeryToken()
+                            <button type="submit" class="link-button">Logout</button>
+                        </form>
+                    }
+                    else
+                    {
+                        <a href="~/Identity/Account/Login">Admin Login</a>
+                    }
+                </nav>
+            </div>
+        </header>
+    }
+    <main class="@(isAssocPage ? "pub-main" : "container")">
         @RenderBody()
     </main>
-    <footer class="site-footer">
-        <div class="container">
-            <p>Golf Association Community &copy; @DateTime.UtcNow.Year</p>
-        </div>
-    </footer>
+    @if (isAssocPage)
+    {
+        <footer class="pub-footer">
+            <div class="pub-container">
+                <div class="pub-footer__grid">
+                    <div class="pub-footer__col pub-footer__col--brand">
+                        <p class="pub-footer__brand-name">@publicAssociationName</p>
+                        <p class="pub-footer__brand-sub">The home of competitive golf.</p>
+                        <div class="pub-footer__cta-row">
+                            @if (nextTournamentId.HasValue)
+                            {
+                                <a href="~/Tournaments/Details/@nextTournamentId?associationId=@publicAssociationId" class="pub-btn pub-btn--sm">JOIN NOW</a>
+                            }
+                            <a href="~/Associations/Tournaments?associationId=@publicAssociationId" class="pub-btn pub-btn--ghost pub-btn--sm">VIEW SCHEDULE</a>
+                        </div>
+                    </div>
+                    <div class="pub-footer__col">
+                        <p class="pub-footer__col-title">QUICK LINKS</p>
+                        <ul class="pub-footer__links">
+                            <li><a href="~/Associations/Details/@publicAssociationId">Home</a></li>
+                            <li><a href="~/Associations/Tournaments?associationId=@publicAssociationId">Tournaments</a></li>
+                            <li><a href="~/Associations/Leaderboard/@publicAssociationId">Results</a></li>
+                            @if (nextTournamentId.HasValue)
+                            {
+                                <li><a href="~/Tournaments/Details/@nextTournamentId?associationId=@publicAssociationId">Register / Membership</a></li>
+                            }
+                            <li><a href="~/Associations/Details/@publicAssociationId#sponsors">Sponsors</a></li>
+                            <li><a href="~/Associations/Details/@publicAssociationId#about">About</a></li>
+                        </ul>
+                    </div>
+                    @if (!string.IsNullOrWhiteSpace(nextTournamentName))
+                    {
+                        <div class="pub-footer__col">
+                            <p class="pub-footer__col-title">@currentYear NEXT EVENT</p>
+                            <p class="pub-footer__event-name">@nextTournamentName</p>
+                            @if (!string.IsNullOrWhiteSpace(nextTournamentDate)) { <p class="pub-footer__event-meta">@nextTournamentDate</p> }
+                            @if (!string.IsNullOrWhiteSpace(nextTournamentCourse)) { <p class="pub-footer__event-meta">@nextTournamentCourse</p> }
+                            @if (!string.IsNullOrWhiteSpace(nextTournamentLocation)) { <p class="pub-footer__event-meta">@nextTournamentLocation</p> }
+                        </div>
+                    }
+                    <div class="pub-footer__col">
+                        <p class="pub-footer__col-title">LEGAL</p>
+                        <ul class="pub-footer__links">
+                            <li><a href="#">Terms &amp; Conditions</a></li>
+                            <li><a href="#">Privacy Policy</a></li>
+                            <li><a href="#">Payment Policy</a></li>
+                            <li><a href="#">Return/Refund Policy</a></li>
+                        </ul>
+                        <div style="margin-top:1rem;">
+                            @if (SignInManager.IsSignedIn(User))
+                            {
+                                <form method="post" action="~/Identity/Account/Logout" class="inline-form">
+                                    @Html.AntiForgeryToken()
+                                    <button type="submit" class="pub-footer__action-link">Logout</button>
+                                </form>
+                            }
+                            else
+                            {
+                                <a href="~/Identity/Account/Login" class="pub-footer__action-link">Admin Login</a>
+                            }
+                        </div>
+                    </div>
+                </div>
+                <div class="pub-footer__bottom">
+                    <p>&copy; @currentYear @publicAssociationName. All rights reserved.</p>
+                    <a href="~/" class="pub-footer__hub-link">Golf Association Community Hub</a>
+                </div>
+            </div>
+        </footer>
+    }
+    else
+    {
+        <footer class="site-footer">
+            <div class="container">
+                <p>Golf Association Community &copy; @currentYear</p>
+            </div>
+        </footer>
+    }
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>
+
