@@ -1323,7 +1323,9 @@ a.sponsor-card:hover {
     width: auto;
     max-width: 160px;
     object-fit: contain;
-    filter: brightness(0) invert(1);
+    border-radius: 4px;
+    background: rgba(255,255,255,0.92);
+    padding: 3px 6px;
 }
 .pub-nav {
     display: flex;
@@ -1721,7 +1723,8 @@ a.sponsor-card:hover {
 .join-cta__img {
     width: 220px; max-height: 220px; object-fit: contain;
     border-radius: 0.6rem; flex-shrink: 0;
-    filter: brightness(0) invert(1);
+    background: rgba(255,255,255,0.92);
+    padding: 8px;
 }
 
 /* ── Public Footer ────────────────────────────────────────────────── */

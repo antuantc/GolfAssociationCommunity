@@ -67,10 +67,12 @@
     else
     {
         <h2>Active Players</h2>
+        <form id="bulk-assoc-player-delete" method="post" asp-page-handler="DeleteSelected"></form>
         <div class="table-scroll">
             <table class="table">
                 <thead>
                     <tr>
+                        <th><input type="checkbox" id="select-all-assoc-players" title="Select all" /></th>
                         <th>Actions</th>
                         <th></th>
                         <th>Player</th>
@@ -86,6 +88,7 @@
                 @foreach (var player in Model.Players)
                 {
                     <tr>
+                        <td><input type="checkbox" class="assoc-player-check" name="Ids" value="@player.Id" form="bulk-assoc-player-delete" /></td>
                         <td>
                             <a class="card-link" href="~/AssociationAdmin/Players?EditId=@player.Id">Edit</a>
                             <a class="card-link" href="~/AssociationAdmin/Scores?AssociationPlayerId=@player.Id">Scores</a>
@@ -114,6 +117,12 @@
                 }
                 </tbody>
             </table>
+        </div>
+        <div class="form-actions" style="margin-top:0.75rem;">
+            <button type="submit" form="bulk-assoc-player-delete" class="btn btn-danger"
+                    onclick="return document.querySelectorAll('.assoc-player-check:checked').length > 0 || (alert('Select at least one player.'), false)">
+                Delete Selected
+            </button>
         </div>
     }
 
@@ -170,3 +179,8 @@
         }
     </section>
 </section>
+<script>
+    document.getElementById('select-all-assoc-players')?.addEventListener('change', function () {
+        document.querySelectorAll('.assoc-player-check').forEach(cb => cb.checked = this.checked);
+    });
+</script>

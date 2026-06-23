@@ -78,6 +78,34 @@ namespace GolfAssociationCommunity.Pages.AssociationAdmin
             return Page();
         }
 
+        public async Task<IActionResult> OnPostDeleteTournamentScoresAsync()
+        {
+            var contextResult = await LoadAssociationContextAsync();
+            if (contextResult is not null) return contextResult;
+
+            if (!TournamentId.HasValue)
+            {
+                TempData["SuccessMessage"] = "No tournament selected.";
+                return RedirectToPage();
+            }
+
+            var tournament = await Context.Tournaments
+                .FirstOrDefaultAsync(t => t.Id == TournamentId.Value && t.GolfAssociationId == CurrentAssociation.Id);
+
+            if (tournament == null) return NotFound();
+
+            var scores = await Context.PlayerScores
+                .Where(s => s.TournamentId == TournamentId.Value)
+                .ToListAsync();
+
+            Context.PlayerScores.RemoveRange(scores);
+            await Context.SaveChangesAsync();
+            await _leaderboardService.RecalculateLeaderboardAsync(TournamentId.Value);
+
+            TempData["SuccessMessage"] = $"Deleted {scores.Count} score record(s) for {tournament.Name} and recalculated the leaderboard.";
+            return RedirectToPage(new { TournamentId = TournamentId.Value });
+        }
+
         public async Task<IActionResult> OnPostSaveAsync()
         {
             var contextResult = await LoadAssociationContextAsync();

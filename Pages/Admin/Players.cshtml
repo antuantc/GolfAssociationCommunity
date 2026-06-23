@@ -34,10 +34,14 @@
     }
     else
     {
+        <form id="bulk-player-delete" method="post" asp-page-handler="DeleteSelected">
+            <input type="hidden" name="Search" value="@Model.Search" />
+        </form>
         <div class="table-scroll">
             <table class="table">
                 <thead>
                     <tr>
+                        <th><input type="checkbox" id="select-all-players" title="Select all" /></th>
                         <th>Player</th>
                         <th>Email</th>
                         <th>Associations</th>
@@ -54,6 +58,7 @@
                 @foreach (var player in Model.Players)
                 {
                     <tr>
+                        <td><input type="checkbox" class="player-check" name="EmailKeys" value="@player.EmailKey" form="bulk-player-delete" /></td>
                         <td>@player.DisplayName</td>
                         <td>@player.Email</td>
                         <td>
@@ -79,5 +84,16 @@
                 </tbody>
             </table>
         </div>
+        <div class="form-actions" style="margin-top:0.75rem;">
+            <button type="submit" form="bulk-player-delete" class="btn btn-danger"
+                    onclick="return document.querySelectorAll('.player-check:checked').length > 0 || (alert('Select at least one player.'), false)">
+                Delete Selected
+            </button>
+        </div>
     }
 </section>
+<script>
+    document.getElementById('select-all-players')?.addEventListener('change', function () {
+        document.querySelectorAll('.player-check').forEach(cb => cb.checked = this.checked);
+    });
+</script>

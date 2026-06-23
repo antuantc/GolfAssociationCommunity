@@ -180,6 +180,40 @@ namespace GolfAssociationCommunity.Services
             var affectedTournaments = new HashSet<int>();
             var now = DateTime.UtcNow;
 
+            // Auto-create any players not yet in this association
+            {
+                var neededEmails = rows
+                    .Select(r => Get(r, "PlayerEmail", "Email")?.Trim().ToLowerInvariant())
+                    .Where(e => !string.IsNullOrWhiteSpace(e) && !playersByEmail.ContainsKey(e!))
+                    .Distinct()
+                    .ToList();
+
+                if (neededEmails.Count > 0)
+                {
+                    var nameByEmail = rows
+                        .Where(r => !string.IsNullOrWhiteSpace(Get(r, "PlayerEmail", "Email")))
+                        .GroupBy(r => Get(r, "PlayerEmail", "Email")!.Trim().ToLowerInvariant())
+                        .ToDictionary(g => g.Key, g => Get(g.First(), "PlayerName", "Name") ?? g.Key);
+
+                    foreach (var email in neededEmails)
+                    {
+                        var newPlayer = new AssociationPlayer
+                        {
+                            GolfAssociationId = associationId,
+                            DisplayName = nameByEmail.GetValueOrDefault(email, email),
+                            Email = email,
+                            IsActive = true,
+                            CreatedAt = now,
+                            UpdatedAt = now
+                        };
+                        _db.AssociationPlayers.Add(newPlayer);
+                        playersByEmail[email] = newPlayer;
+                    }
+                    await _db.SaveChangesAsync();
+                    result.Warnings.Add($"Auto-created {neededEmails.Count} player(s) not found in this association.");
+                }
+            }
+
             foreach (var (row, i) in rows.Select((r, i) => (r, i + 2)))
             {
                 // Resolve tournament
@@ -196,7 +230,7 @@ namespace GolfAssociationCommunity.Services
                 var playerEmail = Get(row, "PlayerEmail", "Email");
                 if (!playersByEmail.TryGetValue(playerEmail?.ToLowerInvariant() ?? "", out var player))
                 {
-                    result.Errors.Add($"Row {i}: Player not found ('{playerEmail}').");
+                    result.Errors.Add($"Row {i}: Player email missing or invalid ('{playerEmail}').");
                     continue;
                 }
 
@@ -249,13 +283,17 @@ namespace GolfAssociationCommunity.Services
             // can sum them correctly.
             foreach (var tournamentId in affectedTournaments)
             {
-                // Load all non-tiebreaker, non-total hole scores for this tournament
+                // Load all non-tiebreaker, non-total hole scores for round-total computation
                 var holeScores = await _db.PlayerScores
                     .Where(s => s.TournamentId == tournamentId && s.HoleNumber > 0)
                     .ToListAsync();
 
-                // Ensure a Registered registration exists for every scored player
-                var scoredPlayerIds = holeScores.Select(s => s.AssociationPlayerId).Distinct().ToList();
+                // Ensure a Registered registration for every player that has ANY score entry
+                var scoredPlayerIds = await _db.PlayerScores
+                    .Where(s => s.TournamentId == tournamentId)
+                    .Select(s => s.AssociationPlayerId)
+                    .Distinct()
+                    .ToListAsync();
                 var existingRegs = await _db.Registrations
                     .Where(r => r.TournamentId == tournamentId && r.AssociationPlayerId != null)
                     .ToListAsync();
@@ -354,6 +392,40 @@ namespace GolfAssociationCommunity.Services
                 .ToListAsync();
             var regIndex = existing.ToDictionary(r => $"{r.TournamentId}:{r.AssociationPlayerId}");
             var now = DateTime.UtcNow;
+
+            // Auto-create any players not yet in this association
+            {
+                var neededEmails = rows
+                    .Select(r => Get(r, "PlayerEmail", "Email")?.Trim().ToLowerInvariant())
+                    .Where(e => !string.IsNullOrWhiteSpace(e) && !playersByEmail.ContainsKey(e!))
+                    .Distinct()
+                    .ToList();
+
+                if (neededEmails.Count > 0)
+                {
+                    var nameByEmail = rows
+                        .Where(r => !string.IsNullOrWhiteSpace(Get(r, "PlayerEmail", "Email")))
+                        .GroupBy(r => Get(r, "PlayerEmail", "Email")!.Trim().ToLowerInvariant())
+                        .ToDictionary(g => g.Key, g => Get(g.First(), "PlayerName", "GuestName", "Name") ?? g.Key);
+
+                    foreach (var email in neededEmails)
+                    {
+                        var newPlayer = new AssociationPlayer
+                        {
+                            GolfAssociationId = associationId,
+                            DisplayName = nameByEmail.GetValueOrDefault(email, email),
+                            Email = email,
+                            IsActive = true,
+                            CreatedAt = now,
+                            UpdatedAt = now
+                        };
+                        _db.AssociationPlayers.Add(newPlayer);
+                        playersByEmail[email] = newPlayer;
+                    }
+                    await _db.SaveChangesAsync();
+                    result.Warnings.Add($"Auto-created {neededEmails.Count} player(s) not found in this association.");
+                }
+            }
 
             foreach (var (row, i) in rows.Select((r, i) => (r, i + 2)))
             {

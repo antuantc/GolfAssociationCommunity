@@ -146,5 +146,10 @@ else if (Model.TournamentId.HasValue)
 {
     <section class="section-panel">
         <p>Select a registered player to load and manage the scorecard.</p>
+        <form method="post" asp-page-handler="DeleteTournamentScores" class="inline-form"
+              onsubmit="return confirm('Delete ALL scores for this tournament and recalculate the leaderboard? This cannot be undone.');">
+            <input type="hidden" name="TournamentId" value="@Model.TournamentId" />
+            <button type="submit" class="btn btn-danger">Delete All Scores for This Tournament</button>
+        </form>
     </section>
 }

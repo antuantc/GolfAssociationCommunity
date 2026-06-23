@@ -52,9 +52,16 @@
     }
     else
     {
+        <form id="bulk-reg-delete" method="post" asp-page-handler="DeleteSelected">
+            <input type="hidden" name="Search" value="@Model.Search" />
+            <input type="hidden" name="StatusFilter" value="@Model.StatusFilter" />
+            <input type="hidden" name="PaymentFilter" value="@Model.PaymentFilter" />
+            <input type="hidden" name="CurrentPage" value="@Model.PageNumber" />
+        </form>
         <table class="table">
             <thead>
                 <tr>
+                    <th><input type="checkbox" id="select-all-regs" title="Select all" /></th>
                     <th>Player</th>
                     <th>Tournament</th>
                     <th>Association</th>
@@ -69,6 +76,7 @@
             @foreach (var registration in Model.Registrations)
             {
                 <tr>
+                    <td><input type="checkbox" class="reg-check" name="Ids" value="@registration.Id" form="bulk-reg-delete" /></td>
                     <td>@registration.PlayerEmail</td>
                     <td>@registration.TournamentName</td>
                     <td>@registration.AssociationName</td>
@@ -127,6 +135,13 @@
             </tbody>
         </table>
 
+        <div class="form-actions" style="margin-top:0.75rem;">
+            <button type="submit" form="bulk-reg-delete" class="btn btn-danger"
+                    onclick="return document.querySelectorAll('.reg-check:checked').length > 0 || (alert('Select at least one registration.'), false)">
+                Delete Selected
+            </button>
+        </div>
+
         <div>
             <span>Page @Model.PageNumber of @Model.TotalPages</span>
             @if (Model.PageNumber > 1)
@@ -142,3 +157,8 @@
 
     <a class="btn btn-secondary" href="~/Admin">Back to Dashboard</a>
 </section>
+<script>
+    document.getElementById('select-all-regs')?.addEventListener('change', function () {
+        document.querySelectorAll('.reg-check').forEach(cb => cb.checked = this.checked);
+    });
+</script>

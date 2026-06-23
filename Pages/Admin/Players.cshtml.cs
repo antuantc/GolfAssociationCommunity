@@ -94,6 +94,41 @@ namespace GolfAssociationCommunity.Pages.Admin
             return RedirectToPage(GetStateRouteValues());
         }
 
+        public async Task<IActionResult> OnPostDeleteSelectedAsync(List<string> emailKeys)
+        {
+            if (emailKeys == null || emailKeys.Count == 0)
+            {
+                TempData["SuccessMessage"] = "No players selected.";
+                return RedirectToPage(GetStateRouteValues());
+            }
+
+            var normalizedKeys = emailKeys.Select(k => k.Trim().ToUpperInvariant()).ToList();
+            var players = await _context.AssociationPlayers
+                .Where(p => normalizedKeys.Contains(p.Email.ToUpper()))
+                .ToListAsync();
+
+            if (players.Count == 0)
+            {
+                TempData["SuccessMessage"] = "No matching players found.";
+                return RedirectToPage(GetStateRouteValues());
+            }
+
+            _context.AssociationPlayers.RemoveRange(players);
+            await _context.SaveChangesAsync();
+
+            TempData["SuccessMessage"] = $"Deleted {players.Count} player record(s) across {normalizedKeys.Count} selected player(s).";
+            await _adminAuditService.WriteAsync(
+                "Bulk deleted players",
+                User?.Identity?.Name ?? "anonymous",
+                new Dictionary<string, string?>
+                {
+                    ["Count"] = players.Count.ToString(),
+                    ["EmailKeys"] = string.Join(", ", normalizedKeys)
+                });
+
+            return RedirectToPage(GetStateRouteValues());
+        }
+
         private async Task LoadAsync()
         {
             var query = _context.AssociationPlayers

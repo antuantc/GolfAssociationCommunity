@@ -212,6 +212,33 @@ namespace GolfAssociationCommunity.Pages.AssociationAdmin
             return RedirectToPage();
         }
 
+        public async Task<IActionResult> OnPostDeleteSelectedAsync(List<int> ids)
+        {
+            var contextResult = await LoadAssociationContextAsync();
+            if (contextResult is not null) return contextResult;
+
+            if (ids == null || ids.Count == 0)
+            {
+                TempData["SuccessMessage"] = "No players selected.";
+                return RedirectToPage();
+            }
+
+            var players = await Context.AssociationPlayers
+                .Where(p => ids.Contains(p.Id) && p.GolfAssociationId == CurrentAssociation.Id)
+                .ToListAsync();
+
+            if (players.Count == 0)
+            {
+                TempData["SuccessMessage"] = "No matching players found.";
+                return RedirectToPage();
+            }
+
+            Context.AssociationPlayers.RemoveRange(players);
+            await Context.SaveChangesAsync();
+            TempData["SuccessMessage"] = $"Deleted {players.Count} player(s) from this association.";
+            return RedirectToPage();
+        }
+
         public async Task<IActionResult> OnPostActivateAsync(int id)
         {
             var contextResult = await LoadAssociationContextAsync();
