@@ -123,6 +123,17 @@ namespace GolfAssociationCommunity.Pages.Tournaments
                     ViewData["PublicAssociationId"] = Tournament.GolfAssociation.Id;
                     ViewData["PublicAssociationName"] = Tournament.GolfAssociation.Name;
                     ViewData["PublicThemeKey"] = BrandingThemes.Normalize(Tournament.GolfAssociation.ThemeKey);
+                    ViewData["PublicAssociationLogoUrl"] = Tournament.GolfAssociation.LogoUrl;
+
+                    var nextTmmt = (await _tournamentService.GetUpcomingTournamentsAsync(Tournament.GolfAssociationId)).FirstOrDefault();
+                    if (nextTmmt != null)
+                    {
+                        ViewData["NextTournamentName"] = nextTmmt.Name;
+                        ViewData["NextTournamentDate"] = nextTmmt.StartDate.ToString("MMMM d, yyyy");
+                        ViewData["NextTournamentCourse"] = nextTmmt.GolfCourse;
+                        ViewData["NextTournamentLocation"] = nextTmmt.Location;
+                        ViewData["NextTournamentId"] = nextTmmt.Id;
+                    }
                 }
             }
 
@@ -159,6 +170,7 @@ namespace GolfAssociationCommunity.Pages.Tournaments
                     ViewData["PublicAssociationId"] = tournament.GolfAssociation.Id;
                     ViewData["PublicAssociationName"] = tournament.GolfAssociation.Name;
                     ViewData["PublicThemeKey"] = BrandingThemes.Normalize(tournament.GolfAssociation.ThemeKey);
+                    ViewData["PublicAssociationLogoUrl"] = tournament.GolfAssociation.LogoUrl;
                 }
                 RegistrationCount = await _registrationService.GetRegistrationCountAsync(tournamentId, RegistrationStatus.Registered);
                 Leaderboard = (await _leaderboardService.GetTournamentLeaderboardAsync(tournamentId)).ToList();
@@ -184,6 +196,7 @@ namespace GolfAssociationCommunity.Pages.Tournaments
                         ViewData["PublicAssociationId"] = tournament.GolfAssociation.Id;
                         ViewData["PublicAssociationName"] = tournament.GolfAssociation.Name;
                         ViewData["PublicThemeKey"] = BrandingThemes.Normalize(tournament.GolfAssociation.ThemeKey);
+                        ViewData["PublicAssociationLogoUrl"] = tournament.GolfAssociation.LogoUrl;
                     }
                     RegistrationCount = await _registrationService.GetRegistrationCountAsync(tournamentId, RegistrationStatus.Registered);
                     Leaderboard = (await _leaderboardService.GetTournamentLeaderboardAsync(tournamentId)).ToList();
@@ -208,6 +221,7 @@ namespace GolfAssociationCommunity.Pages.Tournaments
                     ViewData["PublicAssociationId"] = tournament.GolfAssociation.Id;
                     ViewData["PublicAssociationName"] = tournament.GolfAssociation.Name;
                     ViewData["PublicThemeKey"] = BrandingThemes.Normalize(tournament.GolfAssociation.ThemeKey);
+                    ViewData["PublicAssociationLogoUrl"] = tournament.GolfAssociation.LogoUrl;
                 }
                 RegistrationCount = await _registrationService.GetRegistrationCountAsync(tournamentId, RegistrationStatus.Registered);
                 Leaderboard = (await _leaderboardService.GetTournamentLeaderboardAsync(tournamentId)).ToList();

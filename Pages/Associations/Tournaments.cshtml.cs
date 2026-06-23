@@ -31,8 +31,21 @@ namespace GolfAssociationCommunity.Pages.Associations
             ViewData["PublicAssociationId"] = Association.Id;
             ViewData["PublicAssociationName"] = Association.Name;
             ViewData["PublicThemeKey"] = BrandingThemes.Normalize(Association.ThemeKey);
+            ViewData["PublicAssociationLogoUrl"] = Association.LogoUrl;
+
             UpcomingTournaments = (await _tournamentService.GetUpcomingTournamentsAsync(associationId)).ToList();
             CompletedTournaments = (await _tournamentService.GetCompletedTournamentsAsync(associationId)).ToList();
+
+            var nextTmmt = UpcomingTournaments.FirstOrDefault();
+            if (nextTmmt != null)
+            {
+                ViewData["NextTournamentName"] = nextTmmt.Name;
+                ViewData["NextTournamentDate"] = nextTmmt.StartDate.ToString("MMMM d, yyyy");
+                ViewData["NextTournamentCourse"] = nextTmmt.GolfCourse;
+                ViewData["NextTournamentLocation"] = nextTmmt.Location;
+                ViewData["NextTournamentId"] = nextTmmt.Id;
+            }
+
             return Page();
         }
     }

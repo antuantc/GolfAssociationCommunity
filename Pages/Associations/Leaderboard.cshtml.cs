@@ -45,6 +45,20 @@ namespace GolfAssociationCommunity.Pages.Associations
             ViewData["PublicAssociationId"] = Association.Id;
             ViewData["PublicAssociationName"] = Association.Name;
             ViewData["PublicThemeKey"] = BrandingThemes.Normalize(Association.ThemeKey);
+            ViewData["PublicAssociationLogoUrl"] = Association.LogoUrl;
+
+            var nextTmmt = Association.Tournaments
+                .Where(t => t.StartDate >= DateTime.UtcNow && t.Status != TournamentStatus.Cancelled)
+                .OrderBy(t => t.StartDate)
+                .FirstOrDefault();
+            if (nextTmmt != null)
+            {
+                ViewData["NextTournamentName"] = nextTmmt.Name;
+                ViewData["NextTournamentDate"] = nextTmmt.StartDate.ToString("MMMM d, yyyy");
+                ViewData["NextTournamentCourse"] = nextTmmt.GolfCourse;
+                ViewData["NextTournamentLocation"] = nextTmmt.Location;
+                ViewData["NextTournamentId"] = nextTmmt.Id;
+            }
 
             Tournaments = (await _tournamentService.GetAssociationTournamentsAsync(associationId))
                 .OrderByDescending(t => t.StartDate)
