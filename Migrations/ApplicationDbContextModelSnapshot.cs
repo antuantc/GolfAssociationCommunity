@@ -405,9 +405,6 @@ namespace GolfAssociationCommunity.Migrations
                     b.Property<int>("ScoreDifferential")
                         .HasColumnType("INTEGER");
 
-                    b.Property<int>("StablefordPoints")
-                        .HasColumnType("INTEGER");
-
                     b.Property<int>("TotalScore")
                         .HasColumnType("INTEGER");
 
@@ -451,9 +448,6 @@ namespace GolfAssociationCommunity.Migrations
                         .HasColumnType("INTEGER");
 
                     b.Property<int>("Score")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<int>("StablefordPoints")
                         .HasColumnType("INTEGER");
 
                     b.Property<int?>("TiebreakerHoleHandicap")

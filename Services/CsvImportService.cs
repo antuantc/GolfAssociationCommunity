@@ -241,7 +241,6 @@ namespace GolfAssociationCommunity.Services
                 { result.Errors.Add($"Row {i}: Score is required."); continue; }
                 if (!int.TryParse(Get(row, "HolePar", "Par"), out var par)) par = 4;
                 if (!int.TryParse(Get(row, "HandicapStrokes"), out var hdcpStrokes)) hdcpStrokes = 0;
-                if (!int.TryParse(Get(row, "StablefordPoints"), out var stableford)) stableford = 0;
                 int.TryParse(Get(row, "TiebreakerHoleHandicap"), out var tiebreakerHole);
 
                 var scoreKey = $"{tournament.Id}:{player.Id}:{round}:{hole}";
@@ -251,7 +250,6 @@ namespace GolfAssociationCommunity.Services
                     existing2.Score = score;
                     existing2.HolePar = par;
                     existing2.HandicapStrokes = hdcpStrokes;
-                    existing2.StablefordPoints = stableford;
                     if (tiebreakerHole > 0) existing2.TiebreakerHoleHandicap = tiebreakerHole;
                     existing2.UpdatedAt = now;
                     result.Updated++;
@@ -267,7 +265,6 @@ namespace GolfAssociationCommunity.Services
                         Score = score,
                         HolePar = par,
                         HandicapStrokes = hdcpStrokes,
-                        StablefordPoints = stableford,
                         TiebreakerHoleHandicap = tiebreakerHole > 0 ? tiebreakerHole : null,
                         CreatedAt = now,
                         UpdatedAt = now
@@ -522,7 +519,6 @@ namespace GolfAssociationCommunity.Services
 
                 if (!int.TryParse(Get(row, "Position", "Pos"), out var pos)) pos = 0;
                 if (!int.TryParse(Get(row, "TotalScore", "Score"), out var total)) total = 0;
-                if (!int.TryParse(Get(row, "StablefordPoints", "Stableford"), out var stableford)) stableford = 0;
                 if (!int.TryParse(Get(row, "ScoreDifferential", "Differential"), out var diff)) diff = 0;
                 var flight = Get(row, "Flight") ?? "";
 
@@ -531,7 +527,6 @@ namespace GolfAssociationCommunity.Services
                 {
                     lb.Position = pos;
                     lb.TotalScore = total;
-                    lb.StablefordPoints = stableford;
                     lb.ScoreDifferential = diff;
                     if (!string.IsNullOrWhiteSpace(flight)) lb.Flight = flight;
                     lb.UpdatedAt = now;
@@ -545,7 +540,6 @@ namespace GolfAssociationCommunity.Services
                         AssociationPlayerId = player.Id,
                         Position = pos,
                         TotalScore = total,
-                        StablefordPoints = stableford,
                         ScoreDifferential = diff,
                         Flight = string.IsNullOrWhiteSpace(flight) ? null : flight,
                         UpdatedAt = now
@@ -562,9 +556,9 @@ namespace GolfAssociationCommunity.Services
         public string GetTemplate(string type) => type.ToLowerInvariant() switch
         {
             "players" => "DisplayName,Email,HandicapIndex,IsActive,TournamentName,Flight\nJohn Smith,john@example.com,12.5,true,2026 Championship,A\nJane Doe,jane@example.com,,true,,",
-            "scores" => "TournamentName,PlayerEmail,Round,HoleNumber,Score,HolePar,HandicapStrokes,StablefordPoints\n2026 Tournament,john@example.com,1,0,85,72,5,0\n2026 Tournament,john@example.com,1,1,4,4,1,2",
+            "scores" => "TournamentName,PlayerEmail,Round,HoleNumber,Score,HolePar,HandicapStrokes,TiebreakerHoleHandicap\n2026 Tournament,john@example.com,1,0,85,72,5,\n2026 Tournament,john@example.com,1,1,4,4,1,",
             "registrations" => "TournamentName,PlayerEmail,PlayerName,Handicap,Flight,Status\n2026 Tournament,john@example.com,John Smith,12.5,A,Registered\n2026 Tournament,jane@example.com,Jane Doe,18,B,Registered",
-            "leaderboard" => "TournamentName,PlayerEmail,Position,TotalScore,StablefordPoints,ScoreDifferential,Flight\n2026 Tournament,john@example.com,1,72,36,0,A\n2026 Tournament,jane@example.com,2,75,32,3,A",
+            "leaderboard" => "TournamentName,PlayerEmail,Position,TotalScore,ScoreDifferential,Flight\n2026 Tournament,john@example.com,1,72,0,A\n2026 Tournament,jane@example.com,2,75,3,A",
             _ => ""
         };
 

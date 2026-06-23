@@ -22,7 +22,6 @@ namespace GolfAssociationCommunity.Models
     public enum TournamentFormat
     {
         Stroke,
-        Stableford,
         BestBall,
         Scramble,
         Fourball
@@ -232,7 +231,6 @@ namespace GolfAssociationCommunity.Models
         public int HolePar { get; set; }
         public int HandicapStrokes { get; set; }
         public int? TiebreakerHoleHandicap { get; set; }
-        public int StablefordPoints { get; set; }
         public DateTime CreatedAt { get; set; }
         public DateTime UpdatedAt { get; set; }
 
@@ -248,7 +246,6 @@ namespace GolfAssociationCommunity.Models
         public AssociationPlayer? AssociationPlayer { get; set; }
         public int Position { get; set; }
         public int TotalScore { get; set; }
-        public int StablefordPoints { get; set; }
         public int ScoreDifferential { get; set; }
         public string? Flight { get; set; }
         public DateTime UpdatedAt { get; set; }

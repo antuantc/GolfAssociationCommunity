@@ -44,7 +44,6 @@ namespace GolfAssociationCommunity.Pages.AssociationAdmin
         public string? SelectedPlayerName { get; private set; }
         public string? SelectedFlight { get; private set; }
         public int CurrentTotalScore { get; private set; }
-        public int CurrentStablefordPoints { get; private set; }
         public List<TournamentFlight> TournamentFlights { get; private set; } = new();
 
         public class PlayerOption
@@ -56,7 +55,6 @@ namespace GolfAssociationCommunity.Pages.AssociationAdmin
         public class RoundScoreInput
         {
             public int? TotalScore { get; set; }
-            public int? StablefordPoints { get; set; }
             public List<TiebreakerEntry> Tiebreakers { get; set; } =
                 Enumerable.Range(0, PlayerScore.MaxTiebreakerEntries).Select(_ => new TiebreakerEntry()).ToList();
 
@@ -141,13 +139,6 @@ namespace GolfAssociationCommunity.Pages.AssociationAdmin
             if (tournament == null)
             {
                 return NotFound();
-            }
-
-            if (tournament.Format == TournamentFormat.Stableford && !Input.StablefordPoints.HasValue)
-            {
-                ModelState.AddModelError(string.Empty, "Enter the round Stableford points for Stableford tournaments.");
-                await LoadPageDataAsync();
-                return Page();
             }
 
             var registeredPlayer = await Context.Registrations
@@ -249,7 +240,6 @@ namespace GolfAssociationCommunity.Pages.AssociationAdmin
                 roundScore.HolePar = 0;
                 roundScore.HandicapStrokes = 0;
                 roundScore.TiebreakerHoleHandicap = null;
-                roundScore.StablefordPoints = Input.StablefordPoints ?? 0;
                 roundScore.UpdatedAt = DateTime.UtcNow;
 
                 // Remove any accidental duplicate round total records
@@ -285,7 +275,6 @@ namespace GolfAssociationCommunity.Pages.AssociationAdmin
                         existing.TiebreakerHoleHandicap = i + 1;
                         existing.HolePar = 0;
                         existing.HandicapStrokes = 0;
-                        existing.StablefordPoints = 0;
                         existing.UpdatedAt = DateTime.UtcNow;
                     }
                     else if (existing != null)
@@ -404,13 +393,11 @@ namespace GolfAssociationCommunity.Pages.AssociationAdmin
                 Input = new RoundScoreInput
                 {
                     TotalScore = roundTotalEntry?.Score,
-                    StablefordPoints = roundTotalEntry?.StablefordPoints,
                     Tiebreakers = tiebreakers
                 };
             }
 
             CurrentTotalScore = existingScores.Where(s => s.IsRoundTotalEntry).Sum(s => s.Score);
-            CurrentStablefordPoints = existingScores.Where(s => s.IsRoundTotalEntry).Sum(s => s.StablefordPoints);
         }
     }
 }

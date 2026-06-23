@@ -15,8 +15,6 @@ namespace GolfAssociationCommunity.Services
         Task<PlayerScore> RecordScoreAsync(PlayerScore score);
         Task<PlayerScore?> UpdateScoreAsync(int id, PlayerScore score);
         Task<bool> DeleteScoreAsync(int id);
-        Task<int> CalculateStablefordPointsAsync(int holeScore, int holePar, int handicapStrokes);
-        Task<int> CalculateTotalStablefordAsync(int tournamentId, int associationPlayerId);
         Task<int> CalculateTotalScoreAsync(int tournamentId, int associationPlayerId);
         Task<IEnumerable<PlayerScore>> GetPlayerRoundScoresAsync(int tournamentId, int associationPlayerId, int round);
     }
@@ -98,14 +96,6 @@ namespace GolfAssociationCommunity.Services
                 score.CreatedAt = DateTime.UtcNow;
                 score.UpdatedAt = DateTime.UtcNow;
 
-                if (!score.IsRoundTotalEntry)
-                {
-                    score.StablefordPoints = await CalculateStablefordPointsAsync(
-                        score.Score,
-                        score.HolePar,
-                        score.HandicapStrokes);
-                }
-
                 _context.PlayerScores.Add(score);
                 await _context.SaveChangesAsync();
 
@@ -136,12 +126,6 @@ namespace GolfAssociationCommunity.Services
                 existing.HolePar = score.HolePar;
                 existing.HandicapStrokes = score.HandicapStrokes;
                 existing.TiebreakerHoleHandicap = score.TiebreakerHoleHandicap;
-                existing.StablefordPoints = !score.IsRoundTotalEntry
-                    ? await CalculateStablefordPointsAsync(
-                        score.Score,
-                        score.HolePar,
-                        score.HandicapStrokes)
-                    : score.StablefordPoints;
                 existing.UpdatedAt = DateTime.UtcNow;
 
                 await _context.SaveChangesAsync();
@@ -176,46 +160,6 @@ namespace GolfAssociationCommunity.Services
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error deleting score with ID: {ScoreId}", id);
-                throw;
-            }
-        }
-
-        public Task<int> CalculateStablefordPointsAsync(int holeScore, int holePar, int handicapStrokes)
-        {
-            try
-            {
-                // Stableford scoring: 2 points for par, +1 per stroke under par, -1 per stroke over par
-                // Adjusted for handicap strokes
-                int adjustedScore = holeScore - handicapStrokes;
-                int adjustedPar = holePar;
-
-                int diff = adjustedScore - adjustedPar;
-                int points = 2 - diff;
-
-                // Minimum points is 0
-                return Task.FromResult(Math.Max(0, points));
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error calculating Stableford points");
-                throw;
-            }
-        }
-
-        public async Task<int> CalculateTotalStablefordAsync(int tournamentId, int associationPlayerId)
-        {
-            try
-            {
-                var scores = await _context.PlayerScores
-                    .Where(ps => ps.TournamentId == tournamentId && ps.AssociationPlayerId == associationPlayerId)
-                    .ToListAsync();
-
-                return scores.Sum(ps => ps.StablefordPoints);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error calculating total Stableford score for tournament {TournamentId}, association player {AssociationPlayerId}",
-                    tournamentId, associationPlayerId);
                 throw;
             }
         }

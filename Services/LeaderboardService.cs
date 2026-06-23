@@ -384,7 +384,6 @@ namespace GolfAssociationCommunity.Services
                             Position = position,
                             TotalScore = scoreRow.TotalScore,
                             Flight = scoreRow.Flight,
-                            StablefordPoints = 0,
                             ScoreDifferential = 0,
                             UpdatedAt = DateTime.UtcNow
                         });

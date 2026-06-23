@@ -65,7 +65,6 @@
             <span class="pill">Player: @Model.SelectedPlayerName</span>
             <span class="pill">Round: @Model.Round</span>
             <span class="pill">Total Score: @Model.CurrentTotalScore</span>
-            <span class="pill">Stableford: @Model.CurrentStablefordPoints</span>
             @if (!string.IsNullOrWhiteSpace(Model.SelectedFlight))
             {
                 <span class="pill">Flight: @Model.SelectedFlight</span>
@@ -110,14 +109,6 @@
                         <input asp-for="Input.TotalScore" type="number" min="1" class="form-control" />
                         <span asp-validation-for="Input.TotalScore" class="text-danger"></span>
                     </div>
-                    @if (Model.SelectedTournament.Format == TournamentFormat.Stableford)
-                    {
-                        <div>
-                            <label asp-for="Input.StablefordPoints">Stableford Points</label>
-                            <input asp-for="Input.StablefordPoints" type="number" min="0" class="form-control" />
-                            <span asp-validation-for="Input.StablefordPoints" class="text-danger"></span>
-                        </div>
-                    }
                 </div>
             </div>
 
