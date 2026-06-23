@@ -106,6 +106,8 @@ namespace GolfAssociationCommunity.Services
 
                 if (!string.IsNullOrWhiteSpace(tname) && tournamentsByName.TryGetValue(tname.ToLowerInvariant(), out var tournament))
                     registrationPairs.Add((player, tournament.Id, flight));
+                else if (!string.IsNullOrWhiteSpace(tname))
+                    result.Warnings.Add($"Row {i}: Tournament '{tname}' not found — player added but not registered or flight assigned.");
             }
             await _db.SaveChangesAsync();
 
@@ -129,9 +131,12 @@ namespace GolfAssociationCommunity.Services
                         if (existing2.Status != RegistrationStatus.Registered)
                         {
                             existing2.Status = RegistrationStatus.Registered;
-                            existing2.UpdatedAt = now;
                         }
-                        if (!string.IsNullOrWhiteSpace(flight)) existing2.Flight = flight;
+                        if (!string.IsNullOrWhiteSpace(flight))
+                        {
+                            existing2.Flight = flight;
+                        }
+                        existing2.UpdatedAt = now;
                     }
                     else
                     {
@@ -139,6 +144,7 @@ namespace GolfAssociationCommunity.Services
                         {
                             TournamentId = tId,
                             AssociationPlayerId = rPlayer.Id,
+                            Handicap = rPlayer.HandicapIndex,
                             Status = RegistrationStatus.Registered,
                             PaymentConfirmed = true,
                             RegistrationDate = now,
