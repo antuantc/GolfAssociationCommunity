@@ -1,0 +1,67 @@
+@page "{associationId:int}"
+@model GolfAssociationCommunity.Pages.Associations.TeamModel
+@{
+    ViewData["Title"] = Model.Association?.Name is null ? "Team" : $"{Model.Association.Name} — Officers & Members";
+}
+
+@if (Model.Association == null)
+{
+    <div class="pub-container pub-inner-page">
+        <h1>Association not found</h1>
+        <p>The association you requested does not exist or is not active.</p>
+        <a href="~/" class="btn btn-secondary">Back to associations</a>
+    </div>
+}
+else
+{
+    <div class="pub-inner-page">
+        <div class="pub-container">
+
+            <div class="pub-inner-page__header">
+                <h1 class="pub-inner-page__title">Officers &amp; Members</h1>
+                <p class="pub-inner-page__subtitle">@Model.Association.Name leadership and key members.</p>
+            </div>
+
+            @if (Model.ActiveOfficers.Count == 0)
+            {
+                <div class="section-panel" style="text-align:center;padding:3rem 1.5rem;color:var(--muted-text,#888);">
+                    <p style="font-size:1.1rem;">No officers or members have been added yet.</p>
+                    <a href="~/Associations/Details/@Model.Association.Id" class="pub-btn pub-btn--ghost" style="margin-top:1rem;">Back to Home</a>
+                </div>
+            }
+            else
+            {
+                <div class="team-grid">
+                    @foreach (var officer in Model.ActiveOfficers)
+                    {
+                        <article class="team-card">
+                            <div class="team-card__photo">
+                                @if (!string.IsNullOrWhiteSpace(officer.PictureUrl))
+                                {
+                                    <img src="@officer.PictureUrl" alt="@officer.Name" class="team-card__img" />
+                                }
+                                else
+                                {
+                                    var initials = string.Join("", officer.Name
+                                        .Split(' ', StringSplitOptions.RemoveEmptyEntries)
+                                        .Take(2)
+                                        .Select(w => w[0].ToString().ToUpperInvariant()));
+                                    <div class="team-card__initials">@initials</div>
+                                }
+                            </div>
+                            <div class="team-card__body">
+                                <h2 class="team-card__name">@officer.Name</h2>
+                                <span class="team-card__role">@officer.Role</span>
+                                @if (!string.IsNullOrWhiteSpace(officer.Bio))
+                                {
+                                    <p class="team-card__bio">@officer.Bio</p>
+                                }
+                            </div>
+                        </article>
+                    }
+                </div>
+            }
+
+        </div>
+    </div>
+}

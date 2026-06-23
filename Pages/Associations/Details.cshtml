@@ -347,10 +347,16 @@ else
         </section>
     }
 
+    @* SPONSORS / PACKAGES ANCHOR — nav links point here *@
+    @if (assoc.Sponsors.Any(s => s.IsActive) || Model.ActiveSponsorshipPackages.Count > 0)
+    {
+        <div id="sponsors" style="height:0;overflow:hidden;scroll-margin-top:80px;" aria-hidden="true"></div>
+    }
+
     @* SPONSORS *@
     @if (assoc.Sponsors.Any(s => s.IsActive))
     {
-        <section class="pub-section" id="sponsors">
+        <section class="pub-section">
             <div class="pub-container">
                 <p class="pub-eyebrow">PROUDLY SUPPORTED BY</p>
                 <h2 class="pub-section-title">@DateTime.UtcNow.Year SPONSORS</h2>
@@ -384,7 +390,7 @@ else
     @* SPONSORSHIP PACKAGES *@
     @if (Model.ActiveSponsorshipPackages.Count > 0)
     {
-        <section class="pub-section">
+        <section class="pub-section" id="become-sponsor">
             <div class="pub-container">
                 <p class="pub-eyebrow">SUPPORT THE ASSOCIATION</p>
                 <h2 class="pub-section-title">BECOME A SPONSOR</h2>
@@ -420,7 +426,7 @@ else
                         }
                         else if (Model.ActiveSponsorshipPackages.Count > 0)
                         {
-                            <a class="pub-btn" href="#sponsors">BECOME A SPONSOR</a>
+                            <a class="pub-btn" href="#become-sponsor">BECOME A SPONSOR</a>
                         }
                         <a class="pub-btn pub-btn--ghost" href="~/Associations/Tournaments?associationId=@assoc.Id">VIEW SCHEDULE</a>
                     </div>

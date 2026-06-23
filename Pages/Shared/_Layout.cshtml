@@ -59,6 +59,7 @@
                         <a href="~/Tournaments/Details/@nextTournamentId?associationId=@publicAssociationId">REGISTER</a>
                     }
                     <a href="~/Associations/Details/@publicAssociationId#sponsors">SPONSORS</a>
+                    <a href="~/Associations/Team/@publicAssociationId">TEAM</a>
                     <a href="~/Associations/Details/@publicAssociationId#about">ABOUT</a>
                     <a href="~/Associations/Tournaments?associationId=@publicAssociationId">@currentYear SCHEDULE</a>
                     @if (SignInManager.IsSignedIn(User))
@@ -137,6 +138,7 @@
                                 <li><a href="~/Tournaments/Details/@nextTournamentId?associationId=@publicAssociationId">Register / Membership</a></li>
                             }
                             <li><a href="~/Associations/Details/@publicAssociationId#sponsors">Sponsors</a></li>
+                            <li><a href="~/Associations/Team/@publicAssociationId">Officers &amp; Members</a></li>
                             <li><a href="~/Associations/Details/@publicAssociationId#about">About</a></li>
                         </ul>
                     </div>
