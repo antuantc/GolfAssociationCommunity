@@ -13,7 +13,7 @@
 
     <p>Manage the player roster for this association. Guest tournament registrations automatically create player records, and deleting a player removes that player from this association.</p>
 
-    <form method="post" asp-page-handler="Save" class="form-shell">
+    <form method="post" asp-page-handler="Save" enctype="multipart/form-data" class="form-shell">
         <div class="form-section">
             <h2 class="form-section-title">@(Model.IsEditing ? "Edit Player" : "Add Player")</h2>
             <div asp-validation-summary="ModelOnly" class="message error"></div>
@@ -33,6 +33,21 @@
                     <label asp-for="Input.HandicapIndex">Handicap</label>
                     <input asp-for="Input.HandicapIndex" type="number" step="0.1" class="form-control" />
                     <span asp-validation-for="Input.HandicapIndex" class="text-danger"></span>
+                </div>
+                <div>
+                    <label for="Photo">Player Photo</label>
+                    @if (!string.IsNullOrWhiteSpace(Model.Input.ExistingPhotoUrl))
+                    {
+                        <div style="margin-bottom:0.5rem;">
+                            <img src="@Model.Input.ExistingPhotoUrl" alt="Current photo" class="player-photo-thumb" />
+                        </div>
+                        <form method="post" asp-page-handler="DeletePhoto" asp-route-id="@Model.EditId" class="inline-form" style="margin-bottom:0.4rem;">
+                            <button type="submit" class="link-button danger" onclick="return confirm('Remove this photo?')">Remove photo</button>
+                        </form>
+                    }
+                    <input id="Photo" name="Photo" type="file" accept="image/*" class="form-control" />
+                    <input type="hidden" asp-for="Input.ExistingPhotoUrl" />
+                    <small class="form-text">JPG, PNG, GIF or WebP. Max 5 MB.</small>
                 </div>
             </div>
             <div class="form-actions">
@@ -56,6 +71,7 @@
             <table class="table">
                 <thead>
                     <tr>
+                        <th></th>
                         <th>Player</th>
                         <th>Email</th>
                         <th>Handicap</th>
@@ -70,6 +86,16 @@
                 @foreach (var player in Model.Players)
                 {
                     <tr>
+                        <td>
+                            @if (!string.IsNullOrWhiteSpace(player.PhotoUrl))
+                            {
+                                <img src="@player.PhotoUrl" alt="@player.DisplayName" class="player-photo-thumb" />
+                            }
+                            else
+                            {
+                                <span class="player-photo-placeholder">&#9824;</span>
+                            }
+                        </td>
                         <td>@player.DisplayName</td>
                         <td>@player.Email</td>
                         <td>@(player.HandicapIndex.HasValue ? player.HandicapIndex.Value.ToString("0.0#") : "-")</td>
@@ -103,6 +129,7 @@
                 <table class="table">
                     <thead>
                         <tr>
+                            <th></th>
                             <th>Player</th>
                             <th>Email</th>
                             <th>Handicap</th>
@@ -117,6 +144,12 @@
                     @foreach (var player in Model.ArchivedPlayers)
                     {
                         <tr>
+                            <td>
+                                @if (!string.IsNullOrWhiteSpace(player.PhotoUrl))
+                                {
+                                    <img src="@player.PhotoUrl" alt="@player.DisplayName" class="player-photo-thumb" />
+                                }
+                            </td>
                             <td>@player.DisplayName</td>
                             <td>@player.Email</td>
                             <td>@(player.HandicapIndex.HasValue ? player.HandicapIndex.Value.ToString("0.0#") : "-")</td>

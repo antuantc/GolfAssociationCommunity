@@ -1,99 +1,130 @@
 @page
 @model GolfAssociationCommunity.Pages.Associations.TournamentsModel
 @{
-    ViewData["Title"] = Model.Association?.Name is null ? "Association Tournaments" : $"{Model.Association.Name} Tournaments";
+    ViewData["Title"] = Model.Association?.Name is null ? "Association Tournaments" : $"{Model.Association.Name} — Schedule";
 }
 
-<section class="section-panel">
-    @if (Model.Association == null)
-    {
+@if (Model.Association == null)
+{
+    <div class="pub-container pub-inner-page">
         <h1>Association not found</h1>
-        <p>The association you requested does not exist or is not active.</p>
         <a href="~/" class="btn btn-secondary">Back to associations</a>
-    }
-    else
-    {
-        <h1>@Model.Association.Name Tournaments</h1>
-        <p>Browse tournaments for this association only.</p>
+    </div>
+}
+else
+{
+    <div class="pub-inner-page">
+        <div class="pub-container">
 
-        <div class="section-panel">
-            <h2>Upcoming Tournaments</h2>
-            @if (Model.UpcomingTournaments.Count == 0)
-            {
-                <p>No upcoming tournaments are available for this association.</p>
-            }
-            else
-            {
-                <div class="card-grid">
-                    @foreach (var tournament in Model.UpcomingTournaments)
-                    {
-                        <article class="card">
-                            <h3>@tournament.Name</h3>
-                            <p>@tournament.Description</p>
-                            <dl class="details-list">
-                                <dt>Dates</dt>
-                                <dd>@tournament.StartDate.ToString("MMM d, yyyy") - @tournament.EndDate.ToString("MMM d, yyyy")</dd>
-                                <dt>Registration Deadline</dt>
-                                <dd>@(tournament.RegistrationDeadline.HasValue ? tournament.RegistrationDeadline.Value.ToString("MMM d, yyyy") : "Not set")</dd>
-                                <dt>Format</dt>
-                                <dd>@tournament.Format</dd>
-                                <dt>Location</dt>
-                                <dd>@(string.IsNullOrWhiteSpace(tournament.Location) ? "TBD" : tournament.Location)</dd>
-                                <dt>Golf Course</dt>
-                                <dd>@(string.IsNullOrWhiteSpace(tournament.GolfCourse) ? "TBD" : tournament.GolfCourse)</dd>
-                                <dt>Entry Fee</dt>
-                                <dd>@tournament.EntryFee.ToString("C")</dd>
-                                <dt>Max Players</dt>
-                                <dd>@tournament.MaxPlayers</dd>
-                                <dt>Status</dt>
-                                <dd>@tournament.Status</dd>
-                            </dl>
-                            <a class="btn" href="~/Tournaments/Details/@tournament.Id?associationId=@Model.Association.Id">Register</a>
-                        </article>
-                    }
-                </div>
-            }
+            <div class="pub-inner-page__header">
+                <h1 class="pub-inner-page__title">@DateTime.UtcNow.Year Schedule</h1>
+                <p class="pub-inner-page__subtitle">@Model.Association.Name — upcoming and past tournaments.</p>
+            </div>
+
+            <div class="section-panel">
+                <h2 style="margin-top:0;">Upcoming Tournaments</h2>
+                @if (Model.UpcomingTournaments.Count == 0)
+                {
+                    <p>No upcoming tournaments are scheduled yet.</p>
+                }
+                else
+                {
+                    <div class="card-grid">
+                        @foreach (var t in Model.UpcomingTournaments)
+                        {
+                            <article class="card">
+                                <h3 style="margin-top:0;">@t.Name</h3>
+                                @if (!string.IsNullOrWhiteSpace(t.Description)) { <p style="font-size:0.9rem;">@t.Description</p> }
+                                <dl class="details-list">
+                                    <dt>Dates</dt><dd>@t.StartDate.ToString("MMM d") – @t.EndDate.ToString("MMM d, yyyy")</dd>
+                                    @if (t.RegistrationDeadline.HasValue)
+                                    {
+                                        <dt>Deadline</dt><dd>@t.RegistrationDeadline.Value.ToString("MMM d, yyyy")</dd>
+                                    }
+                                    <dt>Format</dt><dd>@t.Format</dd>
+                                    @if (!string.IsNullOrWhiteSpace(t.GolfCourse)) { <dt>Course</dt><dd>@t.GolfCourse</dd> }
+                                    @if (!string.IsNullOrWhiteSpace(t.Location)) { <dt>Location</dt><dd>@t.Location</dd> }
+                                    <dt>Fee</dt><dd>@t.EntryFee.ToString("C")</dd>
+                                    <dt>Spots</dt><dd>@t.MaxPlayers max</dd>
+                                </dl>
+                                <a class="pub-btn" href="~/Tournaments/Details/@t.Id?associationId=@Model.Association.Id">Register</a>
+                            </article>
+                        }
+                    </div>
+                }
+            </div>
+
+            <div class="section-panel">
+                <h2 style="margin-top:0;">Past Tournaments</h2>
+                @if (Model.CompletedTournaments.Count == 0)
+                {
+                    <p>No completed tournaments on record yet.</p>
+                }
+                else
+                {
+                    <div class="pub-filter-bar">
+                        <input type="search" placeholder="&#128269; Search tournaments..." oninput="filterTournaments(this)" style="min-width:220px;" />
+                    </div>
+                    <div class="table-scroll">
+                        <table class="table sortable-table" id="past-tournaments-table">
+                            <thead>
+                                <tr>
+                                    <th data-sort="str" data-col="0">Name</th>
+                                    <th data-sort="str" data-col="1">Dates</th>
+                                    <th data-sort="str" data-col="2">Course</th>
+                                    <th data-sort="str" data-col="3">Format</th>
+                                    <th></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var t in Model.CompletedTournaments)
+                                {
+                                    <tr>
+                                        <td><strong>@t.Name</strong></td>
+                                        <td>@t.StartDate.ToString("MMM d") – @t.EndDate.ToString("MMM d, yyyy")</td>
+                                        <td>@(string.IsNullOrWhiteSpace(t.GolfCourse) ? "—" : t.GolfCourse)</td>
+                                        <td>@t.Format</td>
+                                        <td>
+                                            <a class="card-link" href="~/Associations/Leaderboard/@Model.Association.Id?TournamentId=@t.Id">Results</a>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+            </div>
+
+            <a href="~/Associations/Details/@Model.Association.Id" class="pub-btn pub-btn--ghost">&#8592; Back to @Model.Association.Name</a>
+
         </div>
+    </div>
 
-        <div class="section-panel">
-            <h2>Past Tournaments</h2>
-            @if (Model.CompletedTournaments.Count == 0)
-            {
-                <p>No completed tournaments are available for this association.</p>
-            }
-            else
-            {
-                <div class="card-grid">
-                    @foreach (var tournament in Model.CompletedTournaments)
-                    {
-                        <article class="card">
-                            <h3>@tournament.Name</h3>
-                            <p>@tournament.Description</p>
-                            <dl class="details-list">
-                                <dt>Dates</dt>
-                                <dd>@tournament.StartDate.ToString("MMM d, yyyy") - @tournament.EndDate.ToString("MMM d, yyyy")</dd>
-                                <dt>Registration Deadline</dt>
-                                <dd>@(tournament.RegistrationDeadline.HasValue ? tournament.RegistrationDeadline.Value.ToString("MMM d, yyyy") : "Not set")</dd>
-                                <dt>Format</dt>
-                                <dd>@tournament.Format</dd>
-                                <dt>Location</dt>
-                                <dd>@(string.IsNullOrWhiteSpace(tournament.Location) ? "TBD" : tournament.Location)</dd>
-                                <dt>Golf Course</dt>
-                                <dd>@(string.IsNullOrWhiteSpace(tournament.GolfCourse) ? "TBD" : tournament.GolfCourse)</dd>
-                                <dt>Entry Fee</dt>
-                                <dd>@tournament.EntryFee.ToString("C")</dd>
-                                <dt>Max Players</dt>
-                                <dd>@tournament.MaxPlayers</dd>
-                                <dt>Status</dt>
-                                <dd>@tournament.Status</dd>
-                            </dl>
-                            <a class="btn" href="~/Tournaments/Details/@tournament.Id?associationId=@Model.Association.Id">Register</a>
-                        </article>
-                    }
-                </div>
-            }
-        </div>
-
-        <a href="~/Associations/Details/@Model.Association.Id" class="btn btn-secondary">Back to association</a>
+    <script>
+    function filterTournaments(input) {
+        var term = input.value.toLowerCase();
+        document.querySelectorAll('#past-tournaments-table tbody tr').forEach(function(row) {
+            row.style.display = row.textContent.toLowerCase().includes(term) ? '' : 'none';
+        });
     }
-</section>
+
+    document.querySelectorAll('.sortable-table').forEach(function(table) {
+        table.querySelectorAll('th[data-sort]').forEach(function(th) {
+            th.addEventListener('click', function() {
+                var col = parseInt(th.dataset.col);
+                var asc = !th.classList.contains('sort-asc');
+                table.querySelectorAll('th').forEach(function(h) { h.classList.remove('sort-asc','sort-desc'); });
+                th.classList.add(asc ? 'sort-asc' : 'sort-desc');
+                var tbody = table.querySelector('tbody');
+                var rows = Array.from(tbody.querySelectorAll('tr'));
+                rows.sort(function(a, b) {
+                    var av = a.cells[col] ? a.cells[col].textContent.trim() : '';
+                    var bv = b.cells[col] ? b.cells[col].textContent.trim() : '';
+                    return asc ? av.localeCompare(bv) : bv.localeCompare(av);
+                });
+                rows.forEach(function(r) { tbody.appendChild(r); });
+            });
+        });
+    });
+    </script>
+}

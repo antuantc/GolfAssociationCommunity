@@ -110,6 +110,7 @@ namespace GolfAssociationCommunity.Models
         public string Email { get; set; } = string.Empty;
         public decimal? HandicapIndex { get; set; }
         public bool IsActive { get; set; } = true;
+        public string? PhotoUrl { get; set; }
         public DateTime CreatedAt { get; set; }
         public DateTime UpdatedAt { get; set; }
         public ICollection<Registration> Registrations { get; set; } = new List<Registration>();

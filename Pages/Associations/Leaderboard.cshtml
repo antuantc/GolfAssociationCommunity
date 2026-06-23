@@ -1,158 +1,222 @@
 @page "{associationId:int}"
 @model GolfAssociationCommunity.Pages.Associations.LeaderboardModel
 @{
-    ViewData["Title"] = Model.Association?.Name is null ? "Leaderboard" : $"{Model.Association.Name} Leaderboard";
+    ViewData["Title"] = Model.Association?.Name is null ? "Leaderboard" : $"{Model.Association.Name} — Results";
+    var lbFlights = Model.TournamentLeaderboard
+        .Select(r => r.Flight ?? "")
+        .Distinct()
+        .OrderBy(f => f)
+        .ToList();
 }
 
-<section class="section-panel">
-    @if (Model.Association == null)
-    {
+@if (Model.Association == null)
+{
+    <div class="pub-container pub-inner-page">
         <h1>Association not found</h1>
         <p>The association you requested does not exist or is not active.</p>
         <a href="~/" class="btn btn-secondary">Back to associations</a>
-    }
-    else
-    {
-        <h1>@Model.Association.Name Leaderboard</h1>
+    </div>
+}
+else
+{
+    <div class="pub-inner-page">
+        <div class="pub-container">
 
-        <div class="form-actions">
-            <form method="get">
-                <input type="hidden" name="associationId" value="@Model.Association.Id" />
-                <label for="tournamentId">View Tournament Leaderboard</label>
-                <select id="tournamentId" name="TournamentId" class="form-control" onchange="this.form.submit()">
-                    <option value="">-- All tournaments (association overall) --</option>
-                    @foreach (var tournament in Model.Tournaments)
+            <div class="pub-inner-page__header">
+                <h1 class="pub-inner-page__title">Results &amp; Standings</h1>
+                <p class="pub-inner-page__subtitle">@Model.Association.Name tournament results and overall standings.</p>
+            </div>
+
+            @* Tournament selector *@
+            <div class="section-panel" style="margin-bottom:1.5rem;">
+                <form method="get" style="display:flex;flex-wrap:wrap;gap:0.75rem;align-items:flex-end;">
+                    <div style="flex:1;min-width:200px;">
+                        <label for="tournamentId" style="display:block;font-weight:600;margin-bottom:0.3rem;font-size:0.85rem;text-transform:uppercase;letter-spacing:0.05em;">Tournament</label>
+                        <select id="tournamentId" name="TournamentId" class="form-control" onchange="this.form.submit()">
+                            <option value="">— Overall Standings —</option>
+                            @foreach (var t in Model.Tournaments)
+                            {
+                                <option value="@t.Id" selected="@(Model.TournamentId == t.Id)">@t.Name (@t.StartDate.ToString("MMM d, yyyy"))</option>
+                            }
+                        </select>
+                    </div>
+                    <div>
+                        <button type="submit" class="btn">View</button>
+                        @if (Model.TournamentId.HasValue)
+                        {
+                            <a class="btn btn-secondary" href="~/Associations/Leaderboard/@Model.Association.Id" style="margin-left:0.5rem;">Overall</a>
+                        }
+                    </div>
+                </form>
+            </div>
+
+            @if (Model.SelectedTournament != null)
+            {
+                <div class="section-panel">
+                    <h2 style="margin-top:0;">@Model.SelectedTournament.Name</h2>
+                    <p style="margin-bottom:1rem;">@Model.SelectedTournament.StartDate.ToString("MMM d, yyyy") &ndash; @Model.SelectedTournament.EndDate.ToString("MMM d, yyyy")</p>
+
+                    @if (Model.TournamentLeaderboard.Count == 0)
                     {
-                        <option value="@tournament.Id" selected="@(Model.TournamentId == tournament.Id)">@tournament.Name (@tournament.StartDate.ToString("MMM d, yyyy"))</option>
+                        <p>No scores have been recorded for this tournament yet.</p>
                     }
-                </select>
-            </form>
-        </div>
-
-        @if (Model.SelectedTournament != null)
-        {
-            <section class="section-panel">
-                <h2>@Model.SelectedTournament.Name</h2>
-                <p>@Model.SelectedTournament.StartDate.ToString("MMM d, yyyy") &ndash; @Model.SelectedTournament.EndDate.ToString("MMM d, yyyy")</p>
-
-                @if (Model.TournamentLeaderboard.Count == 0)
-                {
-                    <p>No scores have been recorded for this tournament yet.</p>
-                }
-                else if (Model.HasMultipleFlights)
-                {
-                    @foreach (var flight in Model.TournamentFlights)
+                    else
                     {
-                        var flightRows = Model.TournamentLeaderboard.Where(r => (r.Flight ?? string.Empty) == flight).ToList();
-                        <h3 style="margin-top:1.5rem;">@(string.IsNullOrEmpty(flight) ? "No Flight Assigned" : $"Flight {flight}")</h3>
-                        <div class="table-scroll">
-                            <table class="table">
-                                <thead>
-                                    <tr>
-                                        <th>Position</th>
-                                        <th>Player</th>
-                                        <th>Total Score</th>
-                                        @if (Model.HasTiebreakerData)
-                                        {
-                                            <th title="Scores on hardest handicap holes used as tiebreakers">Hdcp Hole Scores (TB)</th>
-                                        }
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    @foreach (var entry in flightRows)
-                                    {
+                        <div class="pub-filter-bar">
+                            <input type="search" id="lb-search" placeholder="&#128269; Search player..." oninput="filterLeaderboard()" style="min-width:220px;" />
+                            <span id="lb-count" style="font-size:0.8rem;opacity:0.6;"></span>
+                        </div>
+
+                        @foreach (var flight in lbFlights)
+                        {
+                            var flightRows = Model.TournamentLeaderboard.Where(r => (r.Flight ?? "") == flight).ToList();
+                            <p class="pub-flight-heading" data-flight-heading="@flight">
+                                @(string.IsNullOrEmpty(flight) ? "All Players" : $"Flight {flight}")
+                                <span style="font-weight:400;opacity:0.65;">(@flightRows.Count players)</span>
+                            </p>
+                            <div class="table-scroll">
+                                <table class="table sortable-table" data-flight="@flight" id="lb-table-@flight">
+                                    <thead>
                                         <tr>
-                                            <td>@entry.Position</td>
-                                            <td>@(entry.AssociationPlayer?.DisplayName ?? "Unknown Player")</td>
-                                            <td>@entry.TotalScore</td>
+                                            <th data-sort="num" data-col="0">#</th>
+                                            <th data-sort="str" data-col="1">Player</th>
+                                            <th data-sort="num" data-col="2">Total Score</th>
                                             @if (Model.HasTiebreakerData)
                                             {
-                                                var tbScores = Model.TiebreakersByPlayer.TryGetValue(entry.AssociationPlayerId, out var s) ? string.Join(", ", s) : "—";
-                                                <td>@tbScores</td>
+                                                <th>Hdcp TB Scores</th>
                                             }
                                         </tr>
-                                    }
-                                </tbody>
-                            </table>
-                        </div>
+                                    </thead>
+                                    <tbody>
+                                        @foreach (var entry in flightRows)
+                                        {
+                                            var tbStr = Model.HasTiebreakerData
+                                                ? (Model.TiebreakersByPlayer.TryGetValue(entry.AssociationPlayerId, out var ts) ? string.Join(", ", ts) : "—")
+                                                : null;
+                                            <tr>
+                                                <td>@entry.Position</td>
+                                                <td>@(entry.AssociationPlayer?.DisplayName ?? "Unknown")</td>
+                                                <td>@entry.TotalScore</td>
+                                                @if (Model.HasTiebreakerData) { <td>@tbStr</td> }
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+                        }
                     }
+                </div>
+            }
+
+            <div class="section-panel">
+                <h2 style="margin-top:0;">Overall Standings</h2>
+                <p>Ranked by tournament points, then average finish position.</p>
+
+                @if (Model.AssociationLeaderboard.Count == 0)
+                {
+                    <p>No standings data available yet.</p>
                 }
                 else
                 {
+                    <div class="pub-filter-bar">
+                        <input type="search" id="overall-search" placeholder="&#128269; Search player..." oninput="filterOverall()" style="min-width:220px;" />
+                        <span id="overall-count" style="font-size:0.8rem;opacity:0.6;"></span>
+                    </div>
                     <div class="table-scroll">
-                        <table class="table">
+                        <table class="table sortable-table" id="overall-table">
                             <thead>
                                 <tr>
-                                    <th>Position</th>
-                                    <th>Player</th>
-                                    <th>Total Score</th>
-                                    @if (Model.HasTiebreakerData)
-                                    {
-                                        <th title="Scores on hardest handicap holes used as tiebreakers">Hdcp Hole Scores (TB)</th>
-                                    }
+                                    <th data-sort="num" data-col="0">#</th>
+                                    <th data-sort="str" data-col="1">Player</th>
+                                    <th data-sort="num" data-col="2">Tournaments</th>
+                                    <th data-sort="num" data-col="3">Wins</th>
+                                    <th data-sort="num" data-col="4">Avg Finish</th>
+                                    <th data-sort="num" data-col="5">Total Score</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                @foreach (var entry in Model.TournamentLeaderboard)
+                                @foreach (var row in Model.AssociationLeaderboard)
                                 {
                                     <tr>
-                                        <td>@entry.Position</td>
-                                        <td>@(entry.AssociationPlayer?.DisplayName ?? "Unknown Player")</td>
-                                        <td>@entry.TotalScore</td>
-                                        @if (Model.HasTiebreakerData)
-                                        {
-                                            var tbScores = Model.TiebreakersByPlayer.TryGetValue(entry.AssociationPlayerId, out var s) ? string.Join(", ", s) : "—";
-                                            <td>@tbScores</td>
-                                        }
+                                        <td>@row.OverallPosition</td>
+                                        <td>@row.PlayerName</td>
+                                        <td>@row.TournamentsPlayed</td>
+                                        <td>@row.Wins</td>
+                                        <td>@row.AveragePosition.ToString("0.##")</td>
+                                        <td>@row.TotalScore</td>
                                     </tr>
                                 }
                             </tbody>
                         </table>
                     </div>
                 }
-            </section>
-        }
+            </div>
 
-        <section class="section-panel">
-            <h2>Association Overall Standings</h2>
-            <p>Overall position is based on tournament finishes and average finishing position.</p>
+            <a href="~/Associations/Details/@Model.Association.Id" class="pub-btn pub-btn--ghost">&#8592; Back to @Model.Association.Name</a>
 
-            @if (Model.AssociationLeaderboard.Count == 0)
-            {
-                <p>No leaderboard data is available yet.</p>
-            }
-            else
-            {
-                <div class="table-scroll">
-                    <table class="table">
-                        <thead>
-                            <tr>
-                                <th>Position</th>
-                                <th>Player</th>
-                                <th>Tournaments</th>
-                                <th>Wins</th>
-                                <th>Avg Finish</th>
-                                <th>Total Score</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach (var row in Model.AssociationLeaderboard)
-                            {
-                                <tr>
-                                    <td>@row.OverallPosition</td>
-                                    <td>@row.PlayerName</td>
-                                    <td>@row.TournamentsPlayed</td>
-                                    <td>@row.Wins</td>
-                                    <td>@row.AveragePosition.ToString("0.##")</td>
-                                    <td>@row.TotalScore</td>
-                                </tr>
-                            }
-                        </tbody>
-                    </table>
-                </div>
-            }
-        </section>
+        </div>
+    </div>
 
-        <a href="~/Associations/Details/@Model.Association.Id" class="btn btn-secondary">Back to association</a>
+    <script>
+    function filterLeaderboard() {
+        var term = document.getElementById('lb-search').value.toLowerCase();
+        var tables = document.querySelectorAll('.sortable-table[data-flight]');
+        var total = 0, visible = 0;
+        tables.forEach(function(tbl) {
+            var rows = tbl.querySelectorAll('tbody tr');
+            rows.forEach(function(row) {
+                total++;
+                var match = row.textContent.toLowerCase().includes(term);
+                row.style.display = match ? '' : 'none';
+                if (match) visible++;
+            });
+            // Show/hide flight heading based on visible rows
+            var flight = tbl.dataset.flight;
+            var heading = document.querySelector('[data-flight-heading="' + flight + '"]');
+            var anyVisible = Array.from(rows).some(function(r) { return r.style.display !== 'none'; });
+            if (heading) heading.style.display = anyVisible ? '' : 'none';
+        });
+        var cnt = document.getElementById('lb-count');
+        if (cnt) cnt.textContent = term ? (visible + ' of ' + total + ' players') : '';
     }
-</section>
+
+    function filterOverall() {
+        var term = document.getElementById('overall-search').value.toLowerCase();
+        var rows = document.querySelectorAll('#overall-table tbody tr');
+        var visible = 0;
+        rows.forEach(function(row) {
+            var match = row.textContent.toLowerCase().includes(term);
+            row.style.display = match ? '' : 'none';
+            if (match) visible++;
+        });
+        var cnt = document.getElementById('overall-count');
+        if (cnt) cnt.textContent = term ? (visible + ' of ' + rows.length + ' players') : '';
+    }
+
+    // Sortable columns
+    document.querySelectorAll('.sortable-table').forEach(function(table) {
+        table.querySelectorAll('th[data-sort]').forEach(function(th) {
+            th.addEventListener('click', function() {
+                var col = parseInt(th.dataset.col);
+                var type = th.dataset.sort;
+                var asc = !th.classList.contains('sort-asc');
+                table.querySelectorAll('th').forEach(function(h) { h.classList.remove('sort-asc','sort-desc'); });
+                th.classList.add(asc ? 'sort-asc' : 'sort-desc');
+                var tbody = table.querySelector('tbody');
+                var rows = Array.from(tbody.querySelectorAll('tr'));
+                rows.sort(function(a, b) {
+                    var av = a.cells[col] ? a.cells[col].textContent.trim() : '';
+                    var bv = b.cells[col] ? b.cells[col].textContent.trim() : '';
+                    if (type === 'num') {
+                        return (parseFloat(av) || 0) - (parseFloat(bv) || 0);
+                    }
+                    return av.localeCompare(bv);
+                });
+                if (!asc) rows.reverse();
+                rows.forEach(function(r) { tbody.appendChild(r); });
+            });
+        });
+    });
+    </script>
+}
+

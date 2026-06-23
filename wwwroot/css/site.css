@@ -236,6 +236,33 @@ body {
     color: #c0392b;
 }
 
+.player-photo-thumb {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    object-fit: cover;
+    display: block;
+}
+
+.player-photo-placeholder {
+    display: inline-block;
+    width: 40px;
+    height: 40px;
+    line-height: 40px;
+    text-align: center;
+    border-radius: 50%;
+    background: var(--secondary-accent, #e0e0e0);
+    color: #fff;
+    font-size: 1.1rem;
+}
+
+.form-text {
+    display: block;
+    margin-top: 0.25rem;
+    font-size: 0.8rem;
+    color: #666;
+}
+
 .btn {
     background: var(--brand-accent);
 }
@@ -1018,6 +1045,109 @@ a.sponsor-card:hover {
 
 /* ── Core layout ─────────────────────────────────────────────────── */
 .pub-main { width: 100%; min-height: 60vh; }
+
+/* ── Inner sub-pages (Leaderboard, Tournaments, etc.) ──────────────── */
+.pub-inner-page {
+    padding: 3rem 0 4rem;
+}
+
+.pub-inner-page__header {
+    margin-bottom: 2rem;
+    padding-bottom: 1rem;
+    border-bottom: 2px solid var(--brand-accent);
+}
+
+.pub-inner-page__title {
+    font-size: 2rem;
+    font-weight: 800;
+    color: var(--text-color);
+    margin: 0 0 0.25rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.pub-inner-page__subtitle {
+    color: var(--text-color);
+    opacity: 0.65;
+    margin: 0;
+    font-size: 0.9rem;
+}
+
+/* Cards on pub sub-pages: white panel on themed page-bg background */
+.pub-site .section-panel {
+    background: #fff;
+    color: var(--text-color);
+    border-top: 3px solid var(--brand-accent);
+}
+
+.pub-site .section-panel h1,
+.pub-site .section-panel h2,
+.pub-site .section-panel h3 {
+    color: var(--text-color);
+}
+
+.pub-site .section-panel p,
+.pub-site .section-panel .table td,
+.pub-site .section-panel .table th {
+    color: var(--text-color);
+}
+
+/* Search/filter toolbar on pub pages */
+.pub-filter-bar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    align-items: center;
+    margin-bottom: 1.25rem;
+}
+
+.pub-filter-bar input,
+.pub-filter-bar select {
+    padding: 0.45rem 0.75rem;
+    border: 1px solid var(--card-border, #dde4ef);
+    border-radius: 0.4rem;
+    font-size: 0.9rem;
+    background: #fff;
+    color: var(--text-color);
+}
+
+.pub-filter-bar input:focus,
+.pub-filter-bar select:focus {
+    outline: 2px solid var(--brand-accent);
+    outline-offset: 1px;
+}
+
+/* Sortable table headers */
+.pub-site .table th[data-sort] {
+    cursor: pointer;
+    user-select: none;
+    white-space: nowrap;
+}
+
+.pub-site .table th[data-sort]:hover {
+    color: var(--brand-accent);
+}
+
+.pub-site .table th[data-sort]::after {
+    content: " ↕";
+    opacity: 0.35;
+    font-size: 0.8em;
+}
+
+.pub-site .table th[data-sort].sort-asc::after { content: " ↑"; opacity: 1; }
+.pub-site .table th[data-sort].sort-desc::after { content: " ↓"; opacity: 1; }
+
+/* Flight section headings on pub pages */
+.pub-flight-heading {
+    margin: 2rem 0 0.75rem;
+    font-size: 0.75rem;
+    font-weight: 800;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--brand-accent);
+    border-left: 3px solid var(--brand-accent);
+    padding-left: 0.6rem;
+}
 
 .pub-container {
     max-width: 1140px;

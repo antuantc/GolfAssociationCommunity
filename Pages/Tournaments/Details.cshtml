@@ -3,7 +3,9 @@
 @{
     ViewData["Title"] = Model.Tournament?.Name ?? "Tournament Details";
 }
-<section class="section-panel">
+<div class="pub-inner-page">
+<div class="pub-container">
+<div class="section-panel">
     @if (TempData["SuccessMessage"] != null)
     {
         <div class="message success">@TempData["SuccessMessage"]</div>
@@ -167,29 +169,43 @@
 
         @if (Model.Leaderboard.Any())
         {
+            var tdFlights = Model.Leaderboard.Select(r => r.Flight ?? "").Distinct().OrderBy(f => f).ToList();
+            var tdMultiFlights = tdFlights.Count > 1 || (tdFlights.Count == 1 && tdFlights[0] != "");
             <div class="section-panel">
-                <h2>Leaderboard</h2>
-                <div class="table-scroll">
-                    <table class="table">
-                        <thead>
-                            <tr>
-                                <th>Position</th>
-                                <th>Player</th>
-                                <th>Total Score</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach (var entry in Model.Leaderboard)
-                            {
-                                <tr>
-                                    <td>@entry.Position</td>
-                                    <td>@(entry.AssociationPlayer?.DisplayName ?? "Unknown Player")</td>
-                                    <td>@entry.TotalScore</td>
-                                </tr>
-                            }
-                        </tbody>
-                    </table>
+                <h2>Results</h2>
+                <div class="pub-filter-bar">
+                    <input type="search" placeholder="&#128269; Search player..." oninput="filterTdLb(this)" style="min-width:200px;" />
+                    <a class="btn btn-secondary" href="~/Associations/Leaderboard/@Model.Tournament?.GolfAssociationId?TournamentId=@Model.Tournament?.Id">Full standings</a>
                 </div>
+                @foreach (var flight in tdFlights)
+                {
+                    var fRows = Model.Leaderboard.Where(r => (r.Flight ?? "") == flight).ToList();
+                    if (tdMultiFlights)
+                    {
+                        <p class="pub-flight-heading">@(string.IsNullOrEmpty(flight) ? "All Players" : $"Flight {flight}")</p>
+                    }
+                    <div class="table-scroll">
+                        <table class="table sortable-table" data-td-flight="@flight">
+                            <thead>
+                                <tr>
+                                    <th data-sort="num" data-col="0">#</th>
+                                    <th data-sort="str" data-col="1">Player</th>
+                                    <th data-sort="num" data-col="2">Total Score</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var entry in fRows)
+                                {
+                                    <tr>
+                                        <td>@entry.Position</td>
+                                        <td>@(entry.AssociationPlayer?.DisplayName ?? "Unknown")</td>
+                                        <td>@entry.TotalScore</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                }
             </div>
         }
 
@@ -202,10 +218,39 @@
             <a class="btn btn-secondary" href="~/Tournaments">Back to tournaments</a>
         }
     }
-</section>
+</div>
+</div>
+</div>
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
+    <script>
+    function filterTdLb(input) {
+        var term = input.value.toLowerCase();
+        document.querySelectorAll('.sortable-table[data-td-flight] tbody tr').forEach(function(row) {
+            row.style.display = row.textContent.toLowerCase().includes(term) ? '' : 'none';
+        });
+    }
+    document.querySelectorAll('.sortable-table').forEach(function(table) {
+        table.querySelectorAll('th[data-sort]').forEach(function(th) {
+            th.addEventListener('click', function() {
+                var col = parseInt(th.dataset.col), type = th.dataset.sort;
+                var asc = !th.classList.contains('sort-asc');
+                table.querySelectorAll('th').forEach(function(h) { h.classList.remove('sort-asc','sort-desc'); });
+                th.classList.add(asc ? 'sort-asc' : 'sort-desc');
+                var tbody = table.querySelector('tbody');
+                var rows = Array.from(tbody.querySelectorAll('tr'));
+                rows.sort(function(a,b) {
+                    var av = a.cells[col] ? a.cells[col].textContent.trim() : '';
+                    var bv = b.cells[col] ? b.cells[col].textContent.trim() : '';
+                    return asc ? (type==='num' ? (parseFloat(av)||0)-(parseFloat(bv)||0) : av.localeCompare(bv))
+                               : (type==='num' ? (parseFloat(bv)||0)-(parseFloat(av)||0) : bv.localeCompare(av));
+                });
+                rows.forEach(function(r) { tbody.appendChild(r); });
+            });
+        });
+    });
+    </script>
     <script>
         (function () {
             var cardNumberInput = document.getElementById('Input_CardNumber');
