@@ -1532,12 +1532,6 @@ a.sponsor-card:hover {
 /* ── FLIGHT LEADERS ───────────────────────────────────────────────── */
 .flight-section .pub-section-hdr { align-items: center; }
 .flight-section .pub-eyebrow { color: rgba(255,255,255,0.45); }
-.live-pill {
-    background: #dc2626; color: #fff;
-    font-size: 0.6rem; font-weight: 800; letter-spacing: 0.1em;
-    padding: 0.28rem 0.65rem; border-radius: 999px; white-space: nowrap;
-    align-self: center;
-}
 .flight-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));

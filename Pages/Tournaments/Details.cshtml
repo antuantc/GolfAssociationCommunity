@@ -169,7 +169,11 @@
 
         @if (Model.Leaderboard.Any())
         {
-            var tdFlights = Model.Leaderboard.Select(r => r.Flight ?? "").Distinct().OrderBy(f => f).ToList();
+            var tdFlights = Model.TournamentFlights.Select(f => f.Name)
+                .Where(name => Model.Leaderboard.Any(r => (r.Flight ?? "") == name))
+                .Concat(Model.Leaderboard.Select(r => r.Flight ?? "").Distinct()
+                    .Where(f => !Model.TournamentFlights.Any(tf => tf.Name == f)).OrderBy(f => f))
+                .ToList();
             var tdMultiFlights = tdFlights.Count > 1 || (tdFlights.Count == 1 && tdFlights[0] != "");
             <div class="section-panel">
                 <h2>Results</h2>

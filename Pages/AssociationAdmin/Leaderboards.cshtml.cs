@@ -111,10 +111,16 @@ namespace GolfAssociationCommunity.Pages.AssociationAdmin
             TournamentLeaderboard = (await _leaderboardService.GetTournamentLeaderboardAsync(TournamentId.Value)).ToList();
             TiebreakersByPlayer = await _leaderboardService.GetTournamentTiebreakersAsync(TournamentId.Value);
             HasTiebreakerData = TiebreakersByPlayer.Count > 0;
+            var orderedFlightNames = await Context.TournamentFlights
+                .Where(f => f.TournamentId == TournamentId.Value)
+                .OrderBy(f => f.DisplayOrder).ThenBy(f => f.Name)
+                .Select(f => f.Name)
+                .ToListAsync();
             TournamentFlights = TournamentLeaderboard
                 .Select(r => r.Flight ?? string.Empty)
                 .Distinct()
-                .OrderBy(f => f)
+                .OrderBy(f => { var i = orderedFlightNames.IndexOf(f); return i >= 0 ? i : int.MaxValue; })
+                .ThenBy(f => f)
                 .ToList();
             HasMultipleFlights = TournamentFlights.Count > 1 || (TournamentFlights.Count == 1 && TournamentFlights[0] != string.Empty);
         }
