@@ -34,6 +34,7 @@ jobs:
         with:
           name: .net-app
           path: ${{env.DOTNET_ROOT}}/myapp
+          retention-days: 1
 
   deploy:
     runs-on: windows-latest
@@ -62,4 +63,3 @@ jobs:
           app-name: 'GolfAssociationCommunity'
           slot-name: 'Production'
           package: .
-          
