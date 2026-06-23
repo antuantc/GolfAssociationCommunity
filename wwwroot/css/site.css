@@ -1853,9 +1853,15 @@ a.sponsor-card:hover {
 .hub-assoc-card:hover { transform: translateY(-3px); box-shadow: 0 8px 30px rgba(0,0,0,0.12); }
 .hub-assoc-card__img {
     height: 140px; background-size: cover; background-position: center;
+    position: relative; display: flex; align-items: center; justify-content: center;
 }
 .hub-assoc-card__img--gradient {
     background: linear-gradient(135deg, var(--hero-start), var(--hero-end));
+}
+.hub-assoc-card__logo {
+    max-height: 80px; max-width: 160px;
+    object-fit: contain;
+    filter: drop-shadow(0 2px 6px rgba(0,0,0,0.45));
 }
 .hub-assoc-card__body { padding: 1.25rem; flex: 1; display: flex; flex-direction: column; gap: 0.35rem; }
 .hub-assoc-card__est { font-size: 0.63rem; font-weight: 800; letter-spacing: 0.14em; color: var(--muted-text); margin: 0; }
@@ -1877,6 +1883,49 @@ a.sponsor-card:hover {
     color: var(--brand-accent); text-decoration: none;
 }
 .hub-assoc-card__cta:hover { text-decoration: underline; }
+
+/* ── Hub global leaderboard cards ──────────────────────────────── */
+.hub-lb-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 0.65rem;
+    margin-top: 1rem;
+}
+.hub-lb-card {
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+    padding: 0.75rem 1rem;
+    background: var(--card-bg, #fff);
+    border: 1px solid var(--card-border, #e4e4e4);
+    border-radius: 0.6rem;
+    transition: box-shadow 0.15s;
+}
+.hub-lb-card:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.08); }
+.hub-lb-card__pos {
+    font-size: 1rem; font-weight: 900;
+    color: var(--muted-text, #999);
+    min-width: 1.4rem; text-align: center;
+}
+.hub-lb-card--gold   { border-left: 3px solid #b8860b; }
+.hub-lb-card--silver { border-left: 3px solid #9e9e9e; }
+.hub-lb-card--bronze { border-left: 3px solid #a0522d; }
+.hub-lb-card--gold   .hub-lb-card__pos { color: #b8860b; }
+.hub-lb-card--silver .hub-lb-card__pos { color: #7a7a7a; }
+.hub-lb-card--bronze .hub-lb-card__pos { color: #a0522d; }
+.hub-lb-avatar {
+    width: 38px; height: 38px; border-radius: 50%;
+    background: var(--brand-accent, #2c6e49);
+    color: #fff; font-size: 0.8rem; font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+}
+.hub-lb-card--gold   .hub-lb-avatar { background: #b8860b; }
+.hub-lb-card--silver .hub-lb-avatar { background: #9e9e9e; }
+.hub-lb-card--bronze .hub-lb-avatar { background: #a0522d; }
+.hub-lb-card__info { flex: 1; min-width: 0; }
+.hub-lb-card__name { font-size: 0.9rem; font-weight: 700; margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.hub-lb-card__stats { font-size: 0.72rem; color: var(--muted-text, #888); margin: 0.1rem 0 0; }
 
 /* Hub page styles */
 .hub-stats-bar{display:flex;flex-wrap:wrap;background:var(--header-bg);color:#fff;text-align:center;}

@@ -48,14 +48,13 @@
                 var a = stat.Association;
                 var loc = string.Join(", ", new[] { a.City, a.State }.Where(s => !string.IsNullOrWhiteSpace(s)));
                 <article class="hub-assoc-card" style="--card-accent: var(--brand-accent);">
-                    @if (!string.IsNullOrWhiteSpace(a.HeroImageUrl))
-                    {
-                        <div class="hub-assoc-card__img" style="background-image:url('@a.HeroImageUrl')"></div>
-                    }
-                    else
-                    {
-                        <div class="hub-assoc-card__img hub-assoc-card__img--gradient"></div>
-                    }
+                    <div class="hub-assoc-card__img @(!string.IsNullOrWhiteSpace(a.HeroImageUrl) ? "" : "hub-assoc-card__img--gradient")"
+                         @(!string.IsNullOrWhiteSpace(a.HeroImageUrl) ? Html.Raw($"style=\"background-image:url('{a.HeroImageUrl}')\"") : Html.Raw(""))>
+                        @if (!string.IsNullOrWhiteSpace(a.LogoUrl))
+                        {
+                            <img src="@a.LogoUrl" class="hub-assoc-card__logo" alt="@a.Name" />
+                        }
+                    </div>
                     <div class="hub-assoc-card__body">
                         @if (a.EstYear.HasValue && a.EstYear.Value > 1800)
                         {
@@ -85,34 +84,25 @@
 @if (Model.GlobalLeaderboard.Count > 0)
 {
     <section class="section-panel">
-        <h2>Top Players &mdash; All Associations</h2>
-        <p class="field-note">Ranked by tournament finish points accumulated across all associations.</p>
-        <div class="table-scroll">
-            <table class="table">
-                <thead>
-                    <tr>
-                        <th>#</th>
-                        <th>Player</th>
-                        <th>Tournaments</th>
-                        <th>Wins</th>
-                        <th>Avg Finish</th>
-                        <th>Total Score</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach (var row in Model.GlobalLeaderboard)
-                    {
-                        <tr>
-                            <td>@row.OverallPosition</td>
-                            <td>@row.PlayerName</td>
-                            <td>@row.TournamentsPlayed</td>
-                            <td>@row.Wins</td>
-                            <td>@row.AveragePosition.ToString("0.##")</td>
-                            <td>@row.TotalScore</td>
-                        </tr>
-                    }
-                </tbody>
-            </table>
+        <div style="display:flex;align-items:baseline;gap:1rem;flex-wrap:wrap;margin-bottom:0.25rem;">
+            <h2 style="margin:0;">Top Players</h2>
+            <span style="font-size:0.8rem;color:var(--muted-text);">All associations &mdash; ranked by finish points</span>
+        </div>
+        <div class="hub-lb-grid">
+            @foreach (var row in Model.GlobalLeaderboard)
+            {
+                var pts = row.PlayerName.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+                var ini = string.Join("", pts.Take(2).Select(s => s[0].ToString().ToUpperInvariant()));
+                var medalClass = row.OverallPosition == 1 ? "hub-lb-card--gold" : row.OverallPosition == 2 ? "hub-lb-card--silver" : row.OverallPosition == 3 ? "hub-lb-card--bronze" : "";
+                <div class="hub-lb-card @medalClass">
+                    <span class="hub-lb-card__pos">@row.OverallPosition</span>
+                    <span class="hub-lb-avatar">@ini</span>
+                    <div class="hub-lb-card__info">
+                        <p class="hub-lb-card__name">@row.PlayerName</p>
+                        <p class="hub-lb-card__stats">@row.TournamentsPlayed T &bull; @row.Wins W &bull; avg&nbsp;@row.AveragePosition.ToString("0.#")</p>
+                    </div>
+                </div>
+            }
         </div>
     </section>
 }
