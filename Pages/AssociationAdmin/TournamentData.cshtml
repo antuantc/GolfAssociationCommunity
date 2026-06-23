@@ -1,0 +1,118 @@
+@page
+@model GolfAssociationCommunity.Pages.AssociationAdmin.TournamentDataModel
+@{
+    ViewData["Title"] = "Tournament Data Management";
+}
+
+<section class="section-panel">
+    <h1>Tournament Data Management</h1>
+    <p class="form-text">Select a tournament to view and mass-delete its scores, registrations, and players.</p>
+
+    @if (TempData["SuccessMessage"] is string success)
+    {
+        <div class="message success">@success</div>
+    }
+
+    <form method="get" class="form-shell" style="margin-bottom:1.5rem;">
+        <div class="form-grid">
+            <div>
+                <label for="TournamentId">Tournament</label>
+                <select id="TournamentId" name="TournamentId" asp-for="TournamentId" class="form-control" onchange="this.form.submit()">
+                    <option value="">— Select tournament —</option>
+                    @foreach (var t in Model.Tournaments)
+                    {
+                        <option value="@t.Id">@t.Name</option>
+                    }
+                </select>
+            </div>
+        </div>
+    </form>
+
+    @if (Model.SelectedTournament is not null)
+    {
+        <h2>@Model.SelectedTournament.Name</h2>
+        <p class="form-text">
+            <strong>@Model.RegistrationCount</strong> registrations &nbsp;·&nbsp;
+            <strong>@Model.ScoreCount</strong> score records &nbsp;·&nbsp;
+            <strong>@Model.LeaderboardCount</strong> leaderboard entries &nbsp;·&nbsp;
+            <strong>@Model.OrphanPlayerCount</strong> player(s) with no data in other tournaments
+        </p>
+
+        <div class="form-shell" style="display:flex;flex-direction:column;gap:1.5rem;margin-top:1.5rem;">
+
+            @* Delete scores *@
+            <div class="danger-zone-panel">
+                <h3>Delete All Scores</h3>
+                <p>Removes every <strong>score record</strong> and <strong>leaderboard entry</strong> for this tournament. Registrations are kept.</p>
+                <form method="post" asp-page-handler="DeleteScores">
+                    <input type="hidden" name="tournamentId" value="@Model.SelectedTournament.Id" />
+                    @Html.AntiForgeryToken()
+                    <button type="button" class="btn btn-danger"
+                            onclick="confirmAction(this, '@Model.ScoreCount score records and @Model.LeaderboardCount leaderboard entries')">
+                        Delete @Model.ScoreCount Scores
+                    </button>
+                </form>
+            </div>
+
+            @* Delete registrations *@
+            <div class="danger-zone-panel">
+                <h3>Delete All Registrations</h3>
+                <p>Removes every <strong>registration</strong> for this tournament. Scores and players are kept.</p>
+                <form method="post" asp-page-handler="DeleteRegistrations">
+                    <input type="hidden" name="tournamentId" value="@Model.SelectedTournament.Id" />
+                    @Html.AntiForgeryToken()
+                    <button type="button" class="btn btn-danger"
+                            onclick="confirmAction(this, '@Model.RegistrationCount registrations')">
+                        Delete @Model.RegistrationCount Registrations
+                    </button>
+                </form>
+            </div>
+
+            @* Delete all data *@
+            <div class="danger-zone-panel">
+                <h3>Reset Tournament (Scores + Registrations)</h3>
+                <p>Removes <strong>all scores, leaderboard entries, and registrations</strong> for this tournament. Players are kept.</p>
+                <form method="post" asp-page-handler="DeleteAllData">
+                    <input type="hidden" name="tournamentId" value="@Model.SelectedTournament.Id" />
+                    @Html.AntiForgeryToken()
+                    <button type="button" class="btn btn-danger"
+                            onclick="confirmAction(this, 'all scores and registrations (@Model.ScoreCount scores, @Model.RegistrationCount registrations)')">
+                        Reset Tournament Data
+                    </button>
+                </form>
+            </div>
+
+            @* Delete orphan players *@
+            @if (Model.OrphanPlayerCount > 0)
+            {
+                <div class="danger-zone-panel danger-zone-panel--extreme">
+                    <h3>Delete Players With No Other Data</h3>
+                    <p>
+                        Permanently deletes <strong>@Model.OrphanPlayerCount player(s)</strong> who have no
+                        registrations or scores in any other tournament. This cannot be undone.
+                        Run <em>Reset Tournament</em> first to also clear their scores/registrations.
+                    </p>
+                    <form method="post" asp-page-handler="DeleteOrphanPlayers">
+                        <input type="hidden" name="tournamentId" value="@Model.SelectedTournament.Id" />
+                        @Html.AntiForgeryToken()
+                        <button type="button" class="btn btn-danger"
+                                onclick="confirmAction(this, '@Model.OrphanPlayerCount player(s) with no data in other tournaments — this cannot be undone')">
+                            Delete @Model.OrphanPlayerCount Player(s)
+                        </button>
+                    </form>
+                </div>
+            }
+
+        </div>
+    }
+</section>
+
+@section Scripts {
+<script>
+function confirmAction(btn, label) {
+    if (confirm('Are you sure you want to delete ' + label + '?')) {
+        btn.form.submit();
+    }
+}
+</script>
+}

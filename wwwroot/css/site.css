@@ -236,6 +236,50 @@ body {
     color: #c0392b;
 }
 
+/* Danger zone panels for destructive admin actions */
+.danger-zone-panel {
+    border: 1px solid #e0c0c0;
+    border-left: 4px solid #c0392b;
+    background: #fff8f8;
+    border-radius: 4px;
+    padding: 1rem 1.25rem;
+}
+
+.danger-zone-panel h3 {
+    margin: 0 0 0.35rem;
+    font-size: 1rem;
+    color: #c0392b;
+}
+
+.danger-zone-panel p {
+    margin: 0 0 0.75rem;
+    font-size: 0.875rem;
+    color: #555;
+}
+
+.danger-zone-panel--extreme {
+    border-left-color: #7b1010;
+    background: #fff3f3;
+}
+
+.danger-zone-panel--extreme h3 {
+    color: #7b1010;
+}
+
+.btn-danger {
+    background: #c0392b;
+    color: #fff;
+    border: none;
+    padding: 0.4rem 1rem;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.875rem;
+}
+
+.btn-danger:hover {
+    background: #a93226;
+}
+
 .player-photo-thumb {
     width: 40px;
     height: 40px;

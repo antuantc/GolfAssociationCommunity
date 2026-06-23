@@ -125,12 +125,41 @@ namespace GolfAssociationCommunity.Pages.AssociationAdmin
             var registeredPlayer = await Context.Registrations
                 .Include(registration => registration.AssociationPlayer)
                 .FirstOrDefaultAsync(registration => registration.TournamentId == TournamentId.Value
-                    && registration.AssociationPlayerId == AssociationPlayerId.Value
-                    && registration.Status == RegistrationStatus.Registered);
+                    && registration.AssociationPlayerId == AssociationPlayerId.Value);
+
+            // Auto-register the player if no registration exists yet
+            if (registeredPlayer == null)
+            {
+                var assocPlayer = await Context.AssociationPlayers
+                    .FirstOrDefaultAsync(p => p.Id == AssociationPlayerId.Value && p.GolfAssociationId == CurrentAssociation.Id);
+                if (assocPlayer == null) return NotFound();
+
+                var newReg = new Registration
+                {
+                    TournamentId = TournamentId.Value,
+                    AssociationPlayerId = AssociationPlayerId.Value,
+                    Status = RegistrationStatus.Registered,
+                    PaymentConfirmed = true,
+                    RegistrationDate = DateTime.UtcNow,
+                    UpdatedAt = DateTime.UtcNow
+                };
+                Context.Registrations.Add(newReg);
+                await Context.SaveChangesAsync();
+                registeredPlayer = await Context.Registrations
+                    .Include(r => r.AssociationPlayer)
+                    .FirstOrDefaultAsync(r => r.Id == newReg.Id);
+            }
+            else if (registeredPlayer.Status != RegistrationStatus.Registered)
+            {
+                registeredPlayer.Status = RegistrationStatus.Registered;
+                registeredPlayer.UpdatedAt = DateTime.UtcNow;
+                await Context.SaveChangesAsync();
+                await Context.Entry(registeredPlayer).Reference(r => r.AssociationPlayer).LoadAsync();
+            }
 
             if (registeredPlayer?.AssociationPlayer == null)
             {
-                ModelState.AddModelError(string.Empty, "Selected player is not a registered member for this tournament.");
+                ModelState.AddModelError(string.Empty, "Could not load player record.");
                 await LoadPageDataAsync();
                 return Page();
             }
@@ -258,12 +287,21 @@ namespace GolfAssociationCommunity.Pages.AssociationAdmin
             {
                 TournamentId = await Context.Registrations
                     .Where(registration => registration.AssociationPlayerId == AssociationPlayerId.Value
-                        && registration.Status == RegistrationStatus.Registered
                         && registration.Tournament != null
                         && registration.Tournament.GolfAssociationId == CurrentAssociation.Id)
                     .OrderByDescending(registration => registration.Tournament!.StartDate)
                     .Select(registration => (int?)registration.TournamentId)
                     .FirstOrDefaultAsync();
+
+                // Fall back to most recent tournament for this association even if no registration
+                if (!TournamentId.HasValue)
+                {
+                    TournamentId = await Context.Tournaments
+                        .Where(t => t.GolfAssociationId == CurrentAssociation.Id)
+                        .OrderByDescending(t => t.StartDate)
+                        .Select(t => (int?)t.Id)
+                        .FirstOrDefaultAsync();
+                }
             }
 
             if (!TournamentId.HasValue)
@@ -283,20 +321,11 @@ namespace GolfAssociationCommunity.Pages.AssociationAdmin
                 .OrderBy(f => f.DisplayOrder).ThenBy(f => f.Name)
                 .ToListAsync();
 
-            Players = await Context.Registrations
-                .Where(registration => registration.TournamentId == TournamentId.Value
-                    && registration.AssociationPlayerId != null
-                    && registration.AssociationPlayer != null
-                    && registration.Status == RegistrationStatus.Registered)
-                .Select(registration => registration.AssociationPlayer!)
-                .Distinct()
-                .OrderBy(player => player.DisplayName)
-                .ThenBy(player => player.Email)
-                .Select(player => new PlayerOption
-                {
-                    Id = player.Id,
-                    Name = player.DisplayName
-                })
+            Players = await Context.AssociationPlayers
+                .Where(p => p.GolfAssociationId == CurrentAssociation.Id && p.IsActive)
+                .OrderBy(p => p.DisplayName)
+                .ThenBy(p => p.Email)
+                .Select(p => new PlayerOption { Id = p.Id, Name = p.DisplayName })
                 .ToListAsync();
 
             if (!AssociationPlayerId.HasValue)

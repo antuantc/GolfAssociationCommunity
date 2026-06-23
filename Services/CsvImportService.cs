@@ -48,7 +48,15 @@ namespace GolfAssociationCommunity.Services
                 .Where(p => p.GolfAssociationId == associationId)
                 .ToListAsync();
             var byEmail = existing.ToDictionary(p => p.Email.ToLowerInvariant());
+
+            var tournaments = await _db.Tournaments
+                .Where(t => t.GolfAssociationId == associationId)
+                .ToListAsync();
+            var tournamentsByName = tournaments.ToDictionary(t => t.Name.ToLowerInvariant());
+
             var now = DateTime.UtcNow;
+            // Track (player, tournamentId) pairs that need registrations
+            var registrationPairs = new List<(AssociationPlayer Player, int TournamentId, string? Flight)>();
 
             foreach (var (row, i) in rows.Select((r, i) => (r, i + 2)))
             {
@@ -64,15 +72,19 @@ namespace GolfAssociationCommunity.Services
                 decimal? handicap = decimal.TryParse(handicapRaw, out var h) ? h : null;
                 var isActiveRaw = Get(row, "IsActive", "Active");
                 bool isActive = string.IsNullOrWhiteSpace(isActiveRaw) || isActiveRaw.Equals("true", StringComparison.OrdinalIgnoreCase) || isActiveRaw == "1";
+                var tname = Get(row, "TournamentName", "Tournament");
+                var flight = Get(row, "Flight");
 
                 var key = email.ToLowerInvariant();
-                if (byEmail.TryGetValue(key, out var player))
+                AssociationPlayer player;
+                if (byEmail.TryGetValue(key, out var existingPlayer))
                 {
-                    player.DisplayName = name;
-                    player.HandicapIndex = handicap;
-                    player.IsActive = isActive;
-                    player.UpdatedAt = now;
+                    existingPlayer.DisplayName = name;
+                    existingPlayer.HandicapIndex = handicap;
+                    existingPlayer.IsActive = isActive;
+                    existingPlayer.UpdatedAt = now;
                     result.Updated++;
+                    player = existingPlayer;
                 }
                 else
                 {
@@ -89,9 +101,57 @@ namespace GolfAssociationCommunity.Services
                     _db.AssociationPlayers.Add(newPlayer);
                     byEmail[key] = newPlayer;
                     result.Inserted++;
+                    player = newPlayer;
                 }
+
+                if (!string.IsNullOrWhiteSpace(tname) && tournamentsByName.TryGetValue(tname.ToLowerInvariant(), out var tournament))
+                    registrationPairs.Add((player, tournament.Id, flight));
             }
             await _db.SaveChangesAsync();
+
+            // Auto-register players for specified tournaments
+            if (registrationPairs.Count > 0)
+            {
+                var tournamentIds = registrationPairs.Select(p => p.TournamentId).Distinct().ToList();
+                var existingRegs = await _db.Registrations
+                    .Where(r => tournamentIds.Contains(r.TournamentId) && r.AssociationPlayerId != null)
+                    .ToListAsync();
+                var regIndex = existingRegs.ToLookup(r => $"{r.TournamentId}:{r.AssociationPlayerId}");
+
+                int registered = 0;
+                foreach (var (rPlayer, tId, flight) in registrationPairs)
+                {
+                    if (rPlayer.Id == 0) continue; // EF hasn't assigned Id yet — shouldn't happen after SaveChanges
+                    var regKey = $"{tId}:{rPlayer.Id}";
+                    var existing2 = regIndex[regKey].FirstOrDefault();
+                    if (existing2 != null)
+                    {
+                        if (existing2.Status != RegistrationStatus.Registered)
+                        {
+                            existing2.Status = RegistrationStatus.Registered;
+                            existing2.UpdatedAt = now;
+                        }
+                        if (!string.IsNullOrWhiteSpace(flight)) existing2.Flight = flight;
+                    }
+                    else
+                    {
+                        _db.Registrations.Add(new Registration
+                        {
+                            TournamentId = tId,
+                            AssociationPlayerId = rPlayer.Id,
+                            Status = RegistrationStatus.Registered,
+                            PaymentConfirmed = true,
+                            RegistrationDate = now,
+                            UpdatedAt = now,
+                            Flight = string.IsNullOrWhiteSpace(flight) ? null : flight
+                        });
+                        registered++;
+                    }
+                }
+                await _db.SaveChangesAsync();
+                if (registered > 0)
+                    result.Warnings.Add($"Auto-registered {registered} player(s) for tournament(s).");
+            }
             return result;
         }
 
@@ -429,7 +489,7 @@ namespace GolfAssociationCommunity.Services
 
         public string GetTemplate(string type) => type.ToLowerInvariant() switch
         {
-            "players" => "DisplayName,Email,HandicapIndex,IsActive\nJohn Smith,john@example.com,12.5,true\nJane Doe,jane@example.com,,true",
+            "players" => "DisplayName,Email,HandicapIndex,IsActive,TournamentName,Flight\nJohn Smith,john@example.com,12.5,true,2026 Championship,A\nJane Doe,jane@example.com,,true,,",
             "scores" => "TournamentName,PlayerEmail,Round,HoleNumber,Score,HolePar,HandicapStrokes,StablefordPoints\n2026 Tournament,john@example.com,1,0,85,72,5,0\n2026 Tournament,john@example.com,1,1,4,4,1,2",
             "registrations" => "TournamentName,PlayerEmail,PlayerName,Handicap,Flight,Status\n2026 Tournament,john@example.com,John Smith,12.5,A,Registered\n2026 Tournament,jane@example.com,Jane Doe,18,B,Registered",
             "leaderboard" => "TournamentName,PlayerEmail,Position,TotalScore,StablefordPoints,ScoreDifferential,Flight\n2026 Tournament,john@example.com,1,72,36,0,A\n2026 Tournament,jane@example.com,2,75,32,3,A",
