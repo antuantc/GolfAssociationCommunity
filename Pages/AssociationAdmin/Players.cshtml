@@ -106,7 +106,6 @@
                         <th>Scores</th>
                         <th>Wins</th>
                         <th>Last Activity</th>
-                        <th>Actions</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -124,7 +123,17 @@
                                 {
                                     <span class="player-avatar-initials">@(player.DisplayName.Length > 0 ? player.DisplayName[0].ToString().ToUpper() : "?")</span>
                                 }
-                                <span>@player.DisplayName</span>
+                                <div>
+                                    <div>@player.DisplayName</div>
+                                    <div class="row-actions" style="margin-top:0.3rem;">
+                                        <a class="btn btn-secondary btn-xs" href="~/AssociationAdmin/Players?EditId=@player.Id">Edit</a>
+                                        <a class="btn btn-secondary btn-xs" href="~/AssociationAdmin/Scores?AssociationPlayerId=@player.Id">Scores</a>
+                                        <form method="post" asp-page-handler="Delete" asp-route-id="@player.Id" class="inline-form"
+                                              onsubmit="return confirm('Delete this player from this association? This will remove linked score history.');">
+                                            <button type="submit" class="btn btn-danger btn-xs">Delete</button>
+                                        </form>
+                                    </div>
+                                </div>
                             </div>
                         </td>
                         <td class="text-muted-sm">@player.Email</td>
@@ -133,14 +142,6 @@
                         <td class="num-cell">@player.ScoreCount</td>
                         <td class="num-cell">@player.Wins</td>
                         <td class="text-muted-sm">@(player.LastScoreUpdateUtc.HasValue ? player.LastScoreUpdateUtc.Value.ToString("MMM d, yyyy") : "-")</td>
-                        <td class="row-actions">
-                            <a class="btn btn-secondary btn-xs" href="~/AssociationAdmin/Players?EditId=@player.Id">Edit</a>
-                            <a class="btn btn-secondary btn-xs" href="~/AssociationAdmin/Scores?AssociationPlayerId=@player.Id">Scores</a>
-                            <form method="post" asp-page-handler="Delete" asp-route-id="@player.Id" class="inline-form"
-                                  onsubmit="return confirm('Delete this player from this association? This will remove linked score history.');">
-                                <button type="submit" class="btn btn-danger btn-xs">Delete</button>
-                            </form>
-                        </td>
                     </tr>
                 }
                 </tbody>
@@ -170,7 +171,6 @@
                             <th>Scores</th>
                             <th>Wins</th>
                             <th>Last Activity</th>
-                            <th>Actions</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -187,7 +187,14 @@
                                     {
                                         <span class="player-avatar-initials">@(player.DisplayName.Length > 0 ? player.DisplayName[0].ToString().ToUpper() : "?")</span>
                                     }
-                                    <span>@player.DisplayName</span>
+                                    <div>
+                                        <div>@player.DisplayName</div>
+                                        <div style="margin-top:0.3rem;">
+                                            <form method="post" asp-page-handler="Activate" asp-route-id="@player.Id" class="inline-form">
+                                                <button type="submit" class="btn btn-secondary btn-xs">Reactivate</button>
+                                            </form>
+                                        </div>
+                                    </div>
                                 </div>
                             </td>
                             <td class="text-muted-sm">@player.Email</td>
@@ -196,11 +203,6 @@
                             <td class="num-cell">@player.ScoreCount</td>
                             <td class="num-cell">@player.Wins</td>
                             <td class="text-muted-sm">@(player.LastScoreUpdateUtc.HasValue ? player.LastScoreUpdateUtc.Value.ToString("MMM d, yyyy") : "-")</td>
-                            <td class="row-actions">
-                                <form method="post" asp-page-handler="Activate" asp-route-id="@player.Id" class="inline-form">
-                                    <button type="submit" class="btn btn-secondary btn-xs">Reactivate</button>
-                                </form>
-                            </td>
                         </tr>
                     }
                     </tbody>

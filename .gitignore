@@ -43,6 +43,12 @@ ScaffoldingReadMe.txt
 # (logos go to wwwroot/images/associations/ for serving)
 /Images/
 
+# User-uploaded runtime files (player photos, etc.)
+# Ignore files but preserve directory structure via .gitkeep
+/persistent-uploads/**
+!/persistent-uploads/**/
+!/persistent-uploads/**/.gitkeep
+
 # Others
 ~$*
 *~
