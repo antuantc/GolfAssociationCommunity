@@ -38,8 +38,14 @@ namespace GolfAssociationCommunity.Pages.AssociationAdmin
 
             [StringLength(1000)]
             public string? Description { get; set; }
+            [DataType(DataType.DateTime)]
+            [DisplayFormat(DataFormatString = "{0:yyyy-MM-ddTHH:mm}", ApplyFormatInEditMode = true)]
             public DateTime StartDate { get; set; }
+            [DataType(DataType.DateTime)]
+            [DisplayFormat(DataFormatString = "{0:yyyy-MM-ddTHH:mm}", ApplyFormatInEditMode = true)]
             public DateTime EndDate { get; set; }
+            [DataType(DataType.DateTime)]
+            [DisplayFormat(DataFormatString = "{0:yyyy-MM-ddTHH:mm}", ApplyFormatInEditMode = true)]
             public DateTime? RegistrationDeadline { get; set; }
             public TournamentFormat Format { get; set; }
             public string? Location { get; set; }

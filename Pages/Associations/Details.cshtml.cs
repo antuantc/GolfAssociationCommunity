@@ -74,9 +74,11 @@ namespace GolfAssociationCommunity.Pages.Associations
 
             if (LatestResult?.TopEntries.Count > 0)
             {
+                var flightOrder = LatestResult.Flights.Select(f => f.Name).ToList();
                 FlightLeaders = LatestResult.TopEntries
                     .GroupBy(e => string.IsNullOrWhiteSpace(e.Flight) ? "Overall" : e.Flight)
-                    .OrderBy(g => g.Key)
+                    .OrderBy(g => { var i = flightOrder.IndexOf(g.Key); return i >= 0 ? i : int.MaxValue; })
+                    .ThenBy(g => g.Key)
                     .ToDictionary(g => g.Key, g => g.OrderBy(e => e.Position).Take(5).ToList());
             }
 

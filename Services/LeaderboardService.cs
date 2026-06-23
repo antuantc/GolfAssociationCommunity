@@ -10,6 +10,7 @@ namespace GolfAssociationCommunity.Services
         public string TournamentName { get; set; } = string.Empty;
         public string TournamentDates { get; set; } = string.Empty;
         public List<Leaderboard> TopEntries { get; set; } = new();
+        public List<TournamentFlight> Flights { get; set; } = new();
     }
 
     public class GlobalLeaderboardRow
@@ -201,12 +202,19 @@ namespace GolfAssociationCommunity.Services
 
                     if (entries.Count == 0) continue;
 
+                    var flights = await _context.TournamentFlights
+                        .Where(f => f.TournamentId == t.Id)
+                        .OrderBy(f => f.DisplayOrder)
+                        .ThenBy(f => f.Name)
+                        .ToListAsync();
+
                     result.Add(new RecentTournamentLeaderboard
                     {
                         TournamentId = t.Id,
                         TournamentName = t.Name,
                         TournamentDates = $"{t.StartDate:MMM d, yyyy} \u2013 {t.EndDate:MMM d, yyyy}",
-                        TopEntries = entries
+                        TopEntries = entries,
+                        Flights = flights
                     });
                 }
 

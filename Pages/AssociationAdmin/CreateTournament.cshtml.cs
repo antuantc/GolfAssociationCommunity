@@ -33,12 +33,15 @@ namespace GolfAssociationCommunity.Pages.AssociationAdmin
             public string? Description { get; set; }
 
             [DataType(DataType.DateTime)]
+            [DisplayFormat(DataFormatString = "{0:yyyy-MM-ddTHH:mm}", ApplyFormatInEditMode = true)]
             public DateTime StartDate { get; set; } = DateTime.UtcNow.AddDays(14);
 
             [DataType(DataType.DateTime)]
+            [DisplayFormat(DataFormatString = "{0:yyyy-MM-ddTHH:mm}", ApplyFormatInEditMode = true)]
             public DateTime EndDate { get; set; } = DateTime.UtcNow.AddDays(15);
 
             [DataType(DataType.DateTime)]
+            [DisplayFormat(DataFormatString = "{0:yyyy-MM-ddTHH:mm}", ApplyFormatInEditMode = true)]
             public DateTime? RegistrationDeadline { get; set; }
 
             public TournamentFormat Format { get; set; } = TournamentFormat.Stroke;
