@@ -12,8 +12,7 @@
     var heroYear = assoc?.EstYear ?? 0;
     var yearsStrong = heroYear > 1800 ? DateTime.UtcNow.Year - heroYear : 0;
     var flightKeys = Model.FlightLeaders.Keys.ToList();
-    var taglineRaw = !string.IsNullOrWhiteSpace(assoc?.Tagline) ? assoc!.Tagline : assoc?.Name ?? "GOLF";
-    var heroHeadline = $"WHERE {taglineRaw.ToUpperInvariant()} LIVES.";
+    var heroHeadline = !string.IsNullOrWhiteSpace(assoc?.Tagline) ? assoc!.Tagline : assoc?.Name ?? "Golf";
 }
 
 @if (TempData["SuccessMessage"] != null)

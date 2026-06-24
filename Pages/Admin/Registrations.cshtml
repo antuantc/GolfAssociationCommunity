@@ -58,6 +58,7 @@
             <input type="hidden" name="PaymentFilter" value="@Model.PaymentFilter" />
             <input type="hidden" name="CurrentPage" value="@Model.PageNumber" />
         </form>
+        <div style="overflow-x:auto;">
         <table class="table">
             <thead>
                 <tr>
@@ -134,6 +135,7 @@
             }
             </tbody>
         </table>
+        </div>
 
         <div class="form-actions" style="margin-top:0.75rem;">
             <button type="submit" form="bulk-reg-delete" class="btn btn-danger"

@@ -1,18 +1,20 @@
+using GolfAssociationCommunity.Data;
 using GolfAssociationCommunity.Models;
 using GolfAssociationCommunity.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.EntityFrameworkCore;
 
 namespace GolfAssociationCommunity.Pages.Associations
 {
     public class DetailsModel : PageModel
     {
-        private readonly IAssociationService _associationService;
+        private readonly ApplicationDbContext _context;
         private readonly ILeaderboardService _leaderboardService;
 
-        public DetailsModel(IAssociationService associationService, ILeaderboardService leaderboardService)
+        public DetailsModel(ApplicationDbContext context, ILeaderboardService leaderboardService)
         {
-            _associationService = associationService;
+            _context = context;
             _leaderboardService = leaderboardService;
         }
 
@@ -37,8 +39,22 @@ namespace GolfAssociationCommunity.Pages.Associations
 
         private async Task<bool> LoadAssociationAsync(int id)
         {
-            Association = await _associationService.GetAssociationByIdAsync(id);
+            // Lean query — excludes Members (identity users), SponsorshipPayments, and Players.
+            // Players are not enumerated on this page; we count them with a separate scalar query.
+            Association = await _context.GolfAssociations
+                .Include(ga => ga.Tournaments)
+                .Include(ga => ga.SponsorshipPackages)
+                .Include(ga => ga.OfficersAndMembers)
+                .Include(ga => ga.MediaItems)
+                .Include(ga => ga.Sponsors)
+                .Include(ga => ga.Charities)
+                .FirstOrDefaultAsync(ga => ga.Id == id && ga.IsActive);
+
             if (Association == null) return false;
+
+            // Scalar count — avoids loading every AssociationPlayer row
+            ActiveMembersCount = await _context.AssociationPlayers
+                .CountAsync(p => p.GolfAssociationId == id && p.IsActive);
 
             ViewData["PublicAssociationId"] = Association.Id;
             ViewData["PublicAssociationName"] = Association.Name;
@@ -68,27 +84,32 @@ namespace GolfAssociationCommunity.Pages.Associations
                 ViewData["NextTournamentId"] = NextTournament.Id;
             }
 
-            // Fetch enough entries per tournament to cover multiple flights (up to 5 each)
+            // Run leaderboard queries sequentially — DbContext is not thread-safe;
+            // concurrent async operations on the same instance can cause errors.
             RecentLeaderboards = (await _leaderboardService.GetRecentTournamentLeaderboardsAsync(id, 3, 20)).ToList();
+            SeasonStandings = (await _leaderboardService.GetAssociationLeaderboardAsync(id)).Take(5).ToList();
+
             LatestResult = RecentLeaderboards.FirstOrDefault();
 
             if (LatestResult?.TopEntries.Count > 0)
             {
-                var flightOrder = LatestResult.Flights.Select(f => f.Name).ToList();
+                var flightOrder = LatestResult.Flights.Select(f => f.Name.Trim()).ToList();
                 FlightLeaders = LatestResult.TopEntries
-                    .GroupBy(e => string.IsNullOrWhiteSpace(e.Flight) ? "Overall" : e.Flight)
-                    .OrderBy(g => { var i = flightOrder.IndexOf(g.Key); return i >= 0 ? i : int.MaxValue; })
+                    .GroupBy(e => string.IsNullOrWhiteSpace(e.Flight) ? "Overall" : e.Flight.Trim())
+                    .OrderBy(g =>
+                    {
+                        var i = flightOrder.FindIndex(f => string.Equals(f, g.Key, StringComparison.OrdinalIgnoreCase));
+                        return i >= 0 ? i : int.MaxValue;
+                    })
                     .ThenBy(g => g.Key)
                     .ToDictionary(g => g.Key, g => g.OrderBy(e => e.Position).Take(5).ToList());
             }
 
-            ActiveMembersCount = Association.Players.Count(p => p.IsActive);
             CoursesPlayedCount = Association.Tournaments
                 .Select(t => t.GolfCourse)
                 .Where(c => !string.IsNullOrWhiteSpace(c))
                 .Distinct(StringComparer.OrdinalIgnoreCase)
                 .Count();
-            SeasonStandings = (await _leaderboardService.GetAssociationLeaderboardAsync(id)).Take(5).ToList();
 
             return true;
         }

@@ -134,10 +134,17 @@ namespace GolfAssociationCommunity.Services
         {
             try
             {
+                // Two lightweight queries instead of one wide JOIN that loads full Tournament for every row
+                var tournamentIds = await _context.Tournaments
+                    .Where(t => t.GolfAssociationId == associationId)
+                    .Select(t => t.Id)
+                    .ToListAsync();
+
+                if (tournamentIds.Count == 0) return Enumerable.Empty<AssociationLeaderboardRow>();
+
                 var rows = await _context.Leaderboards
-                    .Where(l => l.Tournament != null && l.Tournament.GolfAssociationId == associationId)
+                    .Where(l => tournamentIds.Contains(l.TournamentId))
                     .Include(l => l.AssociationPlayer)
-                    .Include(l => l.Tournament)
                     .ToListAsync();
 
                 var aggregated = rows
@@ -183,30 +190,38 @@ namespace GolfAssociationCommunity.Services
         {
             try
             {
-                var recentTournamentIds = await _context.Tournaments
+                var recentTournaments = await _context.Tournaments
                     .Where(t => t.GolfAssociationId == associationId)
                     .OrderByDescending(t => t.StartDate)
                     .Select(t => new { t.Id, t.Name, t.StartDate, t.EndDate })
                     .Take(tournamentCount)
                     .ToListAsync();
 
+                if (recentTournaments.Count == 0) return Enumerable.Empty<RecentTournamentLeaderboard>();
+
+                var ids = recentTournaments.Select(t => t.Id).ToList();
+
+                // Batch: one query for all leaderboard entries across all recent tournaments
+                var allEntries = await _context.Leaderboards
+                    .Where(l => ids.Contains(l.TournamentId))
+                    .Include(l => l.AssociationPlayer)
+                    .OrderBy(l => l.TournamentId)
+                    .ThenBy(l => l.Position)
+                    .ToListAsync();
+
+                // Batch: one query for all flights across all recent tournaments
+                var allFlights = await _context.TournamentFlights
+                    .Where(f => ids.Contains(f.TournamentId))
+                    .OrderBy(f => f.TournamentId)
+                    .ThenBy(f => f.DisplayOrder)
+                    .ThenBy(f => f.Name)
+                    .ToListAsync();
+
                 var result = new List<RecentTournamentLeaderboard>();
-                foreach (var t in recentTournamentIds)
+                foreach (var t in recentTournaments)
                 {
-                    var entries = await _context.Leaderboards
-                        .Where(l => l.TournamentId == t.Id)
-                        .Include(l => l.AssociationPlayer)
-                        .OrderBy(l => l.Position)
-                        .Take(topN)
-                        .ToListAsync();
-
+                    var entries = allEntries.Where(l => l.TournamentId == t.Id).Take(topN).ToList();
                     if (entries.Count == 0) continue;
-
-                    var flights = await _context.TournamentFlights
-                        .Where(f => f.TournamentId == t.Id)
-                        .OrderBy(f => f.DisplayOrder)
-                        .ThenBy(f => f.Name)
-                        .ToListAsync();
 
                     result.Add(new RecentTournamentLeaderboard
                     {
@@ -214,7 +229,7 @@ namespace GolfAssociationCommunity.Services
                         TournamentName = t.Name,
                         TournamentDates = $"{t.StartDate:MMM d, yyyy} \u2013 {t.EndDate:MMM d, yyyy}",
                         TopEntries = entries,
-                        Flights = flights
+                        Flights = allFlights.Where(f => f.TournamentId == t.Id).ToList()
                     });
                 }
 

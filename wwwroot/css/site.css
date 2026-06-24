@@ -423,6 +423,13 @@ body {
     border: 1px solid var(--card-border);
     border-radius: 0.65rem;
     min-height: 180px;
+    display: flex;
+    flex-direction: column;
+}
+
+.card .pub-btn {
+    margin-top: auto;
+    align-self: flex-start;
 }
 
 .card h2,
@@ -1494,10 +1501,10 @@ a.sponsor-card:hover {
     color: #fff;
 }
 .pub-hero__headline {
-    font-size: clamp(2.2rem, 6vw, 4.8rem);
+    font-size: clamp(1.6rem, 4vw, 2.8rem);
     font-weight: 900;
-    line-height: 1.0;
-    letter-spacing: -0.03em;
+    line-height: 1.1;
+    letter-spacing: -0.02em;
     margin: 0.4rem 0 1rem;
     max-width: 860px;
 }
@@ -1808,7 +1815,7 @@ a.sponsor-card:hover {
     .pub-header__inner { flex-wrap: wrap; }
     .pub-hero { min-height: 420px; }
     .pub-hero__overlay { padding: 3.5rem 0 2.5rem; }
-    .pub-hero__headline { font-size: clamp(1.8rem, 8vw, 2.8rem); }
+    .pub-hero__headline { font-size: clamp(1.4rem, 6vw, 2rem); }
     .pub-stats-bar { flex-wrap: wrap; }
     .pub-stat-item { min-width: 50%; border-right: none; border-bottom: 1px solid rgba(255,255,255,0.08); }
     .pub-stat-item:nth-child(odd) { border-right: 1px solid rgba(255,255,255,0.08); }
