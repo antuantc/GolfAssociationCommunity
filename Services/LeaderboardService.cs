@@ -36,6 +36,7 @@ namespace GolfAssociationCommunity.Services
         public int Wins { get; set; }
         public decimal AveragePosition { get; set; }
         public int TotalScore { get; set; }
+        public string? PhotoUrl { get; set; }
     }
 
     internal sealed class TournamentLeaderboardScoreRow
@@ -162,7 +163,9 @@ namespace GolfAssociationCommunity.Services
                         TournamentsPlayed = group.Count(),
                         Wins = group.Count(entry => entry.Position == 1),
                         AveragePosition = Math.Round((decimal)group.Average(entry => entry.Position), 2),
-                        TotalScore = group.Sum(entry => entry.TotalScore)
+                        TotalScore = group.Sum(entry => entry.TotalScore),
+                        PhotoUrl = group.Select(entry => entry.AssociationPlayer?.PhotoUrl)
+                                        .FirstOrDefault(p => !string.IsNullOrWhiteSpace(p))
                     })
                     .OrderByDescending(row => row.TournamentPoints)
                     .ThenBy(row => row.AveragePosition)

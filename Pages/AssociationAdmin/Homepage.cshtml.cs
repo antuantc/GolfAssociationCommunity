@@ -75,6 +75,7 @@ namespace GolfAssociationCommunity.Pages.AssociationAdmin
             [StringLength(1000)] public string? Description { get; set; }
             public string? ExistingHeroImageUrl { get; set; }
             public string? ExistingHeroVideoUrl { get; set; }
+            [Range(0, 100)] public int OverlayOpacity { get; set; } = 65;
         }
 
         public class SponsorInput
@@ -108,7 +109,8 @@ namespace GolfAssociationCommunity.Pages.AssociationAdmin
                 EstYear = AssociationData.EstYear,
                 Description = AssociationData.Description,
                 ExistingHeroImageUrl = AssociationData.HeroImageUrl,
-                ExistingHeroVideoUrl = AssociationData.HeroVideoUrl
+                ExistingHeroVideoUrl = AssociationData.HeroVideoUrl,
+                OverlayOpacity = AssociationData.HeroOverlayOpacity
             };
 
             // Auto-increment display order for new sponsor
@@ -212,6 +214,7 @@ namespace GolfAssociationCommunity.Pages.AssociationAdmin
             assoc.Motto = string.IsNullOrWhiteSpace(HeroSettings.Motto) ? null : HeroSettings.Motto.Trim();
             assoc.EstYear = HeroSettings.EstYear;
             assoc.Description = string.IsNullOrWhiteSpace(HeroSettings.Description) ? null : HeroSettings.Description.Trim();
+            assoc.HeroOverlayOpacity = Math.Clamp(HeroSettings.OverlayOpacity, 0, 100);
             assoc.UpdatedAt = DateTime.UtcNow;
 
             await Context.SaveChangesAsync();

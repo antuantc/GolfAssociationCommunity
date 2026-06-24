@@ -27,7 +27,7 @@ namespace GolfAssociationCommunity.Pages.Associations
         public int ActiveMembersCount { get; private set; }
         public int CoursesPlayedCount { get; private set; }
         public RecentTournamentLeaderboard? LatestResult { get; private set; }
-        public Dictionary<string, List<Leaderboard>> FlightLeaders { get; private set; } = new();
+        public List<KeyValuePair<string, List<Leaderboard>>> FlightLeaders { get; private set; } = new();
         public List<AssociationLeaderboardRow> SeasonStandings { get; private set; } = new();
 
         public async Task<IActionResult> OnGetAsync(int id)
@@ -93,16 +93,24 @@ namespace GolfAssociationCommunity.Pages.Associations
 
             if (LatestResult?.TopEntries.Count > 0)
             {
+                // Use the Flights already fetched by GetRecentTournamentLeaderboardsAsync (no extra query).
                 var flightOrder = LatestResult.Flights.Select(f => f.Name.Trim()).ToList();
+
                 FlightLeaders = LatestResult.TopEntries
                     .GroupBy(e => string.IsNullOrWhiteSpace(e.Flight) ? "Overall" : e.Flight.Trim())
                     .OrderBy(g =>
                     {
-                        var i = flightOrder.FindIndex(f => string.Equals(f, g.Key, StringComparison.OrdinalIgnoreCase));
-                        return i >= 0 ? i : int.MaxValue;
+                        if (flightOrder.Count > 0)
+                        {
+                            var i = flightOrder.FindIndex(f => string.Equals(f, g.Key, StringComparison.OrdinalIgnoreCase));
+                            if (i >= 0) return i;
+                        }
+                        // Fallback when no TournamentFlight records exist: Champ first, then alphabetical.
+                        if (string.Equals(g.Key, "Champ", StringComparison.OrdinalIgnoreCase)) return -1;
+                        return string.Compare(g.Key, "A", StringComparison.OrdinalIgnoreCase);
                     })
-                    .ThenBy(g => g.Key)
-                    .ToDictionary(g => g.Key, g => g.OrderBy(e => e.Position).Take(5).ToList());
+                    .Select(g => new KeyValuePair<string, List<Leaderboard>>(g.Key, g.OrderBy(e => e.Position).Take(5).ToList()))
+                    .ToList();
             }
 
             CoursesPlayedCount = Association.Tournaments

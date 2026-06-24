@@ -70,6 +70,14 @@
                     <input asp-for="HeroVideo" type="file" accept="video/mp4,video/webm,video/quicktime" class="form-control" />
                     <span asp-validation-for="HeroVideo" class="text-danger"></span>
                 </div>
+                <div>
+                    <label asp-for="HeroSettings.OverlayOpacity">Hero Overlay Darkness <span class="field-note">0 = fully transparent, 100 = fully dark (default 65)</span></label>
+                    <div style="display:flex;align-items:center;gap:0.75rem;">
+                        <input asp-for="HeroSettings.OverlayOpacity" type="range" min="0" max="100" class="form-control" style="padding:0;"
+                               oninput="document.getElementById('overlay-pct').textContent = this.value + '%'" />
+                        <span id="overlay-pct" style="min-width:3rem;font-weight:700;">@Model.HeroSettings.OverlayOpacity%</span>
+                    </div>
+                </div>
             </div>
         </div>
         <div class="form-actions">

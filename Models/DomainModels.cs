@@ -71,6 +71,8 @@ namespace GolfAssociationCommunity.Models
         public string? Tagline { get; set; }
         public string? Motto { get; set; }
         public int? EstYear { get; set; }
+        /// <summary>Hero overlay darkness 0–100 (default 65). Lower = more transparent, higher = darker.</summary>
+        public int HeroOverlayOpacity { get; set; } = 65;
         // Charity
         public string? CharityName { get; set; }
         public string? CharityDescription { get; set; }

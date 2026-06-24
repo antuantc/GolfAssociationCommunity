@@ -11,7 +11,6 @@
     var heroLoc = string.Join(", ", new[] { assoc?.City, assoc?.State }.Where(s => !string.IsNullOrWhiteSpace(s)));
     var heroYear = assoc?.EstYear ?? 0;
     var yearsStrong = heroYear > 1800 ? DateTime.UtcNow.Year - heroYear : 0;
-    var flightKeys = Model.FlightLeaders.Keys.ToList();
     var heroHeadline = !string.IsNullOrWhiteSpace(assoc?.Tagline) ? assoc!.Tagline : assoc?.Name ?? "Golf";
 }
 
@@ -42,7 +41,7 @@ else
                 <source src="@assoc.HeroVideoUrl" type="video/mp4" />
             </video>
         }
-        <div class="pub-hero__overlay">
+        <div class="pub-hero__overlay" style="--hero-overlay-opacity:@((assoc.HeroOverlayOpacity / 100.0).ToString("0.##", System.Globalization.CultureInfo.InvariantCulture))">
             <div class="pub-container">
                 @if (heroYear > 1800 || !string.IsNullOrWhiteSpace(heroLoc))
                 {
@@ -60,15 +59,6 @@ else
                 @if (!string.IsNullOrWhiteSpace(assoc.Motto))
                 {
                     <p class="pub-hero__motto">&ldquo;@assoc.Motto&rdquo;</p>
-                }
-                @if (flightKeys.Count > 0)
-                {
-                    <div class="pub-hero__flight-row">
-                        @foreach (var f in flightKeys.Take(4))
-                        {
-                            <span class="pub-hero__flight-chip">@f.ToUpperInvariant() FLIGHT</span>
-                        }
-                    </div>
                 }
             </div>
         </div>
@@ -141,7 +131,16 @@ else
                         var pts = row.PlayerName.Split(' ', StringSplitOptions.RemoveEmptyEntries);
                         var ini = string.Join("", pts.Take(2).Select(s => s[0].ToString().ToUpperInvariant()));
                         <a class="player-card" href="~/Associations/Leaderboard/@assoc.Id">
-                            <div class="player-avatar">@ini</div>
+                            <div class="player-avatar">
+                                @if (!string.IsNullOrWhiteSpace(row.PhotoUrl))
+                                {
+                                    <img src="@row.PhotoUrl" alt="@row.PlayerName" class="player-avatar__img" />
+                                }
+                                else
+                                {
+                                    <span>@ini</span>
+                                }
+                            </div>
                             <p class="player-card__name">@row.PlayerName</p>
                             <p class="player-card__stat">@row.TournamentsPlayed T &bull; @row.Wins W</p>
                         </a>

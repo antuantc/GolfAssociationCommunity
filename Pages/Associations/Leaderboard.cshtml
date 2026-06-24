@@ -2,11 +2,7 @@
 @model GolfAssociationCommunity.Pages.Associations.LeaderboardModel
 @{
     ViewData["Title"] = Model.Association?.Name is null ? "Leaderboard" : $"{Model.Association.Name} — Results";
-    var lbFlights = Model.TournamentLeaderboard
-        .Select(r => r.Flight ?? "")
-        .Distinct()
-        .OrderBy(f => f)
-        .ToList();
+    var lbFlights = Model.TournamentFlights; // ordered by TournamentFlight.DisplayOrder in code-behind
 }
 
 @if (Model.Association == null)
