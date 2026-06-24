@@ -175,12 +175,16 @@ namespace GolfAssociationCommunity.Pages.AssociationAdmin
                 return RedirectToPage(new { id });
             }
 
+            var nextFlightOrder = (await Context.TournamentFlights
+                .Where(f => f.TournamentId == id)
+                .MaxAsync(f => (int?)f.DisplayOrder) ?? -1) + 1;
+
             Context.TournamentFlights.Add(new TournamentFlight
             {
                 TournamentId = id,
                 Name = NewFlight.Name.Trim(),
                 Description = string.IsNullOrWhiteSpace(NewFlight.Description) ? null : NewFlight.Description.Trim(),
-                DisplayOrder = NewFlight.DisplayOrder
+                DisplayOrder = nextFlightOrder
             });
             await Context.SaveChangesAsync();
             TempData["SuccessMessage"] = $"Flight \"{NewFlight.Name.Trim()}\" added.";

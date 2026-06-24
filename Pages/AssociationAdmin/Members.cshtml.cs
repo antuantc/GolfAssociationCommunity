@@ -133,6 +133,10 @@ namespace GolfAssociationCommunity.Pages.AssociationAdmin
             }
             else
             {
+                var nextOrder = (await Context.AssociationOfficers
+                    .Where(o => o.GolfAssociationId == CurrentAssociation.Id)
+                    .MaxAsync(o => (int?)o.DisplayOrder) ?? -1) + 1;
+
                 var officer = new AssociationOfficer
                 {
                     GolfAssociationId = CurrentAssociation.Id,
@@ -140,7 +144,7 @@ namespace GolfAssociationCommunity.Pages.AssociationAdmin
                     Role = Input.Role.Trim(),
                     Bio = string.IsNullOrWhiteSpace(Input.Bio) ? null : Input.Bio.Trim(),
                     PictureUrl = pictureUrl,
-                    DisplayOrder = Input.DisplayOrder,
+                    DisplayOrder = nextOrder,
                     IsActive = Input.IsActive,
                     CreatedAt = DateTime.UtcNow,
                     UpdatedAt = DateTime.UtcNow

@@ -32,10 +32,13 @@
                     <input asp-for="Input.Role" class="form-control" placeholder="e.g. President, Treasurer, Member" />
                     <span asp-validation-for="Input.Role" class="text-danger"></span>
                 </div>
-                <div>
-                    <label asp-for="Input.DisplayOrder">Display Order</label>
-                    <input asp-for="Input.DisplayOrder" type="number" class="form-control" />
-                </div>
+                @if (Model.IsEditing)
+                {
+                    <div>
+                        <label asp-for="Input.DisplayOrder">Display Order</label>
+                        <input asp-for="Input.DisplayOrder" type="number" class="form-control" />
+                    </div>
+                }
                 <div>
                     <label>
                         <input asp-for="Input.IsActive" type="checkbox" />

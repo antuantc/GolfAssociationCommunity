@@ -357,7 +357,7 @@ namespace GolfAssociationCommunity.Pages.AssociationAdmin
                 Category = string.IsNullOrWhiteSpace(NewSponsor.Category) ? null : NewSponsor.Category.Trim().ToUpperInvariant(),
                 Website = string.IsNullOrWhiteSpace(NewSponsor.Website) ? null : NewSponsor.Website.Trim(),
                 LogoUrl = logoUrl,
-                DisplayOrder = NewSponsor.DisplayOrder,
+                DisplayOrder = Sponsors.Count > 0 ? Sponsors.Max(s => s.DisplayOrder) + 1 : 0,
                 IsActive = true,
                 CreatedAt = DateTime.UtcNow
             });
@@ -465,7 +465,7 @@ namespace GolfAssociationCommunity.Pages.AssociationAdmin
                 Description = string.IsNullOrWhiteSpace(NewCharity.Description) ? null : NewCharity.Description.Trim(),
                 Url = string.IsNullOrWhiteSpace(NewCharity.Url) ? null : NewCharity.Url.Trim(),
                 ImageUrl = imageUrl,
-                DisplayOrder = NewCharity.DisplayOrder,
+                DisplayOrder = Charities.Count > 0 ? Charities.Max(c => c.DisplayOrder) + 1 : 0,
                 IsActive = true,
                 CreatedAt = DateTime.UtcNow
             });

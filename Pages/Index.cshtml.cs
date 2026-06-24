@@ -1,6 +1,8 @@
+using GolfAssociationCommunity.Data;
 using GolfAssociationCommunity.Models;
 using GolfAssociationCommunity.Services;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.EntityFrameworkCore;
 
 namespace GolfAssociationCommunity.Pages
 {
@@ -14,16 +16,15 @@ namespace GolfAssociationCommunity.Pages
 
     public class IndexModel : PageModel
     {
-        private readonly IAssociationService _associationService;
         private readonly ILeaderboardService _leaderboardService;
+        private readonly ApplicationDbContext _context;
 
-        public IndexModel(IAssociationService associationService, ILeaderboardService leaderboardService)
+        public IndexModel(ApplicationDbContext context, ILeaderboardService leaderboardService)
         {
-            _associationService = associationService;
+            _context = context;
             _leaderboardService = leaderboardService;
         }
 
-        public List<GolfAssociation> Associations { get; set; } = new();
         public List<GlobalLeaderboardRow> GlobalLeaderboard { get; set; } = new();
         public List<AssociationCardStats> AssociationStats { get; set; } = new();
         public int TotalTournaments { get; set; }
@@ -31,27 +32,32 @@ namespace GolfAssociationCommunity.Pages
 
         public async Task OnGetAsync()
         {
-            Associations = (await _associationService.GetAllActiveAssociationsAsync()).ToList();
-            GlobalLeaderboard = (await _leaderboardService.GetGlobalLeaderboardAsync(10)).ToList();
-            TotalAssociations = Associations.Count;
+            // Single query: associations + their tournaments only — no N+1
+            var associations = await _context.GolfAssociations
+                .Where(ga => ga.IsActive)
+                .Include(ga => ga.Tournaments)
+                .OrderBy(ga => ga.Name)
+                .ToListAsync();
 
-            // Build per-association card stats
-            foreach (var assoc in Associations)
+            GlobalLeaderboard = (await _leaderboardService.GetGlobalLeaderboardAsync(10)).ToList();
+            TotalAssociations = associations.Count;
+
+            var now = DateTime.UtcNow;
+            foreach (var assoc in associations)
             {
-                var fullAssoc = await _associationService.GetAssociationByIdAsync(assoc.Id);
-                if (fullAssoc == null) continue;
-                var upcoming = fullAssoc.Tournaments
-                    .Where(t => t.StartDate >= DateTime.UtcNow && t.Status != TournamentStatus.Cancelled)
+                var upcoming = assoc.Tournaments
+                    .Where(t => t.StartDate >= now && t.Status != TournamentStatus.Cancelled)
                     .OrderBy(t => t.StartDate)
                     .ToList();
+
                 AssociationStats.Add(new AssociationCardStats
                 {
-                    Association = fullAssoc,
-                    TournamentCount = fullAssoc.Tournaments.Count,
+                    Association = assoc,
+                    TournamentCount = assoc.Tournaments.Count,
                     UpcomingCount = upcoming.Count,
                     NextTournament = upcoming.FirstOrDefault()
                 });
-                TotalTournaments += fullAssoc.Tournaments.Count;
+                TotalTournaments += assoc.Tournaments.Count;
             }
         }
     }

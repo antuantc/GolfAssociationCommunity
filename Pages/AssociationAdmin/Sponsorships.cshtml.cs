@@ -74,7 +74,9 @@ namespace GolfAssociationCommunity.Pages.AssociationAdmin
                 Description = string.IsNullOrWhiteSpace(Input.Description) ? null : Input.Description.Trim(),
                 Amount = Input.Amount,
                 Benefits = Input.Benefits.Trim(),
-                DisplayOrder = Input.DisplayOrder,
+                DisplayOrder = await Context.SponsorshipPackages
+                    .Where(sp => sp.GolfAssociationId == CurrentAssociation.Id)
+                    .MaxAsync(sp => (int?)sp.DisplayOrder) + 1 ?? 0,
                 IsActive = Input.IsActive,
                 CreatedAt = DateTime.UtcNow,
                 UpdatedAt = DateTime.UtcNow
