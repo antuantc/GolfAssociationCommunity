@@ -39,6 +39,11 @@ ScaffoldingReadMe.txt
 # dotenv environment variables file
 .env
 
+# SQLite database files
+*.db
+*.db-shm
+*.db-wal
+
 # Source/staging assets not needed in production
 # (logos go to wwwroot/images/associations/ for serving)
 /Images/
