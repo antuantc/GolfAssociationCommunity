@@ -34,7 +34,6 @@ jobs:
         with:
           name: .net-app
           path: ${{env.DOTNET_ROOT}}/myapp
-          retention-days: 1
 
   deploy:
     runs-on: windows-latest
@@ -52,9 +51,9 @@ jobs:
       - name: Login to Azure
         uses: azure/login@v2
         with:
-          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_56FB3A30007642429BB05283C7C8FD74 }}
-          tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_20D2D36C73AC4FE385C7AB6CD168DA7C }}
-          subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_B54D71FE0E3A4C04A772E583158B6821 }}
+          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_9B9E0D3C2E754F948AD2D4FFDB467FBC }}
+          tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_8863B879E503402BB519D63F580E2CCB }}
+          subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_371B96BA273149C198EB5B2012414308 }}
 
       - name: Deploy to Azure Web App
         id: deploy-to-webapp
@@ -63,3 +62,4 @@ jobs:
           app-name: 'GolfAssociationCommunity'
           slot-name: 'Production'
           package: .
+          
