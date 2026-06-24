@@ -59,6 +59,8 @@ namespace GolfAssociationCommunity.Pages.Tournaments
 
             public int? FlightId { get; set; }
 
+            public bool IncludePracticeRound { get; set; }
+
             [Required]
             [CreditCard]
             [StringLength(19)]
@@ -239,6 +241,10 @@ namespace GolfAssociationCommunity.Pages.Tournaments
             }
 
             var sanitizedCardNumber = new string(Input.CardNumber.Where(char.IsDigit).ToArray());
+
+            var practiceRoundFee = (Input.IncludePracticeRound && tournament.HasPracticeRound)
+                ? tournament.PracticeRoundFee : 0;
+            var totalFee = tournament.EntryFee + practiceRoundFee;
             var paymentBillingAddress = new PaymentBillingAddress
             {
                 FullName = Input.CardholderName.Trim(),
@@ -251,7 +257,7 @@ namespace GolfAssociationCommunity.Pages.Tournaments
 
             var paymentResult = await _authorizeNetPaymentService.ProcessPaymentAsync(
                 tournament.GolfAssociationId,
-                tournament.EntryFee,
+                totalFee,
                 sanitizedCardNumber,
                 expirationDate,
                 Input.Cvv,
@@ -269,7 +275,7 @@ namespace GolfAssociationCommunity.Pages.Tournaments
                 GuestName = Input.GuestName.Trim(),
                 GuestEmail = Input.GuestEmail.Trim(),
                 Handicap = Input.Handicap,
-                RegistrationFee = tournament.EntryFee,
+                RegistrationFee = totalFee,
                 Status = RegistrationStatus.Registered,
                 PaymentConfirmed = true,
                 PaymentDate = DateTime.UtcNow,
@@ -281,7 +287,8 @@ namespace GolfAssociationCommunity.Pages.Tournaments
                 BillingZipCode = paymentBillingAddress.ZipCode,
                 BillingCountry = paymentBillingAddress.Country,
                 TournamentFlightId = selectedFlight?.Id,
-                Flight = selectedFlight?.Name
+                Flight = selectedFlight?.Name,
+                IncludesPracticeRound = practiceRoundFee > 0
             };
 
             try
@@ -331,6 +338,9 @@ namespace GolfAssociationCommunity.Pages.Tournaments
             var flightLine = string.IsNullOrWhiteSpace(registration.Flight)
                 ? string.Empty
                 : $"<tr><td style='padding:4px 0;color:#555;'>Flight</td><td style='padding:4px 0;font-weight:600;'>{registration.Flight}</td></tr>";
+            var practiceRoundLine = registration.IncludesPracticeRound
+                ? $"<tr><td style='padding:4px 0;color:#555;'>Practice Round</td><td style='padding:4px 0;font-weight:600;'>Included</td></tr>"
+                : string.Empty;
 
             var body = $"""
                 <!DOCTYPE html>
@@ -351,6 +361,7 @@ namespace GolfAssociationCommunity.Pages.Tournaments
                             <tr><td style="padding:4px 0;color:#555;">Date</td><td style="padding:4px 0;font-weight:600;">{tournamentDate}</td></tr>
                             <tr><td style="padding:4px 0;color:#555;">Location</td><td style="padding:4px 0;font-weight:600;">{location}{golfCourse}</td></tr>
                             {flightLine}
+                            {practiceRoundLine}
                             <tr><td style="padding:4px 0;color:#555;">Entry Fee Paid</td><td style="padding:4px 0;font-weight:600;">{registration.RegistrationFee:C}</td></tr>
                             <tr><td style="padding:4px 0;color:#555;">Transaction</td><td style="padding:4px 0;font-weight:600;">{transactionReference}</td></tr>
                           </table>
@@ -390,6 +401,9 @@ namespace GolfAssociationCommunity.Pages.Tournaments
             var flightLine = string.IsNullOrWhiteSpace(registration.Flight)
                 ? string.Empty
                 : $"<tr><td style='padding:4px 0;color:#555;'>Flight</td><td style='padding:4px 0;font-weight:600;'>{registration.Flight}</td></tr>";
+            var practiceRoundLine = registration.IncludesPracticeRound
+                ? $"<tr><td style='padding:4px 0;color:#555;'>Practice Round</td><td style='padding:4px 0;font-weight:600;'>Included</td></tr>"
+                : string.Empty;
 
             var notificationStatus = playerEmailError is null
                 ? "<span style='color:#1a6b3a;font-weight:600;'>&#10003; Sent successfully</span>"
@@ -416,8 +430,7 @@ namespace GolfAssociationCommunity.Pages.Tournaments
                             <tr><td style="padding:4px 0;color:#555;">Tournament</td><td style="padding:4px 0;font-weight:600;">{tournament.Name}</td></tr>
                             <tr><td style="padding:4px 0;color:#555;">Date</td><td style="padding:4px 0;font-weight:600;">{tournamentDate}</td></tr>
                             <tr><td style="padding:4px 0;color:#555;">Location</td><td style="padding:4px 0;font-weight:600;">{location}{golfCourse}</td></tr>
-                            {flightLine}
-                            <tr><td style="padding:4px 0;color:#555;">Entry Fee</td><td style="padding:4px 0;font-weight:600;">{registration.RegistrationFee:C}</td></tr>
+                            {flightLine}                            {practiceRoundLine}                            <tr><td style="padding:4px 0;color:#555;">Entry Fee</td><td style="padding:4px 0;font-weight:600;">{registration.RegistrationFee:C}</td></tr>
                             <tr><td style="padding:4px 0;color:#555;">Transaction</td><td style="padding:4px 0;font-weight:600;">{transactionReference}</td></tr>
                             <tr><td style="padding:4px 0;color:#555;">Registered At</td><td style="padding:4px 0;font-weight:600;">{registration.RegistrationDate:yyyy-MM-dd HH:mm} UTC</td></tr>
                           </table>

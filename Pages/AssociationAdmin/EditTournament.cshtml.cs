@@ -51,6 +51,8 @@ namespace GolfAssociationCommunity.Pages.AssociationAdmin
             public string? Location { get; set; }
             public string? GolfCourse { get; set; }
             public decimal EntryFee { get; set; }
+            public bool HasPracticeRound { get; set; }
+            [Range(0, 100000)] public decimal PracticeRoundFee { get; set; }
             public int MaxPlayers { get; set; }
             public TournamentStatus Status { get; set; }
         }
@@ -96,6 +98,8 @@ namespace GolfAssociationCommunity.Pages.AssociationAdmin
                 Location = tournament.Location,
                 GolfCourse = tournament.GolfCourse,
                 EntryFee = tournament.EntryFee,
+                HasPracticeRound = tournament.HasPracticeRound,
+                PracticeRoundFee = tournament.PracticeRoundFee,
                 MaxPlayers = tournament.MaxPlayers,
                 Status = tournament.Status
             };
@@ -143,6 +147,8 @@ namespace GolfAssociationCommunity.Pages.AssociationAdmin
                 Location = Input.Location,
                 GolfCourse = Input.GolfCourse,
                 EntryFee = Input.EntryFee,
+                HasPracticeRound = Input.HasPracticeRound,
+                PracticeRoundFee = Input.HasPracticeRound ? Input.PracticeRoundFee : 0,
                 MaxPlayers = Input.MaxPlayers,
                 Status = Input.Status
             };

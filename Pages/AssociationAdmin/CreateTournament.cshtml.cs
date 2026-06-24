@@ -55,6 +55,11 @@ namespace GolfAssociationCommunity.Pages.AssociationAdmin
             [Range(0, 100000)]
             public decimal EntryFee { get; set; }
 
+            public bool HasPracticeRound { get; set; }
+
+            [Range(0, 100000)]
+            public decimal PracticeRoundFee { get; set; }
+
             [Range(1, 10000)]
             public int MaxPlayers { get; set; } = 100;
 
@@ -102,6 +107,8 @@ namespace GolfAssociationCommunity.Pages.AssociationAdmin
                 Location = Input.Location,
                 GolfCourse = Input.GolfCourse,
                 EntryFee = Input.EntryFee,
+                HasPracticeRound = Input.HasPracticeRound,
+                PracticeRoundFee = Input.HasPracticeRound ? Input.PracticeRoundFee : 0,
                 MaxPlayers = Input.MaxPlayers,
                 Status = Input.Status
             };

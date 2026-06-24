@@ -65,6 +65,10 @@
                             <h3 class="form-section-title">Registration Details</h3>
                             <div class="form-meta">
                                 <span class="pill">Entry Fee: @Model.Tournament.EntryFee.ToString("C")</span>
+                                @if (Model.Tournament.HasPracticeRound)
+                                {
+                                    <span class="pill">Practice Round: @Model.Tournament.PracticeRoundFee.ToString("C")</span>
+                                }
                                 <span class="pill">Spots: @Model.RegistrationCount / @Model.Tournament.MaxPlayers</span>
                             </div>
 
@@ -97,6 +101,15 @@
                                             }
                                         </select>
                                         <span asp-validation-for="Input.FlightId" class="text-danger"></span>
+                                    </div>
+                                }
+                                @if (Model.Tournament.HasPracticeRound)
+                                {
+                                    <div class="full">
+                                        <label style="display:flex;align-items:center;gap:.6rem;cursor:pointer;">
+                                            <input asp-for="Input.IncludePracticeRound" id="includePracticeRound" style="width:auto;" />
+                                            <span>Add Practice Round — <strong>@Model.Tournament.PracticeRoundFee.ToString("C")</strong></span>
+                                        </label>
                                     </div>
                                 }
                             </div>
@@ -156,10 +169,32 @@
                         </div>
 
                         <div class="form-actions">
-                            <button type="submit" class="btn">Pay and Register</button>
+                            <button type="submit" class="btn">
+                                Pay and Register
+                                @if (Model.Tournament.HasPracticeRound)
+                                {
+                                    <span id="totalFeeDisplay"> — @Model.Tournament.EntryFee.ToString("C")</span>
+                                }
+                            </button>
                         </div>
                     </div>
                 </form>
+                @if (Model.Tournament.HasPracticeRound)
+                {
+                    <script>
+                        (function () {
+                            var entryFee = @Model.Tournament.EntryFee;
+                            var practiceRoundFee = @Model.Tournament.PracticeRoundFee;
+                            var cb = document.getElementById('includePracticeRound');
+                            var display = document.getElementById('totalFeeDisplay');
+                            if (!cb || !display) return;
+                            cb.addEventListener('change', function () {
+                                var total = entryFee + (this.checked ? practiceRoundFee : 0);
+                                display.textContent = ' \u2014 $' + total.toFixed(2);
+                            });
+                        })();
+                    </script>
+                }
             }
             else
             {

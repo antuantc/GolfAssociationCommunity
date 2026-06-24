@@ -174,6 +174,8 @@ namespace GolfAssociationCommunity.Models
         public string? Location { get; set; }
         public string? GolfCourse { get; set; }
         public decimal EntryFee { get; set; }
+        public bool HasPracticeRound { get; set; }
+        public decimal PracticeRoundFee { get; set; }
         public int MaxPlayers { get; set; }
         public TournamentStatus Status { get; set; } = TournamentStatus.Scheduled;
         public DateTime CreatedAt { get; set; }
@@ -214,6 +216,7 @@ namespace GolfAssociationCommunity.Models
         public string? Flight { get; set; }
         public int? TournamentFlightId { get; set; }
         public TournamentFlight? TournamentFlight { get; set; }
+        public bool IncludesPracticeRound { get; set; }
     }
 
     public class PlayerScore

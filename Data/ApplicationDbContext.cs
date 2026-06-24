@@ -135,6 +135,10 @@ namespace GolfAssociationCommunity.Data
                 .HasPrecision(18, 2);
 
             builder.Entity<Tournament>()
+                .Property(t => t.PracticeRoundFee)
+                .HasPrecision(18, 2);
+
+            builder.Entity<Tournament>()
                 .HasMany(t => t.PlayerScores)
                 .WithOne(ps => ps.Tournament)
                 .HasForeignKey(ps => ps.TournamentId)

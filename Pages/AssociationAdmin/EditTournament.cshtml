@@ -49,6 +49,18 @@
                 <input asp-for="Input.EntryFee" class="form-control" />
             </div>
             <div>
+                <label asp-for="Input.HasPracticeRound">Practice Round</label>
+                <div style="display:flex;align-items:center;gap:.5rem;margin-top:.4rem;">
+                    <input asp-for="Input.HasPracticeRound" id="hasPracticeRoundEdit" />
+                    <span class="field-note">Offer a practice round option</span>
+                </div>
+            </div>
+            <div id="practiceRoundFeeEdit" style="display:@(Model.Input.HasPracticeRound ? "block" : "none");">
+                <label asp-for="Input.PracticeRoundFee">Practice Round Fee</label>
+                <input asp-for="Input.PracticeRoundFee" class="form-control" inputmode="decimal" />
+                <span asp-validation-for="Input.PracticeRoundFee" class="text-danger"></span>
+            </div>
+            <div>
                 <label asp-for="Input.MaxPlayers"></label>
                 <input asp-for="Input.MaxPlayers" class="form-control" />
             </div>
@@ -133,4 +145,10 @@
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
+    <script>
+        document.getElementById('hasPracticeRoundEdit').addEventListener('change', function () {
+            document.getElementById('practiceRoundFeeEdit').style.display = this.checked ? 'block' : 'none';
+        });
+    </script>
+}
 }

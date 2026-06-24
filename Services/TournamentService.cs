@@ -173,6 +173,8 @@ namespace GolfAssociationCommunity.Services
                 existing.Location = tournament.Location;
                 existing.GolfCourse = tournament.GolfCourse;
                 existing.EntryFee = tournament.EntryFee;
+                existing.HasPracticeRound = tournament.HasPracticeRound;
+                existing.PracticeRoundFee = tournament.PracticeRoundFee;
                 existing.MaxPlayers = tournament.MaxPlayers;
                 existing.UpdatedAt = DateTime.UtcNow;
 
