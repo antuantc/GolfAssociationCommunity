@@ -85,7 +85,6 @@ namespace GolfAssociationCommunity.Services
                 var leaderboards = await _context.Leaderboards
                     .Where(l => l.TournamentId == tournamentId)
                     .Include(l => l.AssociationPlayer)
-                    .Include(l => l.Tournament)
                     .OrderBy(l => l.Position)
                     .ToListAsync();
 

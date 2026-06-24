@@ -100,7 +100,12 @@
                 @foreach (var flight in Model.Flights)
                 {
                     <tr>
-                        <td>@flight.DisplayOrder</td>
+                        <td>
+                            <form method="post" asp-page-handler="UpdateFlightOrder" asp-route-id="@Model.TournamentId" asp-route-flightId="@flight.Id" class="inline-form" style="display:flex;gap:0.35rem;align-items:center;">
+                                <input type="number" name="displayOrder" value="@flight.DisplayOrder" class="form-control" style="width:5rem;" aria-label="Display order for @flight.Name" />
+                                <button type="submit" class="link-button">Save</button>
+                            </form>
+                        </td>
                         <td>@flight.Name</td>
                         <td>@(flight.Description ?? "—")</td>
                         <td>

@@ -209,5 +209,24 @@ namespace GolfAssociationCommunity.Pages.AssociationAdmin
             TempData["SuccessMessage"] = $"Flight \"{flight.Name}\" removed.";
             return RedirectToPage(new { id });
         }
+
+        public async Task<IActionResult> OnPostUpdateFlightOrderAsync(int id, int flightId, int displayOrder)
+        {
+            var contextResult = await LoadAssociationContextAsync();
+            if (contextResult is not null) return contextResult;
+
+            var flight = await Context.TournamentFlights
+                .FirstOrDefaultAsync(f => f.Id == flightId && f.TournamentId == id);
+            if (flight is null) return NotFound();
+
+            var tournament = await Context.Tournaments
+                .FirstOrDefaultAsync(t => t.Id == id && t.GolfAssociationId == CurrentAssociation.Id);
+            if (tournament is null) return NotFound();
+
+            flight.DisplayOrder = displayOrder;
+            await Context.SaveChangesAsync();
+            TempData["SuccessMessage"] = $"Display order for \"{flight.Name}\" updated.";
+            return RedirectToPage(new { id });
+        }
     }
 }

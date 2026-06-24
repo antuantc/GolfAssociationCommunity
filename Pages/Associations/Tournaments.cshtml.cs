@@ -1,18 +1,20 @@
+using GolfAssociationCommunity.Data;
 using GolfAssociationCommunity.Models;
 using GolfAssociationCommunity.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.EntityFrameworkCore;
 
 namespace GolfAssociationCommunity.Pages.Associations
 {
     public class TournamentsModel : PageModel
     {
-        private readonly IAssociationService _associationService;
+        private readonly ApplicationDbContext _context;
         private readonly ITournamentService _tournamentService;
 
-        public TournamentsModel(IAssociationService associationService, ITournamentService tournamentService)
+        public TournamentsModel(ApplicationDbContext context, ITournamentService tournamentService)
         {
-            _associationService = associationService;
+            _context = context;
             _tournamentService = tournamentService;
         }
 
@@ -22,11 +24,11 @@ namespace GolfAssociationCommunity.Pages.Associations
 
         public async Task<IActionResult> OnGetAsync(int associationId)
         {
-            Association = await _associationService.GetAssociationByIdAsync(associationId);
+            // Lean query — no navigation properties needed; tournaments come from service
+            Association = await _context.GolfAssociations
+                .FirstOrDefaultAsync(ga => ga.Id == associationId && ga.IsActive);
             if (Association == null)
-            {
                 return NotFound();
-            }
 
             ViewData["PublicAssociationId"] = Association.Id;
             ViewData["PublicAssociationName"] = Association.Name;

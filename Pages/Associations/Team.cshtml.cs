@@ -1,17 +1,18 @@
+using GolfAssociationCommunity.Data;
 using GolfAssociationCommunity.Models;
-using GolfAssociationCommunity.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.EntityFrameworkCore;
 
 namespace GolfAssociationCommunity.Pages.Associations
 {
     public class TeamModel : PageModel
     {
-        private readonly IAssociationService _associationService;
+        private readonly ApplicationDbContext _context;
 
-        public TeamModel(IAssociationService associationService)
+        public TeamModel(ApplicationDbContext context)
         {
-            _associationService = associationService;
+            _context = context;
         }
 
         public GolfAssociation? Association { get; private set; }
@@ -19,7 +20,10 @@ namespace GolfAssociationCommunity.Pages.Associations
 
         public async Task<IActionResult> OnGetAsync(int associationId)
         {
-            Association = await _associationService.GetAssociationByIdAsync(associationId);
+            // Only load officers — no Members, Players, Tournaments, etc.
+            Association = await _context.GolfAssociations
+                .Include(ga => ga.OfficersAndMembers)
+                .FirstOrDefaultAsync(ga => ga.Id == associationId && ga.IsActive);
             if (Association == null)
                 return NotFound();
 
@@ -28,10 +32,14 @@ namespace GolfAssociationCommunity.Pages.Associations
             ViewData["PublicThemeKey"] = BrandingThemes.Normalize(Association.ThemeKey);
             ViewData["PublicAssociationLogoUrl"] = Association.LogoUrl;
 
-            var nextTmmt = Association.Tournaments
-                .Where(t => t.StartDate >= DateTime.UtcNow && t.Status != TournamentStatus.Cancelled)
+            // Scalar query for next tournament header — avoids loading all tournaments
+            var nextTmmt = await _context.Tournaments
+                .Where(t => t.GolfAssociationId == associationId
+                         && t.StartDate >= DateTime.UtcNow
+                         && t.Status != TournamentStatus.Cancelled)
                 .OrderBy(t => t.StartDate)
-                .FirstOrDefault();
+                .Select(t => new { t.Id, t.Name, t.StartDate, t.GolfCourse, t.Location })
+                .FirstOrDefaultAsync();
             if (nextTmmt != null)
             {
                 ViewData["NextTournamentName"] = nextTmmt.Name;
