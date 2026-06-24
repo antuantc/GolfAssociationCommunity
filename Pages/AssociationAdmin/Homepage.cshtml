@@ -182,7 +182,7 @@
 </section>
 
 @* Sponsors *@
-<section class="section-panel">
+<section id="sponsors" class="section-panel">
     <h2>Sponsors</h2>
     <p>Add sponsor logos to your homepage. These are display-only entries separate from payment packages.</p>
 
@@ -205,7 +205,7 @@
                 </div>
                 <div>
                     <label asp-for="NewSponsor.DisplayOrder">Display Order</label>
-                    <input asp-for="NewSponsor.DisplayOrder" type="number" class="form-control" value="0" />
+                    <input asp-for="NewSponsor.DisplayOrder" type="number" class="form-control" />
                 </div>
                 <div class="full">
                     <label asp-for="SponsorLogo">Logo <span class="field-note">JPG/PNG/WebP, max 5 MB (optional)</span></label>
@@ -218,6 +218,54 @@
             <button type="submit" class="btn">Add Sponsor</button>
         </div>
     </form>
+
+    @if (Model.EditSponsorId.HasValue)
+    {
+        var editTarget = Model.Sponsors.FirstOrDefault(s => s.Id == Model.EditSponsorId.Value);
+        @if (editTarget != null)
+        {
+            <div id="sponsors" class="form-shell" style="margin-bottom:1.5rem;border:2px solid var(--color-primary,#2563eb);border-radius:8px;padding:1.25rem;">
+                <h3 style="margin-top:0;">Editing: @editTarget.Name</h3>
+                <form method="post" asp-page-handler="EditSponsor" asp-route-id="@Model.EditSponsorId" enctype="multipart/form-data">
+                    <div asp-validation-summary="ModelOnly" class="message error"></div>
+                    <div class="form-section">
+                        <div class="form-grid">
+                            <div>
+                                <label asp-for="EditSponsor.Name">Sponsor Name</label>
+                                <input asp-for="EditSponsor.Name" class="form-control" />
+                                <span asp-validation-for="EditSponsor.Name" class="text-danger"></span>
+                            </div>
+                            <div>
+                                <label asp-for="EditSponsor.Category">Category <span class="field-note">e.g. FOOD, INSURANCE</span></label>
+                                <input asp-for="EditSponsor.Category" class="form-control" />
+                            </div>
+                            <div>
+                                <label asp-for="EditSponsor.Website">Website (optional)</label>
+                                <input asp-for="EditSponsor.Website" type="url" class="form-control" />
+                            </div>
+                            <div>
+                                <label asp-for="EditSponsor.DisplayOrder">Display Order</label>
+                                <input asp-for="EditSponsor.DisplayOrder" type="number" class="form-control" />
+                            </div>
+                            <div class="full">
+                                <label asp-for="EditSponsorLogo">Replace Logo <span class="field-note">JPG/PNG/WebP, max 5 MB (optional)</span></label>
+                                @if (!string.IsNullOrWhiteSpace(editTarget.LogoUrl))
+                                {
+                                    <img src="@editTarget.LogoUrl" alt="@editTarget.Name" style="display:block;height:48px;margin-bottom:.5rem;object-fit:contain;" />
+                                }
+                                <input asp-for="EditSponsorLogo" type="file" accept="image/*" class="form-control" />
+                                <span asp-validation-for="EditSponsorLogo" class="text-danger"></span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-actions">
+                        <button type="submit" class="btn">Save Changes</button>
+                        <a href="~/AssociationAdmin/Homepage#sponsors" class="btn btn-secondary">Cancel</a>
+                    </div>
+                </form>
+            </div>
+        }
+    }
 
     @if (Model.Sponsors.Count == 0)
     {
@@ -262,10 +310,13 @@
                             </td>
                             <td>@s.DisplayOrder</td>
                             <td>
-                                <form method="post" asp-page-handler="DeleteSponsor" asp-route-id="@s.Id"
-                                      onsubmit="return confirm('Remove @s.Name?')">
-                                    <button type="submit" class="btn btn-secondary">Remove</button>
-                                </form>
+                                <div style="display:flex;gap:.5rem;flex-wrap:wrap;">
+                                    <a href="?editId=@s.Id#sponsors" class="btn btn-secondary">Edit</a>
+                                    <form method="post" asp-page-handler="DeleteSponsor" asp-route-id="@s.Id"
+                                          onsubmit="return confirm('Remove @s.Name?')">
+                                        <button type="submit" class="btn btn-secondary">Remove</button>
+                                    </form>
+                                </div>
                             </td>
                         </tr>
                     }
@@ -275,30 +326,145 @@
     }
 </section>
 
-@* Charity *@
-<section class="section-panel">
-    <h2>Charity</h2>
-    <p>Highlight a charity your association supports on the public homepage.</p>
+@* Charities *@
+<section id="charities" class="section-panel">
+    <h2>Charities</h2>
+    <p>Add charities your association supports. Each entry appears on the public homepage.</p>
 
-    <form method="post" asp-page-handler="SaveCharity" class="form-shell">
+    <form method="post" asp-page-handler="AddCharity" enctype="multipart/form-data" class="form-shell" style="margin-bottom:1.5rem;">
+        <div asp-validation-summary="ModelOnly" class="message error"></div>
         <div class="form-section">
             <div class="form-grid">
                 <div>
-                    <label asp-for="Charity.CharityName">Charity Name</label>
-                    <input asp-for="Charity.CharityName" class="form-control" placeholder="Local Youth Golf Foundation" />
+                    <label asp-for="NewCharity.Name">Charity Name</label>
+                    <input asp-for="NewCharity.Name" class="form-control" placeholder="Local Youth Golf Foundation" />
+                    <span asp-validation-for="NewCharity.Name" class="text-danger"></span>
                 </div>
                 <div>
-                    <label asp-for="Charity.CharityUrl">Charity Website (optional)</label>
-                    <input asp-for="Charity.CharityUrl" type="url" class="form-control" placeholder="https://charity.example.com" />
+                    <label asp-for="NewCharity.Url">Website (optional)</label>
+                    <input asp-for="NewCharity.Url" type="url" class="form-control" placeholder="https://charity.example.com" />
+                </div>
+                <div>
+                    <label asp-for="NewCharity.DisplayOrder">Display Order</label>
+                    <input asp-for="NewCharity.DisplayOrder" type="number" class="form-control" />
                 </div>
                 <div class="full">
-                    <label asp-for="Charity.CharityDescription">Description</label>
-                    <textarea asp-for="Charity.CharityDescription" class="form-control" rows="3" placeholder="We proudly support..."></textarea>
+                    <label asp-for="NewCharity.Description">Description</label>
+                    <textarea asp-for="NewCharity.Description" class="form-control" rows="3" placeholder="We proudly support..."></textarea>
+                </div>
+                <div class="full">
+                    <label asp-for="CharityImage">Photo <span class="field-note">JPG/PNG/WebP, max 5 MB (optional)</span></label>
+                    <input asp-for="CharityImage" type="file" accept="image/*" class="form-control" />
+                    <span asp-validation-for="CharityImage" class="text-danger"></span>
                 </div>
             </div>
         </div>
         <div class="form-actions">
-            <button type="submit" class="btn">Save Charity</button>
+            <button type="submit" class="btn">Add Charity</button>
         </div>
     </form>
+
+    @if (Model.EditCharityId.HasValue)
+    {
+        var editTarget = Model.Charities.FirstOrDefault(c => c.Id == Model.EditCharityId.Value);
+        @if (editTarget != null)
+        {
+            <div class="form-shell" style="margin-bottom:1.5rem;border:2px solid var(--color-primary,#2563eb);border-radius:8px;padding:1.25rem;">
+                <h3 style="margin-top:0;">Editing: @editTarget.Name</h3>
+                <form method="post" asp-page-handler="EditCharity" asp-route-id="@Model.EditCharityId" enctype="multipart/form-data">
+                    <div asp-validation-summary="ModelOnly" class="message error"></div>
+                    <div class="form-section">
+                        <div class="form-grid">
+                            <div>
+                                <label asp-for="EditCharity.Name">Charity Name</label>
+                                <input asp-for="EditCharity.Name" class="form-control" />
+                                <span asp-validation-for="EditCharity.Name" class="text-danger"></span>
+                            </div>
+                            <div>
+                                <label asp-for="EditCharity.Url">Website (optional)</label>
+                                <input asp-for="EditCharity.Url" type="url" class="form-control" />
+                            </div>
+                            <div>
+                                <label asp-for="EditCharity.DisplayOrder">Display Order</label>
+                                <input asp-for="EditCharity.DisplayOrder" type="number" class="form-control" />
+                            </div>
+                            <div class="full">
+                                <label asp-for="EditCharity.Description">Description</label>
+                                <textarea asp-for="EditCharity.Description" class="form-control" rows="3"></textarea>
+                            </div>
+                            <div class="full">
+                                <label asp-for="EditCharityImage">Replace Photo <span class="field-note">JPG/PNG/WebP, max 5 MB (optional)</span></label>
+                                @if (!string.IsNullOrWhiteSpace(editTarget.ImageUrl))
+                                {
+                                    <img src="@editTarget.ImageUrl" alt="@editTarget.Name" style="display:block;height:64px;margin-bottom:.5rem;object-fit:contain;" />
+                                }
+                                <input asp-for="EditCharityImage" type="file" accept="image/*" class="form-control" />
+                                <span asp-validation-for="EditCharityImage" class="text-danger"></span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-actions">
+                        <button type="submit" class="btn">Save Changes</button>
+                        <a href="~/AssociationAdmin/Homepage#charities" class="btn btn-secondary">Cancel</a>
+                    </div>
+                </form>
+            </div>
+        }
+    }
+
+    @if (Model.Charities.Count == 0)
+    {
+        <p>No charities added yet.</p>
+    }
+    else
+    {
+        <div class="table-scroll">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Photo</th>
+                        <th>Name</th>
+                        <th>Website</th>
+                        <th>Order</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var c in Model.Charities)
+                    {
+                        <tr>
+                            <td>
+                                @if (!string.IsNullOrWhiteSpace(c.ImageUrl))
+                                {
+                                    <img src="@c.ImageUrl" alt="@c.Name" style="height:40px;width:40px;object-fit:contain;" />
+                                }
+                                else
+                                {
+                                    <span class="sponsor-initials-sm">@(c.Name.Length >= 2 ? c.Name[..2].ToUpperInvariant() : c.Name.ToUpperInvariant())</span>
+                                }
+                            </td>
+                            <td>@c.Name</td>
+                            <td>
+                                @if (!string.IsNullOrWhiteSpace(c.Url))
+                                {
+                                    <a href="@c.Url" target="_blank" rel="noopener noreferrer">@c.Url</a>
+                                }
+                                else { <span>—</span> }
+                            </td>
+                            <td>@c.DisplayOrder</td>
+                            <td>
+                                <div style="display:flex;gap:.5rem;flex-wrap:wrap;">
+                                    <a href="?editCharityId=@c.Id#charities" class="btn btn-secondary">Edit</a>
+                                    <form method="post" asp-page-handler="DeleteCharity" asp-route-id="@c.Id"
+                                          onsubmit="return confirm('Remove @c.Name?')">
+                                        <button type="submit" class="btn btn-secondary">Remove</button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
 </section>

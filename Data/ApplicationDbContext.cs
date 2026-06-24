@@ -16,6 +16,7 @@ namespace GolfAssociationCommunity.Data
         public DbSet<AssociationOfficer> AssociationOfficers { get; set; } = null!;
         public DbSet<AssociationMedia> AssociationMedia { get; set; } = null!;
         public DbSet<AssociationSponsor> AssociationSponsors { get; set; } = null!;
+        public DbSet<AssociationCharity> AssociationCharities { get; set; } = null!;
         public DbSet<Tournament> Tournaments { get; set; } = null!;
         public DbSet<SponsorshipPackage> SponsorshipPackages { get; set; } = null!;
         public DbSet<SponsorshipPayment> SponsorshipPayments { get; set; } = null!;
@@ -69,6 +70,12 @@ namespace GolfAssociationCommunity.Data
                 .HasMany(ga => ga.SponsorshipPackages)
                 .WithOne(sp => sp.GolfAssociation)
                 .HasForeignKey(sp => sp.GolfAssociationId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            builder.Entity<GolfAssociation>()
+                .HasMany(ga => ga.Charities)
+                .WithOne(c => c.GolfAssociation)
+                .HasForeignKey(c => c.GolfAssociationId)
                 .OnDelete(DeleteBehavior.Cascade);
 
             builder.Entity<SponsorshipPackage>()

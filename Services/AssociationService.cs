@@ -45,6 +45,7 @@ namespace GolfAssociationCommunity.Services
                     .Include(ga => ga.OfficersAndMembers)
                     .Include(ga => ga.MediaItems)
                     .Include(ga => ga.Sponsors)
+                    .Include(ga => ga.Charities)
                     .FirstOrDefaultAsync(ga => ga.Id == id && ga.IsActive);
             }
             catch (Exception ex)

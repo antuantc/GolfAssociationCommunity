@@ -48,13 +48,21 @@ namespace GolfAssociationCommunity.Pages.AssociationAdmin
         // Sponsors
         [BindProperty] public SponsorInput NewSponsor { get; set; } = new();
         [BindProperty] public IFormFile? SponsorLogo { get; set; }
+        [BindProperty] public SponsorInput EditSponsor { get; set; } = new();
+        [BindProperty] public IFormFile? EditSponsorLogo { get; set; }
+        public int? EditSponsorId { get; private set; }
 
-        // Charity
-        [BindProperty] public CharityInput Charity { get; set; } = new();
+        // Charities
+        [BindProperty] public CharityInput NewCharity { get; set; } = new();
+        [BindProperty] public IFormFile? CharityImage { get; set; }
+        [BindProperty] public CharityInput EditCharity { get; set; } = new();
+        [BindProperty] public IFormFile? EditCharityImage { get; set; }
+        public int? EditCharityId { get; private set; }
 
         // Display data
         public List<AssociationMedia> MediaItems { get; private set; } = new();
         public List<AssociationSponsor> Sponsors { get; private set; } = new();
+        public List<AssociationCharity> Charities { get; private set; } = new();
         public GolfAssociation? AssociationData { get; private set; }
 
         // ── Input models ─────────────────────────────────────────────────
@@ -79,9 +87,10 @@ namespace GolfAssociationCommunity.Pages.AssociationAdmin
 
         public class CharityInput
         {
-            [StringLength(160)] public string? CharityName { get; set; }
-            [StringLength(1000)] public string? CharityDescription { get; set; }
-            [StringLength(500)] public string? CharityUrl { get; set; }
+            [Required][StringLength(160)] public string Name { get; set; } = string.Empty;
+            [StringLength(1000)] public string? Description { get; set; }
+            [StringLength(500)] public string? Url { get; set; }
+            [Range(0, 1000)] public int DisplayOrder { get; set; }
         }
 
         // ── Handlers ─────────────────────────────────────────────────────
@@ -101,12 +110,47 @@ namespace GolfAssociationCommunity.Pages.AssociationAdmin
                 ExistingHeroImageUrl = AssociationData.HeroImageUrl,
                 ExistingHeroVideoUrl = AssociationData.HeroVideoUrl
             };
-            Charity = new CharityInput
+
+            // Auto-increment display order for new sponsor
+            NewSponsor.DisplayOrder = Sponsors.Count > 0 ? Sponsors.Max(s => s.DisplayOrder) + 1 : 0;
+
+            // Populate edit form if a sponsor edit is requested
+            if (Request.Query.TryGetValue("editId", out var editIdStr) && int.TryParse(editIdStr, out var editId))
             {
-                CharityName = AssociationData.CharityName,
-                CharityDescription = AssociationData.CharityDescription,
-                CharityUrl = AssociationData.CharityUrl
-            };
+                EditSponsorId = editId;
+                var editing = Sponsors.FirstOrDefault(s => s.Id == editId);
+                if (editing != null)
+                {
+                    EditSponsor = new SponsorInput
+                    {
+                        Name = editing.Name,
+                        Category = editing.Category,
+                        Website = editing.Website,
+                        DisplayOrder = editing.DisplayOrder
+                    };
+                }
+            }
+
+            // Auto-increment display order for new charity
+            NewCharity.DisplayOrder = Charities.Count > 0 ? Charities.Max(c => c.DisplayOrder) + 1 : 0;
+
+            // Populate edit form if a charity edit is requested
+            if (Request.Query.TryGetValue("editCharityId", out var editCharityIdStr) && int.TryParse(editCharityIdStr, out var editCharityId))
+            {
+                EditCharityId = editCharityId;
+                var editingCharity = Charities.FirstOrDefault(c => c.Id == editCharityId);
+                if (editingCharity != null)
+                {
+                    EditCharity = new CharityInput
+                    {
+                        Name = editingCharity.Name,
+                        Description = editingCharity.Description,
+                        Url = editingCharity.Url,
+                        DisplayOrder = editingCharity.DisplayOrder
+                    };
+                }
+            }
+
             return Page();
         }
 
@@ -295,6 +339,11 @@ namespace GolfAssociationCommunity.Pages.AssociationAdmin
                     ModelState.AddModelError(nameof(SponsorLogo), "Only JPG, PNG, GIF, or WebP images are allowed.");
             }
 
+            // Only validate fields belonging to this form
+            var addSponsorPrefixes = new[] { "NewSponsor", nameof(SponsorLogo) };
+            foreach (var key in ModelState.Keys.Where(k => !addSponsorPrefixes.Any(p => k.StartsWith(p))).ToList())
+                ModelState.Remove(key);
+
             if (!ModelState.IsValid) { await LoadPageDataAsync(); return Page(); }
 
             string? logoUrl = null;
@@ -314,6 +363,54 @@ namespace GolfAssociationCommunity.Pages.AssociationAdmin
             });
             await Context.SaveChangesAsync();
             TempData["SuccessMessage"] = $"{NewSponsor.Name} added as sponsor.";
+            return LocalRedirect(Url.Page("/AssociationAdmin/Homepage") + "#sponsors");
+        }
+
+        // ── Edit sponsor ─────────────────────────────────────────────────
+
+        public async Task<IActionResult> OnPostEditSponsorAsync(int id)
+        {
+            var ctx = await LoadAssociationContextAsync();
+            if (ctx is not null) return ctx;
+
+            if (EditSponsorLogo != null)
+            {
+                if (EditSponsorLogo.Length > MaxFileSizeBytes)
+                    ModelState.AddModelError(nameof(EditSponsorLogo), "Logo must be 5 MB or smaller.");
+                var ext = Path.GetExtension(EditSponsorLogo.FileName);
+                if (!AllowedImageExtensions.Contains(ext))
+                    ModelState.AddModelError(nameof(EditSponsorLogo), "Only JPG, PNG, GIF, or WebP images are allowed.");
+            }
+
+            // Only validate fields belonging to this form
+            var editSponsorPrefixes = new[] { "EditSponsor", nameof(EditSponsorLogo) };
+            foreach (var key in ModelState.Keys.Where(k => !editSponsorPrefixes.Any(p => k.StartsWith(p))).ToList())
+                ModelState.Remove(key);
+
+            if (!ModelState.IsValid)
+            {
+                EditSponsorId = id;
+                await LoadPageDataAsync();
+                return Page();
+            }
+
+            var sponsor = await Context.AssociationSponsors
+                .FirstOrDefaultAsync(s => s.Id == id && s.GolfAssociationId == CurrentAssociation.Id);
+            if (sponsor is null) return NotFound();
+
+            if (EditSponsorLogo != null && EditSponsorLogo.Length > 0)
+            {
+                DeleteFile(sponsor.LogoUrl);
+                sponsor.LogoUrl = await SaveFileAsync(EditSponsorLogo, "sponsors");
+            }
+
+            sponsor.Name = EditSponsor.Name.Trim();
+            sponsor.Category = string.IsNullOrWhiteSpace(EditSponsor.Category) ? null : EditSponsor.Category.Trim().ToUpperInvariant();
+            sponsor.Website = string.IsNullOrWhiteSpace(EditSponsor.Website) ? null : EditSponsor.Website.Trim();
+            sponsor.DisplayOrder = EditSponsor.DisplayOrder;
+
+            await Context.SaveChangesAsync();
+            TempData["SuccessMessage"] = $"{sponsor.Name} updated.";
             return RedirectToPage();
         }
 
@@ -335,24 +432,112 @@ namespace GolfAssociationCommunity.Pages.AssociationAdmin
             return RedirectToPage();
         }
 
-        // ── Save charity ─────────────────────────────────────────────────
+        // ── Add charity ──────────────────────────────────────────────────
 
-        public async Task<IActionResult> OnPostSaveCharityAsync()
+        public async Task<IActionResult> OnPostAddCharityAsync()
         {
             var ctx = await LoadAssociationContextAsync();
             if (ctx is not null) return ctx;
 
-            var assoc = await Context.GolfAssociations.FindAsync(CurrentAssociation.Id);
-            if (assoc == null) return NotFound();
+            if (CharityImage != null)
+            {
+                if (CharityImage.Length > MaxFileSizeBytes)
+                    ModelState.AddModelError(nameof(CharityImage), "Image must be 5 MB or smaller.");
+                var ext = Path.GetExtension(CharityImage.FileName);
+                if (!AllowedImageExtensions.Contains(ext))
+                    ModelState.AddModelError(nameof(CharityImage), "Only JPG, PNG, GIF, or WebP images are allowed.");
+            }
 
-            assoc.CharityName = string.IsNullOrWhiteSpace(Charity.CharityName) ? null : Charity.CharityName.Trim();
-            assoc.CharityDescription = string.IsNullOrWhiteSpace(Charity.CharityDescription) ? null : Charity.CharityDescription.Trim();
-            assoc.CharityUrl = string.IsNullOrWhiteSpace(Charity.CharityUrl) ? null : Charity.CharityUrl.Trim();
-            assoc.UpdatedAt = DateTime.UtcNow;
+            var addCharityPrefixes = new[] { "NewCharity", nameof(CharityImage) };
+            foreach (var key in ModelState.Keys.Where(k => !addCharityPrefixes.Any(p => k.StartsWith(p))).ToList())
+                ModelState.Remove(key);
+
+            if (!ModelState.IsValid) { await LoadPageDataAsync(); return Page(); }
+
+            string? imageUrl = null;
+            if (CharityImage != null && CharityImage.Length > 0)
+                imageUrl = await SaveFileAsync(CharityImage, "charities");
+
+            Context.AssociationCharities.Add(new AssociationCharity
+            {
+                GolfAssociationId = CurrentAssociation.Id,
+                Name = NewCharity.Name.Trim(),
+                Description = string.IsNullOrWhiteSpace(NewCharity.Description) ? null : NewCharity.Description.Trim(),
+                Url = string.IsNullOrWhiteSpace(NewCharity.Url) ? null : NewCharity.Url.Trim(),
+                ImageUrl = imageUrl,
+                DisplayOrder = NewCharity.DisplayOrder,
+                IsActive = true,
+                CreatedAt = DateTime.UtcNow
+            });
+            await Context.SaveChangesAsync();
+            TempData["SuccessMessage"] = $"{NewCharity.Name} added."
+;
+            return LocalRedirect(Url.Page("/AssociationAdmin/Homepage") + "#charities");
+        }
+
+        // ── Edit charity ───────────────────────────────────────────────
+
+        public async Task<IActionResult> OnPostEditCharityAsync(int id)
+        {
+            var ctx = await LoadAssociationContextAsync();
+            if (ctx is not null) return ctx;
+
+            if (EditCharityImage != null)
+            {
+                if (EditCharityImage.Length > MaxFileSizeBytes)
+                    ModelState.AddModelError(nameof(EditCharityImage), "Image must be 5 MB or smaller.");
+                var ext = Path.GetExtension(EditCharityImage.FileName);
+                if (!AllowedImageExtensions.Contains(ext))
+                    ModelState.AddModelError(nameof(EditCharityImage), "Only JPG, PNG, GIF, or WebP images are allowed.");
+            }
+
+            var editCharityPrefixes = new[] { "EditCharity", nameof(EditCharityImage) };
+            foreach (var key in ModelState.Keys.Where(k => !editCharityPrefixes.Any(p => k.StartsWith(p))).ToList())
+                ModelState.Remove(key);
+
+            if (!ModelState.IsValid)
+            {
+                EditCharityId = id;
+                await LoadPageDataAsync();
+                return Page();
+            }
+
+            var charity = await Context.AssociationCharities
+                .FirstOrDefaultAsync(c => c.Id == id && c.GolfAssociationId == CurrentAssociation.Id);
+            if (charity is null) return NotFound();
+
+            if (EditCharityImage != null && EditCharityImage.Length > 0)
+            {
+                DeleteFile(charity.ImageUrl);
+                charity.ImageUrl = await SaveFileAsync(EditCharityImage, "charities");
+            }
+
+            charity.Name = EditCharity.Name.Trim();
+            charity.Description = string.IsNullOrWhiteSpace(EditCharity.Description) ? null : EditCharity.Description.Trim();
+            charity.Url = string.IsNullOrWhiteSpace(EditCharity.Url) ? null : EditCharity.Url.Trim();
+            charity.DisplayOrder = EditCharity.DisplayOrder;
 
             await Context.SaveChangesAsync();
-            TempData["SuccessMessage"] = "Charity details saved.";
-            return RedirectToPage();
+            TempData["SuccessMessage"] = $"{charity.Name} updated.";
+            return LocalRedirect(Url.Page("/AssociationAdmin/Homepage") + "#charities");
+        }
+
+        // ── Delete charity ──────────────────────────────────────────────
+
+        public async Task<IActionResult> OnPostDeleteCharityAsync(int id)
+        {
+            var ctx = await LoadAssociationContextAsync();
+            if (ctx is not null) return ctx;
+
+            var charity = await Context.AssociationCharities
+                .FirstOrDefaultAsync(c => c.Id == id && c.GolfAssociationId == CurrentAssociation.Id);
+            if (charity == null) return NotFound();
+
+            DeleteFile(charity.ImageUrl);
+            Context.AssociationCharities.Remove(charity);
+            await Context.SaveChangesAsync();
+            TempData["SuccessMessage"] = $"{charity.Name} removed.";
+            return LocalRedirect(Url.Page("/AssociationAdmin/Homepage") + "#charities");
         }
 
         // ── Helpers ──────────────────────────────────────────────────────
@@ -368,6 +553,11 @@ namespace GolfAssociationCommunity.Pages.AssociationAdmin
                 .Where(s => s.GolfAssociationId == CurrentAssociation.Id)
                 .OrderBy(s => s.DisplayOrder)
                 .ThenBy(s => s.Name)
+                .ToListAsync();
+            Charities = await Context.AssociationCharities
+                .Where(c => c.GolfAssociationId == CurrentAssociation.Id)
+                .OrderBy(c => c.DisplayOrder)
+                .ThenBy(c => c.Name)
                 .ToListAsync();
         }
 

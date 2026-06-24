@@ -83,6 +83,7 @@ namespace GolfAssociationCommunity.Models
         public ICollection<AssociationOfficer> OfficersAndMembers { get; set; } = new List<AssociationOfficer>();
         public ICollection<AssociationMedia> MediaItems { get; set; } = new List<AssociationMedia>();
         public ICollection<AssociationSponsor> Sponsors { get; set; } = new List<AssociationSponsor>();
+        public ICollection<AssociationCharity> Charities { get; set; } = new List<AssociationCharity>();
     }
 
     public class AssociationOfficer
@@ -279,6 +280,20 @@ namespace GolfAssociationCommunity.Models
         public string? Category { get; set; }
         public string? LogoUrl { get; set; }
         public string? Website { get; set; }
+        public int DisplayOrder { get; set; }
+        public bool IsActive { get; set; } = true;
+        public DateTime CreatedAt { get; set; }
+    }
+
+    public class AssociationCharity
+    {
+        public int Id { get; set; }
+        public int GolfAssociationId { get; set; }
+        public GolfAssociation? GolfAssociation { get; set; }
+        public string Name { get; set; } = string.Empty;
+        public string? Description { get; set; }
+        public string? Url { get; set; }
+        public string? ImageUrl { get; set; }
         public int DisplayOrder { get; set; }
         public bool IsActive { get; set; } = true;
         public DateTime CreatedAt { get; set; }

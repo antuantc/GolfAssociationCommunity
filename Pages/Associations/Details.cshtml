@@ -327,24 +327,34 @@ else
         </section>
     }
 
-    @* CHARITY *@
-    @if (!string.IsNullOrWhiteSpace(assoc.CharityName))
+    @* CHARITIES *@
+    @if (assoc.Charities.Any(c => c.IsActive))
     {
-        <section class="pub-section">
-            <div class="pub-container">
-                <div class="charity-panel">
-                    <div class="charity-icon">&#9829;</div>
-                    <div>
-                        <h2 style="margin:0 0 0.5rem;">@assoc.CharityName</h2>
-                        @if (!string.IsNullOrWhiteSpace(assoc.CharityDescription)) { <p>@assoc.CharityDescription</p> }
-                        @if (!string.IsNullOrWhiteSpace(assoc.CharityUrl))
+        foreach (var charity in assoc.Charities.Where(c => c.IsActive).OrderBy(c => c.DisplayOrder))
+        {
+            <section class="pub-section">
+                <div class="pub-container">
+                    <div class="charity-panel">
+                        @if (!string.IsNullOrWhiteSpace(charity.ImageUrl))
                         {
-                            <a href="@assoc.CharityUrl" target="_blank" rel="noopener noreferrer" class="pub-btn">Learn More</a>
+                            <img src="@charity.ImageUrl" alt="@charity.Name" style="height:72px;width:72px;object-fit:contain;border-radius:8px;flex-shrink:0;" />
                         }
+                        else
+                        {
+                            <div class="charity-icon">&#9829;</div>
+                        }
+                        <div>
+                            <h2 style="margin:0 0 0.5rem;">@charity.Name</h2>
+                            @if (!string.IsNullOrWhiteSpace(charity.Description)) { <p>@charity.Description</p> }
+                            @if (!string.IsNullOrWhiteSpace(charity.Url))
+                            {
+                                <a href="@charity.Url" target="_blank" rel="noopener noreferrer" class="pub-btn">Learn More</a>
+                            }
+                        </div>
                     </div>
                 </div>
-            </div>
-        </section>
+            </section>
+        }
     }
 
     @* SPONSORS / PACKAGES ANCHOR — nav links point here *@
