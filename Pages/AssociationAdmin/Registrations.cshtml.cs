@@ -30,6 +30,7 @@ namespace GolfAssociationCommunity.Pages.AssociationAdmin
         public List<PlayerOption> AssocPlayers { get; private set; } = new();
 
         public bool IsEditing => EditId.HasValue;
+        public bool ShowForm   { get; private set; }
         public int ActiveCount    => Registrations.Count(r => r.Status == RegistrationStatus.Registered);
         public int PendingCount   => Registrations.Count(r => r.Status == RegistrationStatus.Pending);
         public int ConfirmedCount => Registrations.Count(r => r.PaymentConfirmed && r.Status == RegistrationStatus.Registered);
@@ -112,6 +113,7 @@ namespace GolfAssociationCommunity.Pages.AssociationAdmin
 
             if (!ModelState.IsValid)
             {
+                ShowForm = true;
                 await LoadPageDataAsync();
                 return Page();
             }
@@ -167,6 +169,7 @@ namespace GolfAssociationCommunity.Pages.AssociationAdmin
                     {
                         ModelState.AddModelError($"{nameof(Input)}.{nameof(Input.AssociationPlayerId)}",
                             "This player already has a registration for this tournament.");
+                        ShowForm = true;
                         await LoadPageDataAsync();
                         return Page();
                     }

@@ -100,13 +100,13 @@ namespace GolfAssociationCommunity.Pages.Associations
                     .GroupBy(e => string.IsNullOrWhiteSpace(e.Flight) ? "Overall" : e.Flight.Trim())
                     .OrderBy(g =>
                     {
+                        // Champ always sorts first regardless of DisplayOrder
+                        if (string.Equals(g.Key, "Champ", StringComparison.OrdinalIgnoreCase)) return -1;
                         if (flightOrder.Count > 0)
                         {
                             var i = flightOrder.FindIndex(f => string.Equals(f, g.Key, StringComparison.OrdinalIgnoreCase));
                             if (i >= 0) return i;
                         }
-                        // Fallback when no TournamentFlight records exist: Champ first, then alphabetical.
-                        if (string.Equals(g.Key, "Champ", StringComparison.OrdinalIgnoreCase)) return -1;
                         return string.Compare(g.Key, "A", StringComparison.OrdinalIgnoreCase);
                     })
                     .Select(g => new KeyValuePair<string, List<Leaderboard>>(g.Key, g.OrderBy(e => e.Position).Take(5).ToList()))

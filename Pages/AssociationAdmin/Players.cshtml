@@ -77,9 +77,8 @@
     {
         <div class="players-section-header">
             <h2 id="active-players">Active Players</h2>
-            <input type="search" id="player-search" class="form-control search-inline"
-                   placeholder="Search by name or email&hellip;" autocomplete="off"
-                   oninput="filterAssocPlayers(this)" />
+            <span id="player-search-count" class="table-toolbar__count"></span>
+            <a href="?handler=DownloadCsv" class="btn btn-secondary btn-sm" style="margin-left:auto;">&#8595; Download CSV</a>
         </div>
 
         <form id="bulk-assoc-player-delete" method="post" asp-page-handler="DeleteSelected"></form>
@@ -107,6 +106,12 @@
                         <th>Scores</th>
                         <th>Wins</th>
                         <th>Last Activity</th>
+                    </tr>
+                    <tr>
+                        <th></th>
+                        <th><input type="search" id="col-filter-name" class="form-control" placeholder="Filter name&hellip;" autocomplete="off" oninput="filterAssocPlayers()" style="font-weight:normal;min-width:120px;" /></th>
+                        <th><input type="search" id="col-filter-email" class="form-control" placeholder="Filter email&hellip;" autocomplete="off" oninput="filterAssocPlayers()" style="font-weight:normal;min-width:150px;" /></th>
+                        <th colspan="5"></th>
                     </tr>
                 </thead>
                 <tbody>
@@ -217,14 +222,17 @@
 </section>
 
 <script>
-function filterAssocPlayers(input) {
-    var q = (input.value || '').trim().toLowerCase();
+function filterAssocPlayers() {
+    var qName  = (document.getElementById('col-filter-name')?.value  || '').trim().toLowerCase();
+    var qEmail = (document.getElementById('col-filter-email')?.value || '').trim().toLowerCase();
+    var anyFilter = qName || qEmail;
     var rows = document.querySelectorAll('#players-table tbody tr');
     var visible = 0;
     rows.forEach(function(row) {
-        var name  = (row.dataset.name  || '').toLowerCase();
-        var email = (row.dataset.email || '').toLowerCase();
-        var match = !q || name.indexOf(q) >= 0 || email.indexOf(q) >= 0;
+        var name  = (row.dataset.name  || '');
+        var email = (row.dataset.email || '');
+        var match = (!qName  || name.indexOf(qName)   >= 0) &&
+                    (!qEmail || email.indexOf(qEmail)  >= 0);
         row.style.display = match ? '' : 'none';
         if (match) visible++;
         if (!match) {
@@ -234,8 +242,8 @@ function filterAssocPlayers(input) {
     });
     var searchInfo = document.getElementById('player-search-count');
     var noResults  = document.getElementById('no-results-msg');
-    if (searchInfo) searchInfo.textContent = q ? visible + ' result' + (visible !== 1 ? 's' : '') : '';
-    if (noResults) noResults.style.display = (q && visible === 0) ? '' : 'none';
+    if (searchInfo) searchInfo.textContent = anyFilter ? visible + ' result' + (visible !== 1 ? 's' : '') : '';
+    if (noResults) noResults.style.display = (anyFilter && visible === 0) ? '' : 'none';
     var selectAll = document.getElementById('select-all-assoc-players');
     var countEl   = document.getElementById('assoc-player-selected-count');
     if (countEl || selectAll) {
@@ -251,15 +259,16 @@ if (_assocSelectAll) {
     _assocSelectAll.addEventListener('change', function() {
         var isChecked = this.checked;
         document.querySelectorAll('#players-table tbody tr:not([style*="display: none"]) .assoc-player-check').forEach(function(cb) { cb.checked = isChecked; });
-        filterAssocPlayers(document.getElementById('player-search') || { value: '' });
+        filterAssocPlayers();
     });
 }
 document.querySelectorAll('.assoc-player-check').forEach(function(cb) {
     cb.addEventListener('change', function() {
-        var el = document.getElementById('player-search') || { value: '' };
-        filterAssocPlayers(el);
+        filterAssocPlayers();
     });
 });
 
-var _playerSearchEl = document.getElementById('player-search');
-if (_playerSearchEl) { _playerSearchEl.addEventListener('input', function() { filterAssocPlayers(this); }); }
+['col-filter-name','col-filter-email'].forEach(function(id) {
+    var el = document.getElementById(id);
+    if (el) el.addEventListener('input', filterAssocPlayers);
+});

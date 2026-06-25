@@ -79,6 +79,42 @@ namespace GolfAssociationCommunity.Pages.AssociationAdmin
             return Page();
         }
 
+        public async Task<IActionResult> OnGetDownloadCsvAsync()
+        {
+            var contextResult = await LoadAssociationContextAsync();
+            if (contextResult is not null) return contextResult;
+
+            await LoadPageDataAsync();
+
+            var sb = new System.Text.StringBuilder();
+            sb.AppendLine("Name,Email,Handicap,Tournaments,Scores,Wins,Last Activity,Status");
+
+            foreach (var p in Players.Concat(ArchivedPlayers))
+            {
+                sb.AppendLine(
+                    $"{CsvEscape(p.DisplayName)}," +
+                    $"{CsvEscape(p.Email)}," +
+                    $"{(p.HandicapIndex.HasValue ? p.HandicapIndex.Value.ToString("0.0#") : string.Empty)}," +
+                    $"{p.TournamentCount}," +
+                    $"{p.ScoreCount}," +
+                    $"{p.Wins}," +
+                    $"{(p.LastScoreUpdateUtc.HasValue ? p.LastScoreUpdateUtc.Value.ToString("yyyy-MM-dd") : string.Empty)}," +
+                    $"{(p.IsActive ? "Active" : "Archived")}");
+            }
+
+            var bytes = System.Text.Encoding.UTF8.GetBytes(sb.ToString());
+            var filename = $"players-{CurrentAssociation.Name.Replace(" ", "-").ToLower()}-{DateTime.UtcNow:yyyy-MM-dd}.csv";
+            return File(bytes, "text/csv", filename);
+        }
+
+        private static string CsvEscape(string? value)
+        {
+            if (string.IsNullOrEmpty(value)) return string.Empty;
+            if (value.Contains(',') || value.Contains('"') || value.Contains('\n') || value.Contains('\r'))
+                return "\"" + value.Replace("\"", "\"\"") + "\"";
+            return value;
+        }
+
         public async Task<IActionResult> OnPostSaveAsync()
         {
             var contextResult = await LoadAssociationContextAsync();

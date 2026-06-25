@@ -12,7 +12,6 @@
     {
         <div class="message success">@success</div>
     }
-    <div asp-validation-summary="ModelOnly" class="message error"></div>
 
     <form method="get" style="margin-bottom:1.25rem;">
         <label for="TournamentId" style="font-weight:600;">Tournament</label>
@@ -29,7 +28,7 @@
 
     @if (Model.SelectedTournament != null)
     {
-        <details class="collapsible-form" @(Model.IsEditing ? "open" : "")>
+        <details class="collapsible-form" @(Model.IsEditing || Model.ShowForm ? "open" : "")>
             <summary class="collapsible-form__toggle">
                 <span>@(Model.IsEditing ? "Edit Registration" : "Add Registration")</span>
             </summary>
@@ -37,6 +36,7 @@
                 <input type="hidden" asp-for="TournamentId" />
                 <input type="hidden" asp-for="EditId" />
                 <div class="form-section">
+                    <div asp-validation-summary="ModelOnly" class="message error"></div>
                     <div class="form-grid">
                         <div style="grid-column:1/-1;">
                             <label style="font-weight:600;">Registration Type</label>

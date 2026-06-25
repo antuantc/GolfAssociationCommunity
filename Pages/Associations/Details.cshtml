@@ -239,7 +239,11 @@ else
                 <div class="result-table-wrap">
                     <table class="result-table">
                         <tbody>
-                            @foreach (var e in Model.LatestResult.TopEntries.Take(8))
+                            @foreach (var e in Model.LatestResult.TopEntries
+                                .OrderBy(e => string.Equals(e.Flight?.Trim(), "Champ", StringComparison.OrdinalIgnoreCase) ? 0 : string.IsNullOrWhiteSpace(e.Flight) ? 999 : 1)
+                                .ThenBy(e => e.Flight ?? string.Empty)
+                                .ThenBy(e => e.Position)
+                                .Take(8))
                             {
                                 <tr>
                                     <td class="rt-pos">@e.Position</td>
