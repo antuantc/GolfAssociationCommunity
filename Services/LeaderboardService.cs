@@ -193,7 +193,7 @@ namespace GolfAssociationCommunity.Services
             try
             {
                 var recentTournaments = await _context.Tournaments
-                    .Where(t => t.GolfAssociationId == associationId)
+                    .Where(t => t.GolfAssociationId == associationId && t.EndDate < DateTime.UtcNow)
                     .OrderByDescending(t => t.StartDate)
                     .Select(t => new { t.Id, t.Name, t.StartDate, t.EndDate })
                     .Take(tournamentCount)
@@ -205,7 +205,7 @@ namespace GolfAssociationCommunity.Services
 
                 // Batch: one query for all leaderboard entries across all recent tournaments
                 var allEntries = await _context.Leaderboards
-                    .Where(l => ids.Contains(l.TournamentId))
+                    .Where(l => ids.Contains(l.TournamentId) && l.TotalScore > 0)
                     .Include(l => l.AssociationPlayer)
                     .OrderBy(l => l.TournamentId)
                     .ThenBy(l => l.Position)

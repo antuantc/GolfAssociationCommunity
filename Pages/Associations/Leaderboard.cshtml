@@ -91,7 +91,13 @@ else
                                                 : null;
                                             <tr>
                                                 <td>@entry.Position</td>
-                                                <td>@(entry.AssociationPlayer?.DisplayName ?? "Unknown")</td>
+                                                <td>
+                                                    @(entry.AssociationPlayer?.DisplayName ?? "Unknown")
+                                                    @if (!string.IsNullOrWhiteSpace(entry.Flight))
+                                                    {
+                                                        <small class="pill" style="margin-left:0.35rem;font-size:0.72rem;">@entry.Flight</small>
+                                                    }
+                                                </td>
                                                 <td>@entry.TotalScore</td>
                                                 @if (Model.HasTiebreakerData) { <td>@tbStr</td> }
                                             </tr>
