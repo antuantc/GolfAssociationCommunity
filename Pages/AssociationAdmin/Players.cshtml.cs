@@ -152,6 +152,8 @@ namespace GolfAssociationCommunity.Pages.AssociationAdmin
                 }
                 existing.UpdatedAt = DateTime.UtcNow;
                 TempData["SuccessMessage"] = "Player updated.";
+                await Context.SaveChangesAsync();
+                return RedirectToPage(null, null, (object?)null, "player-" + EditId.Value);
             }
             else
             {
@@ -169,7 +171,7 @@ namespace GolfAssociationCommunity.Pages.AssociationAdmin
             }
 
             await Context.SaveChangesAsync();
-            return RedirectToPage();
+            return RedirectToPage(null, null, (object?)null, "active-players");
         }
 
         public async Task<IActionResult> OnPostDeletePhotoAsync(int id)
@@ -209,7 +211,7 @@ namespace GolfAssociationCommunity.Pages.AssociationAdmin
             TempData["SuccessMessage"] = "Player deleted from this association.";
 
             await Context.SaveChangesAsync();
-            return RedirectToPage();
+            return RedirectToPage(null, null, (object?)null, "active-players");
         }
 
         public async Task<IActionResult> OnPostDeleteSelectedAsync(List<int> ids)
@@ -236,7 +238,7 @@ namespace GolfAssociationCommunity.Pages.AssociationAdmin
             Context.AssociationPlayers.RemoveRange(players);
             await Context.SaveChangesAsync();
             TempData["SuccessMessage"] = $"Deleted {players.Count} player(s) from this association.";
-            return RedirectToPage();
+            return RedirectToPage(null, null, (object?)null, "active-players");
         }
 
         public async Task<IActionResult> OnPostActivateAsync(int id)

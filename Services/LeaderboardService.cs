@@ -36,6 +36,7 @@ namespace GolfAssociationCommunity.Services
         public int Wins { get; set; }
         public decimal AveragePosition { get; set; }
         public int TotalScore { get; set; }
+        public decimal AverageScore => TournamentsPlayed == 0 ? 0 : Math.Round((decimal)TotalScore / TournamentsPlayed, 2);
         public string? PhotoUrl { get; set; }
     }
 
@@ -167,10 +168,9 @@ namespace GolfAssociationCommunity.Services
                         PhotoUrl = group.Select(entry => entry.AssociationPlayer?.PhotoUrl)
                                         .FirstOrDefault(p => !string.IsNullOrWhiteSpace(p))
                     })
-                    .OrderByDescending(row => row.TournamentPoints)
+                    .OrderByDescending(row => row.Wins)
                     .ThenBy(row => row.AveragePosition)
-                    .ThenByDescending(row => row.Wins)
-                    .ThenBy(row => row.TotalScore)
+                    .ThenBy(row => row.AverageScore)
                     .ThenBy(row => row.PlayerName)
                     .ToList();
 

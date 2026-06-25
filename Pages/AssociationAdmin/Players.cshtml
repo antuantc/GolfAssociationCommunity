@@ -76,7 +76,7 @@
     else
     {
         <div class="players-section-header">
-            <h2>Active Players</h2>
+            <h2 id="active-players">Active Players</h2>
             <input type="search" id="player-search" class="form-control search-inline"
                    placeholder="Search by name or email&hellip;" autocomplete="off" />
         </div>
@@ -111,7 +111,7 @@
                 <tbody>
                 @foreach (var player in Model.Players)
                 {
-                    <tr data-name="@player.DisplayName.ToLower()" data-email="@player.Email.ToLower()">
+                    <tr id="player-@player.Id" data-name="@player.DisplayName.ToLower()" data-email="@player.Email.ToLower()">
                         <td class="col-check"><input type="checkbox" class="assoc-player-check" name="Ids" value="@player.Id" form="bulk-assoc-player-delete" /></td>
                         <td>
                             <div class="player-name-cell">
