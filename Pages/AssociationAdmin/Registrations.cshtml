@@ -1,0 +1,331 @@
+@page
+@using GolfAssociationCommunity.Models
+@model GolfAssociationCommunity.Pages.AssociationAdmin.RegistrationsModel
+@{
+    ViewData["Title"] = "Registrations";
+}
+
+<section class="section-panel">
+    <h1>Tournament Registrations</h1>
+
+    @if (TempData["SuccessMessage"] is string success)
+    {
+        <div class="message success">@success</div>
+    }
+    <div asp-validation-summary="ModelOnly" class="message error"></div>
+
+    <form method="get" style="margin-bottom:1.25rem;">
+        <label for="TournamentId" style="font-weight:600;">Tournament</label>
+        <div style="display:flex;gap:0.75rem;align-items:center;flex-wrap:wrap;margin-top:0.35rem;">
+            <select id="TournamentId" name="TournamentId" class="form-control" style="max-width:380px;" onchange="this.form.submit()">
+                <option value="">Select a tournament&hellip;</option>
+                @foreach (var t in Model.Tournaments)
+                {
+                    <option value="@t.Id" selected="@(Model.TournamentId == t.Id)">@t.Name (@t.StartDate.ToString("MMM d, yyyy"))</option>
+                }
+            </select>
+        </div>
+    </form>
+
+    @if (Model.SelectedTournament != null)
+    {
+        <details class="collapsible-form" @(Model.IsEditing ? "open" : "")>
+            <summary class="collapsible-form__toggle">
+                <span>@(Model.IsEditing ? "Edit Registration" : "Add Registration")</span>
+            </summary>
+            <form method="post" asp-page-handler="Save" class="form-shell" style="margin-top:1rem;">
+                <input type="hidden" asp-for="TournamentId" />
+                <input type="hidden" asp-for="EditId" />
+                <div class="form-section">
+                    <div class="form-grid">
+                        <div style="grid-column:1/-1;">
+                            <label style="font-weight:600;">Registration Type</label>
+                            <div style="display:flex;gap:1.5rem;margin-top:0.4rem;">
+                                <label style="display:flex;align-items:center;gap:0.4rem;cursor:pointer;">
+                                    <input type="radio" asp-for="Input.IsGuest" value="false" onchange="togglePlayerType(false)" />
+                                    Member
+                                </label>
+                                <label style="display:flex;align-items:center;gap:0.4rem;cursor:pointer;">
+                                    <input type="radio" asp-for="Input.IsGuest" value="true" onchange="togglePlayerType(true)" />
+                                    Guest
+                                </label>
+                            </div>
+                        </div>
+
+                        <div id="member-field">
+                            <label asp-for="Input.AssociationPlayerId">Player</label>
+                            <select asp-for="Input.AssociationPlayerId" class="form-control">
+                                <option value="">Select player&hellip;</option>
+                                @foreach (var p in Model.AssocPlayers)
+                                {
+                                    <option value="@p.Id">@p.Name (@p.Email)</option>
+                                }
+                            </select>
+                            <span asp-validation-for="Input.AssociationPlayerId" class="text-danger"></span>
+                        </div>
+
+                        <div id="guest-fields" style="display:none;grid-column:span 2;display:none;">
+                            <div class="form-grid">
+                                <div>
+                                    <label asp-for="Input.GuestName">Guest Name</label>
+                                    <input asp-for="Input.GuestName" class="form-control" />
+                                    <span asp-validation-for="Input.GuestName" class="text-danger"></span>
+                                </div>
+                                <div>
+                                    <label asp-for="Input.GuestEmail">Guest Email</label>
+                                    <input asp-for="Input.GuestEmail" type="email" class="form-control" />
+                                    <span asp-validation-for="Input.GuestEmail" class="text-danger"></span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label asp-for="Input.Status">Status</label>
+                            <select asp-for="Input.Status" class="form-control">
+                                <option value="@RegistrationStatus.Registered">Registered</option>
+                                <option value="@RegistrationStatus.Pending">Pending</option>
+                                <option value="@RegistrationStatus.Cancelled">Cancelled</option>
+                                <option value="@RegistrationStatus.Withdrew">Withdrew</option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <label asp-for="Input.Handicap">Handicap</label>
+                            <input asp-for="Input.Handicap" type="number" step="0.1" class="form-control" />
+                            <span asp-validation-for="Input.Handicap" class="text-danger"></span>
+                        </div>
+
+                        <div>
+                            <label asp-for="Input.RegistrationFee">Fee ($)</label>
+                            <input asp-for="Input.RegistrationFee" type="number" step="0.01" min="0" class="form-control" />
+                            <span asp-validation-for="Input.RegistrationFee" class="text-danger"></span>
+                        </div>
+
+                        @if (Model.Flights.Count > 0)
+                        {
+                            <div>
+                                <label asp-for="Input.Flight">Flight</label>
+                                <select asp-for="Input.Flight" class="form-control">
+                                    <option value="">No flight</option>
+                                    @foreach (var f in Model.Flights)
+                                    {
+                                        <option value="@f.Name">@f.Name</option>
+                                    }
+                                </select>
+                            </div>
+                        }
+                        else
+                        {
+                            <div>
+                                <label asp-for="Input.Flight">Flight</label>
+                                <input asp-for="Input.Flight" class="form-control" placeholder="Optional" />
+                            </div>
+                        }
+
+                        <div style="grid-column:1/-1;">
+                            <label style="display:flex;align-items:center;gap:0.5rem;cursor:pointer;">
+                                <input asp-for="Input.PaymentConfirmed" type="checkbox" />
+                                Payment Confirmed
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="form-actions">
+                        <button type="submit" class="btn">@(Model.IsEditing ? "Save Changes" : "Add Registration")</button>
+                        @if (Model.IsEditing)
+                        {
+                            <a class="btn btn-secondary" href="~/AssociationAdmin/Registrations?TournamentId=@Model.TournamentId">Cancel</a>
+                        }
+                    </div>
+                </div>
+            </form>
+        </details>
+
+        <div class="form-meta" style="margin:1rem 0;">
+            <span class="pill">@Model.ActiveCount Registered</span>
+            <span class="pill">@Model.PendingCount Pending</span>
+            <span class="pill">@Model.ConfirmedCount Payment Confirmed</span>
+            @if (Model.CancelledCount > 0)
+            {
+                <span class="pill">@Model.CancelledCount Cancelled/Withdrew</span>
+            }
+        </div>
+
+        @if (Model.Registrations.Count == 0)
+        {
+            <p>No registrations yet for <strong>@Model.SelectedTournament.Name</strong>.</p>
+        }
+        else
+        {
+            <div class="players-section-header" style="margin-bottom:0.75rem;">
+                <input type="search" id="reg-search" class="form-control search-inline"
+                       placeholder="&#128269; Search name or email&hellip;" autocomplete="off"
+                       oninput="filterRegs()" style="max-width:280px;" />
+                <select id="reg-status-filter" class="form-control" onchange="filterRegs()" style="max-width:160px;">
+                    <option value="">All statuses</option>
+                    <option value="Registered">Registered</option>
+                    <option value="Pending">Pending</option>
+                    <option value="Cancelled">Cancelled</option>
+                    <option value="Withdrew">Withdrew</option>
+                </select>
+                <span id="reg-count" style="font-size:0.8rem;opacity:0.6;"></span>
+            </div>
+
+            <div class="table-scroll">
+                <table class="table" id="regs-table">
+                    <thead>
+                        <tr>
+                            <th>Player</th>
+                            <th>Type</th>
+                            <th>Handicap</th>
+                            <th>Status</th>
+                            <th>Payment</th>
+                            <th>Fee</th>
+                            @if (Model.Flights.Count > 0)
+                            {
+                                <th>Flight</th>
+                            }
+                            <th>Registered</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    @foreach (var reg in Model.Registrations)
+                    {
+                        <tr data-name="@reg.PlayerName.ToLower()" data-email="@reg.PlayerEmail.ToLower()" data-status="@reg.Status.ToString()">
+                            <td>
+                                <div><strong>@reg.PlayerName</strong></div>
+                                <div class="text-muted-sm">@reg.PlayerEmail</div>
+                            </td>
+                            <td>
+                                @if (reg.IsGuest)
+                                {
+                                    <span class="pill" style="font-size:0.75rem;">Guest</span>
+                                }
+                                else
+                                {
+                                    <span class="pill" style="font-size:0.75rem;background:var(--primary-bg,#e8f4fd);">Member</span>
+                                }
+                            </td>
+                            <td>@(reg.Handicap.HasValue ? reg.Handicap.Value.ToString("0.#") : "—")</td>
+                            <td>
+                                @switch (reg.Status)
+                                {
+                                    case RegistrationStatus.Registered:
+                                        <span style="color:var(--success-text,#166534);font-weight:600;">Registered</span>
+                                        break;
+                                    case RegistrationStatus.Pending:
+                                        <span style="color:#92400e;font-weight:600;">Pending</span>
+                                        break;
+                                    case RegistrationStatus.Cancelled:
+                                        <span style="color:#9b1c1c;">Cancelled</span>
+                                        break;
+                                    case RegistrationStatus.Withdrew:
+                                        <span style="color:#9b1c1c;">Withdrew</span>
+                                        break;
+                                }
+                            </td>
+                            <td>
+                                @if (reg.PaymentConfirmed)
+                                {
+                                    <span style="color:var(--success-text,#166534);">&#10003; Confirmed</span>
+                                    @if (!string.IsNullOrWhiteSpace(reg.CardLast4))
+                                    {
+                                        <span class="text-muted-sm"> &middot;&middot;&middot;@reg.CardLast4</span>
+                                    }
+                                }
+                                else
+                                {
+                                    <span style="color:#92400e;">Unconfirmed</span>
+                                }
+                            </td>
+                            <td>@(reg.RegistrationFee > 0 ? reg.RegistrationFee.ToString("C") : "—")</td>
+                            @if (Model.Flights.Count > 0)
+                            {
+                                <td>@(string.IsNullOrWhiteSpace(reg.Flight) ? "—" : reg.Flight)</td>
+                            }
+                            <td class="text-muted-sm">@reg.RegistrationDate.ToString("MMM d, yyyy")</td>
+                            <td>
+                                <div style="display:flex;gap:0.35rem;flex-wrap:wrap;">
+                                    <a class="btn btn-secondary btn-xs" href="~/AssociationAdmin/Registrations?TournamentId=@Model.TournamentId&EditId=@reg.Id">Edit</a>
+
+                                    @if (!reg.PaymentConfirmed && reg.Status != RegistrationStatus.Cancelled && reg.Status != RegistrationStatus.Withdrew)
+                                    {
+                                        <form method="post" asp-page-handler="ConfirmPayment" asp-route-registrationId="@reg.Id" class="inline-form">
+                                            <input type="hidden" name="TournamentId" value="@Model.TournamentId" />
+                                            <button type="submit" class="btn btn-secondary btn-xs">Confirm Pmt</button>
+                                        </form>
+                                    }
+
+                                    @if (reg.Status == RegistrationStatus.Cancelled || reg.Status == RegistrationStatus.Withdrew)
+                                    {
+                                        <form method="post" asp-page-handler="Restore" asp-route-registrationId="@reg.Id" class="inline-form">
+                                            <input type="hidden" name="TournamentId" value="@Model.TournamentId" />
+                                            <button type="submit" class="btn btn-secondary btn-xs">Restore</button>
+                                        </form>
+                                    }
+                                    else
+                                    {
+                                        <form method="post" asp-page-handler="CancelRegistration" asp-route-registrationId="@reg.Id" class="inline-form"
+                                              onsubmit="return confirm('Cancel this registration?');">
+                                            <input type="hidden" name="TournamentId" value="@Model.TournamentId" />
+                                            <button type="submit" class="btn btn-secondary btn-xs">Cancel</button>
+                                        </form>
+                                    }
+
+                                    <form method="post" asp-page-handler="Delete" asp-route-id="@reg.Id" class="inline-form"
+                                          onsubmit="return confirm('Permanently delete this registration?');">
+                                        <input type="hidden" name="TournamentId" value="@Model.TournamentId" />
+                                        <button type="submit" class="btn btn-danger btn-xs">Delete</button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                    </tbody>
+                </table>
+            </div>
+            <p id="reg-no-results" class="text-muted" style="display:none;margin-top:0.5rem;">No registrations match your filter.</p>
+        }
+    }
+</section>
+
+<script>
+function togglePlayerType(isGuest) {
+    var mf = document.getElementById('member-field');
+    var gf = document.getElementById('guest-fields');
+    if (mf) mf.style.display = isGuest ? 'none' : '';
+    if (gf) gf.style.display = isGuest ? '' : 'none';
+}
+// Apply initial state on load
+(function() {
+    var checked = document.querySelector('input[name="Input.IsGuest"]:checked');
+    if (checked) togglePlayerType(checked.value === 'true');
+})();
+
+function filterRegs() {
+    var q      = (document.getElementById('reg-search')?.value || '').trim().toLowerCase();
+    var status = (document.getElementById('reg-status-filter')?.value || '').toLowerCase();
+    var rows   = document.querySelectorAll('#regs-table tbody tr');
+    var visible = 0;
+    rows.forEach(function(row) {
+        var name   = (row.dataset.name  || '');
+        var email  = (row.dataset.email || '');
+        var rowSt  = (row.dataset.status || '').toLowerCase();
+        var matchQ = !q || name.indexOf(q) >= 0 || email.indexOf(q) >= 0;
+        var matchS = !status || rowSt === status;
+        var show = matchQ && matchS;
+        row.style.display = show ? '' : 'none';
+        if (show) visible++;
+    });
+    var countEl = document.getElementById('reg-count');
+    var noEl    = document.getElementById('reg-no-results');
+    if (countEl) countEl.textContent = (q || status) ? visible + ' result' + (visible !== 1 ? 's' : '') : '';
+    if (noEl)    noEl.style.display  = ((q || status) && visible === 0) ? '' : 'none';
+}
+
+var _regSearchEl = document.getElementById('reg-search');
+if (_regSearchEl) { _regSearchEl.addEventListener('input', filterRegs); }
+var _regStatusEl = document.getElementById('reg-status-filter');
+if (_regStatusEl) { _regStatusEl.addEventListener('change', filterRegs); }
+</script>

@@ -13,6 +13,7 @@
                placeholder="&#128269; Name, email, or association&hellip;" autocomplete="off"
                oninput="filterAdminPlayers(this)" style="max-width:340px;" />
         <span id="admin-player-search-count" class="table-toolbar__count"></span>
+        <a href="?handler=DownloadCsv&Search=@Model.Search" class="btn btn-secondary btn-sm" style="margin-left:auto;">&#8595; Download CSV</a>
     </div>
 
     @if (TempData["SuccessMessage"] is string message)
@@ -86,34 +87,45 @@
     }
 </section>
 <script>
-    document.getElementById('select-all-players')?.addEventListener('change', function () {
-        document.querySelectorAll('#admin-players-table tbody tr:not([style*="display: none"]) .player-check').forEach(cb => cb.checked = this.checked);
+function filterAdminPlayers(input) {
+    var q = (input.value || '').trim().toLowerCase();
+    var searchCount = document.getElementById('admin-player-search-count');
+    var rows = document.querySelectorAll('#admin-players-table tbody tr');
+    var visible = 0;
+    rows.forEach(function(row) {
+        var match = !q ||
+            (row.dataset.name  || '').toLowerCase().indexOf(q) >= 0 ||
+            (row.dataset.email || '').toLowerCase().indexOf(q) >= 0 ||
+            (row.dataset.assoc || '').toLowerCase().indexOf(q) >= 0;
+        row.style.display = match ? '' : 'none';
+        if (match) visible++;
+        if (!match) {
+            var cb = row.querySelector('.player-check');
+            if (cb) cb.checked = false;
+        }
     });
-    document.querySelectorAll('.player-check').forEach(cb => cb.addEventListener('change', function () {
-        const all = document.getElementById('select-all-players');
+    if (searchCount) searchCount.textContent = q ? visible + ' result' + (visible !== 1 ? 's' : '') : '';
+}
+
+var _adminSelectAll = document.getElementById('select-all-players');
+if (_adminSelectAll) {
+    _adminSelectAll.addEventListener('change', function() {
+        var isChecked = this.checked;
+        document.querySelectorAll('#admin-players-table tbody tr:not([style*="display: none"]) .player-check').forEach(function(cb) { cb.checked = isChecked; });
+    });
+}
+document.querySelectorAll('.player-check').forEach(function(cb) {
+    cb.addEventListener('change', function() {
+        var all = document.getElementById('select-all-players');
         if (!all) return;
-        const checks = document.querySelectorAll('.player-check');
-        const checked = document.querySelectorAll('.player-check:checked');
+        var checks  = document.querySelectorAll('.player-check');
+        var checked = document.querySelectorAll('.player-check:checked');
         all.indeterminate = checked.length > 0 && checked.length < checks.length;
         all.checked = checks.length > 0 && checked.length === checks.length;
-    }));
-    function filterAdminPlayers(input) {
-        const q = input.value.trim().toLowerCase();
-        const searchCount = document.getElementById('admin-player-search-count');
-        const rows = document.querySelectorAll('#admin-players-table tbody tr');
-        let visible = 0;
-        rows.forEach(row => {
-            const match = !q ||
-                (row.dataset.name  || '').includes(q) ||
-                (row.dataset.email || '').includes(q) ||
-                (row.dataset.assoc || '').includes(q);
-            row.style.display = match ? '' : 'none';
-            if (match) visible++;
-            if (!match) {
-                const cb = row.querySelector('.player-check');
-                if (cb) cb.checked = false;
-            }
-        });
-        if (searchCount) searchCount.textContent = q ? visible + ' result' + (visible !== 1 ? 's' : '') : '';
-    }
+    });
+});
+
+// Bind search directly (belt + suspenders alongside oninput attribute)
+var _adminSearchEl = document.getElementById('admin-player-search');
+if (_adminSearchEl) { _adminSearchEl.addEventListener('input', function() { filterAdminPlayers(this); }); }
 </script>

@@ -241,6 +241,23 @@ namespace GolfAssociationCommunity.Pages.AssociationAdmin
             return RedirectToPage(null, null, (object?)null, "active-players");
         }
 
+        public async Task<IActionResult> OnPostArchiveAsync(int id)
+        {
+            var contextResult = await LoadAssociationContextAsync();
+            if (contextResult is not null) return contextResult;
+
+            var player = await Context.AssociationPlayers
+                .FirstOrDefaultAsync(p => p.Id == id && p.GolfAssociationId == CurrentAssociation.Id);
+            if (player == null) return NotFound();
+
+            player.IsActive = false;
+            player.UpdatedAt = DateTime.UtcNow;
+            await Context.SaveChangesAsync();
+
+            TempData["SuccessMessage"] = $"{player.DisplayName} has been archived.";
+            return RedirectToPage(null, null, (object?)null, "active-players");
+        }
+
         public async Task<IActionResult> OnPostActivateAsync(int id)
         {
             var contextResult = await LoadAssociationContextAsync();

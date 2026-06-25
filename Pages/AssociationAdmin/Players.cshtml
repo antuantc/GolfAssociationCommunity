@@ -129,6 +129,9 @@
                                     <div class="row-actions" style="margin-top:0.3rem;">
                                         <a class="btn btn-secondary btn-xs" href="~/AssociationAdmin/Players?EditId=@player.Id">Edit</a>
                                         <a class="btn btn-secondary btn-xs" href="~/AssociationAdmin/Scores?AssociationPlayerId=@player.Id">Scores</a>
+                                        <form method="post" asp-page-handler="Archive" asp-route-id="@player.Id" class="inline-form"
+                                              onsubmit="return confirm('Archive this player? They will be moved to the Archived Players section and hidden from active rosters.');">                                            <button type="submit" class="btn btn-secondary btn-xs">Archive</button>
+                                        </form>
                                         <form method="post" asp-page-handler="Delete" asp-route-id="@player.Id" class="inline-form"
                                               onsubmit="return confirm('Delete this player from this association? This will remove linked score history.');">
                                             <button type="submit" class="btn btn-danger btn-xs">Delete</button>
@@ -214,43 +217,49 @@
 </section>
 
 <script>
-(function () {
-    // Bulk select + count
-    const selectAll = document.getElementById('select-all-assoc-players');
-    const countEl   = document.getElementById('assoc-player-selected-count');
-    function updateCount() {
-        const checked = document.querySelectorAll('.assoc-player-check:checked').length;
-        const total   = document.querySelectorAll('.assoc-player-check:not([style*="display:none"])').length;
-        if (countEl) countEl.textContent = checked > 0 ? checked + ' of ' + total + ' selected' : '';
-        if (selectAll) selectAll.indeterminate = checked > 0 && checked < total;
-        if (selectAll) selectAll.checked = total > 0 && checked === total;
-    }
-    selectAll?.addEventListener('change', function () {
-        document.querySelectorAll('#players-table tbody tr:not([style*="display: none"]) .assoc-player-check').forEach(cb => cb.checked = this.checked);
-        updateCount();
+function filterAssocPlayers(input) {
+    var q = (input.value || '').trim().toLowerCase();
+    var rows = document.querySelectorAll('#players-table tbody tr');
+    var visible = 0;
+    rows.forEach(function(row) {
+        var name  = (row.dataset.name  || '').toLowerCase();
+        var email = (row.dataset.email || '').toLowerCase();
+        var match = !q || name.indexOf(q) >= 0 || email.indexOf(q) >= 0;
+        row.style.display = match ? '' : 'none';
+        if (match) visible++;
+        if (!match) {
+            var cb = row.querySelector('.assoc-player-check');
+            if (cb) cb.checked = false;
+        }
     });
-    document.querySelectorAll('.assoc-player-check').forEach(cb => cb.addEventListener('change', updateCount));
+    var searchInfo = document.getElementById('player-search-count');
+    var noResults  = document.getElementById('no-results-msg');
+    if (searchInfo) searchInfo.textContent = q ? visible + ' result' + (visible !== 1 ? 's' : '') : '';
+    if (noResults) noResults.style.display = (q && visible === 0) ? '' : 'none';
+    var selectAll = document.getElementById('select-all-assoc-players');
+    var countEl   = document.getElementById('assoc-player-selected-count');
+    if (countEl || selectAll) {
+        var checked = document.querySelectorAll('.assoc-player-check:checked').length;
+        var total   = document.querySelectorAll('.assoc-player-check').length;
+        if (countEl) countEl.textContent = checked > 0 ? checked + ' of ' + total + ' selected' : '';
+        if (selectAll) { selectAll.indeterminate = checked > 0 && checked < total; selectAll.checked = total > 0 && checked === total; }
+    }
+}
 
-    // Search / filter
-    const searchInfo = document.getElementById('player-search-count');
-    const noResults  = document.getElementById('no-results-msg');
-    window.filterAssocPlayers = function (input) {
-        const q = input.value.trim().toLowerCase();
-        const rows = document.querySelectorAll('#players-table tbody tr');
-        let visible = 0;
-        rows.forEach(row => {
-            const name  = row.dataset.name  || '';
-            const email = row.dataset.email || '';
-            const match = !q || name.includes(q) || email.includes(q);
-            row.style.display = match ? '' : 'none';
-            if (match) visible++;
-            if (!match) {
-                const cb = row.querySelector('.assoc-player-check');
-                if (cb) cb.checked = false;
-            }
-        });
-        if (searchInfo) searchInfo.textContent = q ? visible + ' result' + (visible !== 1 ? 's' : '') : '';
-        if (noResults) noResults.style.display = (q && visible === 0) ? '' : 'none';
-        updateCount();
-    };
-})();
+var _assocSelectAll = document.getElementById('select-all-assoc-players');
+if (_assocSelectAll) {
+    _assocSelectAll.addEventListener('change', function() {
+        var isChecked = this.checked;
+        document.querySelectorAll('#players-table tbody tr:not([style*="display: none"]) .assoc-player-check').forEach(function(cb) { cb.checked = isChecked; });
+        filterAssocPlayers(document.getElementById('player-search') || { value: '' });
+    });
+}
+document.querySelectorAll('.assoc-player-check').forEach(function(cb) {
+    cb.addEventListener('change', function() {
+        var el = document.getElementById('player-search') || { value: '' };
+        filterAssocPlayers(el);
+    });
+});
+
+var _playerSearchEl = document.getElementById('player-search');
+if (_playerSearchEl) { _playerSearchEl.addEventListener('input', function() { filterAssocPlayers(this); }); }

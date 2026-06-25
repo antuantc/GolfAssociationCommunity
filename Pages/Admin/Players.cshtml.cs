@@ -53,6 +53,40 @@ namespace GolfAssociationCommunity.Pages.Admin
             await LoadAsync();
         }
 
+        public async Task<IActionResult> OnGetDownloadCsvAsync()
+        {
+            await LoadAsync();
+
+            var sb = new System.Text.StringBuilder();
+            sb.AppendLine("Name,Email,Associations,Active,Archived,Registrations,Scores,Last Updated");
+
+            foreach (var p in Players)
+            {
+                var assocNames = string.Join("; ", p.Associations.Select(a => a.AssociationName));
+                sb.AppendLine(
+                    $"{CsvEscape(p.DisplayName)}," +
+                    $"{CsvEscape(p.Email)}," +
+                    $"{CsvEscape(assocNames)}," +
+                    $"{p.ActiveCount}," +
+                    $"{p.ArchivedCount}," +
+                    $"{p.RegistrationCount}," +
+                    $"{p.ScoreCount}," +
+                    $"{p.LastUpdatedAt?.ToString("yyyy-MM-dd") ?? string.Empty}");
+            }
+
+            var bytes = System.Text.Encoding.UTF8.GetBytes(sb.ToString());
+            var filename = $"players-{DateTime.UtcNow:yyyy-MM-dd}.csv";
+            return File(bytes, "text/csv", filename);
+        }
+
+        private static string CsvEscape(string? value)
+        {
+            if (string.IsNullOrEmpty(value)) return string.Empty;
+            if (value.Contains(',') || value.Contains('"') || value.Contains('\n') || value.Contains('\r'))
+                return "\"" + value.Replace("\"", "\"\"") + "\"";
+            return value;
+        }
+
         public async Task<IActionResult> OnPostDeleteAsync(string emailKey)
         {
             if (string.IsNullOrWhiteSpace(emailKey))

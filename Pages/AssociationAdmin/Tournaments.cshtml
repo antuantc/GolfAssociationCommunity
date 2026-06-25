@@ -37,6 +37,7 @@
                         <td>@tournament.Status</td>
                         <td>
                             <a class="card-link" href="~/AssociationAdmin/EditTournament/@tournament.Id">Edit</a>
+                            <a class="card-link" href="~/AssociationAdmin/Registrations?TournamentId=@tournament.Id">Registrations</a>
                             <a class="card-link" href="~/AssociationAdmin/Scores?TournamentId=@tournament.Id">Scores</a>
                             <a class="card-link" href="~/AssociationAdmin/Leaderboards?TournamentId=@tournament.Id">Leaderboard</a>
                             <form method="post" asp-page-handler="Delete" asp-route-id="@tournament.Id" class="inline-form" onsubmit="return confirm('Delete this tournament?');">
