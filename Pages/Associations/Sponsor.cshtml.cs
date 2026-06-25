@@ -3,22 +3,20 @@ using GolfAssociationCommunity.Models;
 using GolfAssociationCommunity.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.EntityFrameworkCore;
 using System.ComponentModel.DataAnnotations;
 
 namespace GolfAssociationCommunity.Pages.Associations
 {
     public class SponsorModel : PageModel
     {
-        private readonly IAssociationService _associationService;
         private readonly IAuthorizeNetPaymentService _authorizeNetPaymentService;
         private readonly ApplicationDbContext _context;
 
         public SponsorModel(
-            IAssociationService associationService,
             IAuthorizeNetPaymentService authorizeNetPaymentService,
             ApplicationDbContext context)
         {
-            _associationService = associationService;
             _authorizeNetPaymentService = authorizeNetPaymentService;
             _context = context;
         }
@@ -212,7 +210,10 @@ namespace GolfAssociationCommunity.Pages.Associations
 
         private async Task<bool> LoadAssociationAsync(int id)
         {
-            Association = await _associationService.GetAssociationByIdAsync(id);
+            Association = await _context.GolfAssociations
+                .Include(ga => ga.Tournaments)
+                .Include(ga => ga.SponsorshipPackages)
+                .FirstOrDefaultAsync(ga => ga.Id == id && ga.IsActive);
             if (Association == null)
             {
                 return false;

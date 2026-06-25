@@ -37,18 +37,36 @@
             <div class="form-shell">
                 <div class="form-section">
                     <h3 class="form-section-title">Sponsorship Selection</h3>
-                    <div class="form-grid">
-                        <div class="full">
-                    <label asp-for="Input.SponsorshipPackageId">Package</label>
-                    <select asp-for="Input.SponsorshipPackageId" class="form-control">
-                        <option value="">Select a sponsorship package</option>
+                    <div class="pkg-option-cards">
                         @foreach (var package in Model.ActiveSponsorshipPackages)
                         {
-                            <option value="@package.Id">@package.Name - @package.Amount.ToString("C")</option>
+                            <div class="pkg-option-card @(package.Id == Model.Input.SponsorshipPackageId ? "selected" : "")"
+                                 data-pkg-id="@package.Id"
+                                 data-pkg-name="@Html.Encode(package.Name)"
+                                 data-pkg-amount="@package.Amount.ToString("F2", System.Globalization.CultureInfo.InvariantCulture)"
+                                 onclick="selectPkg(this)">
+                                <div class="pkg-option-card__name">@package.Name</div>
+                                <div class="pkg-option-card__amount">@package.Amount.ToString("C")</div>
+                                @if (!string.IsNullOrWhiteSpace(package.Description))
+                                {
+                                    <div class="pkg-option-card__desc">@package.Description</div>
+                                }
+                                @if (!string.IsNullOrWhiteSpace(package.Benefits))
+                                {
+                                    <ul class="pkg-option-card__benefits">
+                                        @foreach (var b in package.Benefits.Split('\n', StringSplitOptions.RemoveEmptyEntries))
+                                        {
+                                            <li>@b.Trim()</li>
+                                        }
+                                    </ul>
+                                }
+                            </div>
                         }
-                    </select>
+                    </div>
+                    <input type="hidden" asp-for="Input.SponsorshipPackageId" id="pkgIdInput" />
                     <span asp-validation-for="Input.SponsorshipPackageId" class="text-danger"></span>
-                        </div>
+
+                    <div class="form-grid" style="margin-top:1rem;">
                         <div>
                     <label asp-for="Input.SponsorName">Sponsor Name</label>
                     <input asp-for="Input.SponsorName" class="form-control" autocomplete="name" />
@@ -78,7 +96,7 @@
                     <span asp-validation-for="Input.CardholderName" class="text-danger"></span>
                         </div>
                         <div>
-                    <label asp-for="Input.CardNumber">Card Number</label>
+                    <label asp-for="Input.CardNumber">Card Number <span class="card-type-badge" id="sponsorCardTypeBadge" style="display:none;"></span></label>
                     <input asp-for="Input.CardNumber" class="form-control" inputmode="numeric" autocomplete="cc-number" placeholder="0000 0000 0000 0000" />
                     <span asp-validation-for="Input.CardNumber" class="text-danger"></span>
                         </div>
@@ -120,8 +138,26 @@
                     </div>
                 </div>
 
+                @{
+                    var _selPkg = Model.ActiveSponsorshipPackages.FirstOrDefault(p => p.Id == Model.Input.SponsorshipPackageId);
+                }
+                <div class="checkout-summary" id="sponsorSummary" style="@(_selPkg == null ? "display:none;" : "")">
+                    <div class="checkout-summary__title">Order Summary</div>
+                    <div class="checkout-summary__row">
+                        <span id="summaryPkgName">@(_selPkg?.Name ?? "")</span>
+                        <span id="summaryPkgAmount">@(_selPkg?.Amount.ToString("C") ?? "")</span>
+                    </div>
+                    <div class="checkout-summary__total">
+                        <span>Total Due</span>
+                        <strong id="sponsorTotal">@(_selPkg?.Amount.ToString("C") ?? "")</strong>
+                    </div>
+                </div>
+
                 <div class="form-actions">
-                    <button type="submit" class="btn">Pay and Sponsor</button>
+                    <button type="submit" class="btn" id="sponsorSubmitBtn">
+                        <span id="sponsorSubmitLabel">@(_selPkg != null ? $"Pay {_selPkg.Amount.ToString("C")}" : "Pay and Sponsor")</span>
+                        <span class="btn-spinner" id="sponsorSpinner" style="display:none;"></span>
+                    </button>
                     <a class="btn btn-secondary" href="~/Associations/Details/@Model.Association.Id">Back to association</a>
                 </div>
             </div>
@@ -132,31 +168,68 @@
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
     <script>
+        function selectPkg(el) {
+            var id = parseInt(el.dataset.pkgId);
+            var name = el.dataset.pkgName;
+            var amount = parseFloat(el.dataset.pkgAmount);
+            document.querySelectorAll('.pkg-option-card').forEach(function (c) {
+                c.classList.toggle('selected', parseInt(c.dataset.pkgId) === id);
+            });
+            var hidden = document.getElementById('pkgIdInput');
+            if (hidden) hidden.value = id;
+            var summary = document.getElementById('sponsorSummary');
+            var pkgName = document.getElementById('summaryPkgName');
+            var pkgAmount = document.getElementById('summaryPkgAmount');
+            var total = document.getElementById('sponsorTotal');
+            var label = document.getElementById('sponsorSubmitLabel');
+            var fmt = '$' + amount.toFixed(2);
+            if (summary) summary.style.display = '';
+            if (pkgName) pkgName.textContent = name;
+            if (pkgAmount) pkgAmount.textContent = fmt;
+            if (total) total.textContent = fmt;
+            if (label) label.textContent = 'Pay ' + fmt;
+        }
+
         (function () {
             var cardNumberInput = document.getElementById('Input_CardNumber');
             var cardExpiryInput = document.getElementById('Input_CardExpiry');
+            var cardTypeBadge = document.getElementById('sponsorCardTypeBadge');
+
+            function detectCardType(d) {
+                if (/^4/.test(d)) return 'Visa';
+                if (/^5[1-5]|^2[2-7]/.test(d)) return 'Mastercard';
+                if (/^3[47]/.test(d)) return 'Amex';
+                if (/^6(?:011|5)/.test(d)) return 'Discover';
+                return '';
+            }
 
             if (cardNumberInput) {
-                cardNumberInput.addEventListener('input', function (event) {
-                    var digits = event.target.value.replace(/\D/g, '').slice(0, 19);
-                    event.target.value = digits.replace(/(.{4})/g, '$1 ').trim();
+                cardNumberInput.addEventListener('input', function (e) {
+                    var digits = e.target.value.replace(/\D/g, '').slice(0, 16);
+                    e.target.value = digits.replace(/(.{4})/g, '$1 ').trim();
+                    if (cardTypeBadge) {
+                        var type = detectCardType(digits);
+                        cardTypeBadge.textContent = type;
+                        cardTypeBadge.style.display = type ? '' : 'none';
+                    }
                 });
             }
 
             if (cardExpiryInput) {
-                cardExpiryInput.addEventListener('input', function (event) {
-                    var digits = event.target.value.replace(/\D/g, '').slice(0, 6);
-                    if (digits.length <= 2) {
-                        event.target.value = digits;
-                        return;
-                    }
+                cardExpiryInput.addEventListener('input', function (e) {
+                    var digits = e.target.value.replace(/\D/g, '').slice(0, 4);
+                    e.target.value = digits.length > 2 ? digits.slice(0, 2) + '/' + digits.slice(2) : digits;
+                });
+            }
 
-                    if (digits.length <= 4) {
-                        event.target.value = digits.slice(0, 2) + '/' + digits.slice(2);
-                        return;
-                    }
-
-                    event.target.value = digits.slice(0, 2) + '/' + digits.slice(2);
+            var sponsorSubmitBtn = document.getElementById('sponsorSubmitBtn');
+            if (sponsorSubmitBtn) {
+                sponsorSubmitBtn.closest('form').addEventListener('submit', function () {
+                    sponsorSubmitBtn.disabled = true;
+                    var spinner = document.getElementById('sponsorSpinner');
+                    var label = document.getElementById('sponsorSubmitLabel');
+                    if (spinner) spinner.style.display = 'inline-block';
+                    if (label) label.textContent = 'Processing\u2026';
                 });
             }
         })();

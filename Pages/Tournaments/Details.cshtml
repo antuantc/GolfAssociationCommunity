@@ -43,7 +43,7 @@
                 <dt>Location</dt>
                 <dd>@Model.Tournament.Location</dd>
                 <dt>Entry Fee</dt>
-                <dd>@Model.Tournament.EntryFee:C</dd>
+                <dd>@Model.Tournament.EntryFee.ToString("C")</dd>
                 <dt>Registration</dt>
                 <dd>@Model.RegistrationCount / @Model.Tournament.MaxPlayers registered</dd>
                 <dt>Status</dt>
@@ -126,7 +126,7 @@
                             <span asp-validation-for="Input.CardholderName" class="text-danger"></span>
                                 </div>
                                 <div>
-                            <label asp-for="Input.CardNumber">Card Number</label>
+                            <label asp-for="Input.CardNumber">Card Number <span class="card-type-badge" id="regCardTypeBadge" style="display:none;"></span></label>
                             <input asp-for="Input.CardNumber" class="form-control" inputmode="numeric" autocomplete="cc-number" placeholder="0000 0000 0000 0000" />
                             <span asp-validation-for="Input.CardNumber" class="text-danger"></span>
                                 </div>
@@ -168,13 +168,28 @@
                             </div>
                         </div>
 
+                        <div class="checkout-summary">
+                            <div class="checkout-summary__title">Order Summary</div>
+                            <div class="checkout-summary__row">
+                                <span>Tournament Entry</span>
+                                <span>@Model.Tournament.EntryFee.ToString("C")</span>
+                            </div>
+                            @if (Model.Tournament.HasPracticeRound)
+                            {
+                                <div class="checkout-summary__row" id="summaryPracticeRow" style="display:none;">
+                                    <span>Practice Round</span>
+                                    <span>@Model.Tournament.PracticeRoundFee.ToString("C")</span>
+                                </div>
+                            }
+                            <div class="checkout-summary__total">
+                                <span>Total Due</span>
+                                <strong id="summaryTotal">@Model.Tournament.EntryFee.ToString("C")</strong>
+                            </div>
+                        </div>
                         <div class="form-actions">
-                            <button type="submit" class="btn">
-                                Pay and Register
-                                @if (Model.Tournament.HasPracticeRound)
-                                {
-                                    <span id="totalFeeDisplay"> — @Model.Tournament.EntryFee.ToString("C")</span>
-                                }
+                            <button type="submit" class="btn" id="regSubmitBtn">
+                                <span id="regSubmitLabel">Pay <span id="regTotalDisplay">@Model.Tournament.EntryFee.ToString("C")</span></span>
+                                <span class="btn-spinner" id="regSpinner" style="display:none;"></span>
                             </button>
                         </div>
                     </div>
@@ -186,12 +201,18 @@
                             var entryFee = @Model.Tournament.EntryFee;
                             var practiceRoundFee = @Model.Tournament.PracticeRoundFee;
                             var cb = document.getElementById('includePracticeRound');
-                            var display = document.getElementById('totalFeeDisplay');
-                            if (!cb || !display) return;
-                            cb.addEventListener('change', function () {
-                                var total = entryFee + (this.checked ? practiceRoundFee : 0);
-                                display.textContent = ' \u2014 $' + total.toFixed(2);
-                            });
+                            function syncTotal() {
+                                var hasPractice = cb && cb.checked;
+                                var total = entryFee + (hasPractice ? practiceRoundFee : 0);
+                                var fmt = '$' + total.toFixed(2);
+                                var el = document.getElementById('summaryTotal');
+                                var el2 = document.getElementById('regTotalDisplay');
+                                var row = document.getElementById('summaryPracticeRow');
+                                if (el) el.textContent = fmt;
+                                if (el2) el2.textContent = fmt;
+                                if (row) row.style.display = hasPractice ? '' : 'none';
+                            }
+                            if (cb) cb.addEventListener('change', syncTotal);
                         })();
                     </script>
                 }
@@ -294,28 +315,43 @@
         (function () {
             var cardNumberInput = document.getElementById('Input_CardNumber');
             var cardExpiryInput = document.getElementById('Input_CardExpiry');
+            var cardTypeBadge = document.getElementById('regCardTypeBadge');
+
+            function detectCardType(d) {
+                if (/^4/.test(d)) return 'Visa';
+                if (/^5[1-5]|^2[2-7]/.test(d)) return 'Mastercard';
+                if (/^3[47]/.test(d)) return 'Amex';
+                if (/^6(?:011|5)/.test(d)) return 'Discover';
+                return '';
+            }
 
             if (cardNumberInput) {
-                cardNumberInput.addEventListener('input', function (event) {
-                    var digits = event.target.value.replace(/\D/g, '').slice(0, 19);
-                    event.target.value = digits.replace(/(.{4})/g, '$1 ').trim();
+                cardNumberInput.addEventListener('input', function (e) {
+                    var digits = e.target.value.replace(/\D/g, '').slice(0, 16);
+                    e.target.value = digits.replace(/(.{4})/g, '$1 ').trim();
+                    if (cardTypeBadge) {
+                        var type = detectCardType(digits);
+                        cardTypeBadge.textContent = type;
+                        cardTypeBadge.style.display = type ? '' : 'none';
+                    }
                 });
             }
 
             if (cardExpiryInput) {
-                cardExpiryInput.addEventListener('input', function (event) {
-                    var digits = event.target.value.replace(/\D/g, '').slice(0, 6);
-                    if (digits.length <= 2) {
-                        event.target.value = digits;
-                        return;
-                    }
+                cardExpiryInput.addEventListener('input', function (e) {
+                    var digits = e.target.value.replace(/\D/g, '').slice(0, 4);
+                    e.target.value = digits.length > 2 ? digits.slice(0, 2) + '/' + digits.slice(2) : digits;
+                });
+            }
 
-                    if (digits.length <= 4) {
-                        event.target.value = digits.slice(0, 2) + '/' + digits.slice(2);
-                        return;
-                    }
-
-                    event.target.value = digits.slice(0, 2) + '/' + digits.slice(2);
+            var regSubmitBtn = document.getElementById('regSubmitBtn');
+            if (regSubmitBtn) {
+                regSubmitBtn.closest('form').addEventListener('submit', function () {
+                    regSubmitBtn.disabled = true;
+                    var spinner = document.getElementById('regSpinner');
+                    var label = document.getElementById('regSubmitLabel');
+                    if (spinner) spinner.style.display = 'inline-block';
+                    if (label) label.textContent = 'Processing\u2026';
                 });
             }
         })();

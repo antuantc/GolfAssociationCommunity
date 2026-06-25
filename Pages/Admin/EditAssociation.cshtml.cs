@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using GolfAssociationCommunity.Data;
 using GolfAssociationCommunity.Models;
 using GolfAssociationCommunity.Services;
 using Microsoft.AspNetCore.Authorization;
@@ -13,11 +14,13 @@ namespace GolfAssociationCommunity.Pages.Admin
     {
         private readonly IAssociationService _associationService;
         private readonly IAdminAuditService _adminAuditService;
+        private readonly ApplicationDbContext _context;
 
-        public EditAssociationModel(IAssociationService associationService, IAdminAuditService adminAuditService)
+        public EditAssociationModel(IAssociationService associationService, IAdminAuditService adminAuditService, ApplicationDbContext context)
         {
             _associationService = associationService;
             _adminAuditService = adminAuditService;
+            _context = context;
         }
 
         [BindProperty]
@@ -75,7 +78,7 @@ namespace GolfAssociationCommunity.Pages.Admin
 
         public async Task<IActionResult> OnGetAsync(int id)
         {
-            var association = await _associationService.GetAssociationByIdAsync(id);
+            var association = await _context.GolfAssociations.FindAsync(id);
             if (association is null)
             {
                 return NotFound();
