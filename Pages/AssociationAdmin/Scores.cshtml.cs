@@ -338,11 +338,12 @@ namespace GolfAssociationCommunity.Pages.AssociationAdmin
                 .OrderBy(f => f.DisplayOrder).ThenBy(f => f.Name)
                 .ToListAsync();
 
-            Players = await Context.AssociationPlayers
-                .Where(p => p.GolfAssociationId == CurrentAssociation.Id && p.IsActive)
-                .OrderBy(p => p.DisplayName)
-                .ThenBy(p => p.Email)
-                .Select(p => new PlayerOption { Id = p.Id, Name = p.DisplayName })
+            Players = await Context.Registrations
+                .Where(r => r.TournamentId == TournamentId.Value
+                    && r.AssociationPlayer != null
+                    && r.AssociationPlayer.IsActive)
+                .OrderBy(r => r.AssociationPlayer!.DisplayName)
+                .Select(r => new PlayerOption { Id = (int)r.AssociationPlayerId!, Name = r.AssociationPlayer!.DisplayName })
                 .ToListAsync();
 
             if (!AssociationPlayerId.HasValue)
