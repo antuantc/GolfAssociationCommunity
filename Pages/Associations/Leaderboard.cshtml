@@ -127,7 +127,7 @@ else
                                     <th data-sort="num" data-col="2">Tournaments</th>
                                     <th data-sort="num" data-col="3">Wins</th>
                                     <th data-sort="num" data-col="4">Avg Finish</th>
-                                    <th data-sort="num" data-col="5">Total Score</th>
+                                    <th data-sort="num" data-col="5">Avg Score</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -139,7 +139,7 @@ else
                                         <td>@row.TournamentsPlayed</td>
                                         <td>@row.Wins</td>
                                         <td>@row.AveragePosition.ToString("0.##")</td>
-                                        <td>@row.TotalScore</td>
+                                        <td>@row.AverageScore.ToString("0.##")</td>
                                     </tr>
                                 }
                             </tbody>

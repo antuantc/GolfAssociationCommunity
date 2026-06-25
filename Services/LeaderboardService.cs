@@ -144,7 +144,7 @@ namespace GolfAssociationCommunity.Services
                 if (tournamentIds.Count == 0) return Enumerable.Empty<AssociationLeaderboardRow>();
 
                 var rows = await _context.Leaderboards
-                    .Where(l => tournamentIds.Contains(l.TournamentId))
+                    .Where(l => tournamentIds.Contains(l.TournamentId) && l.TotalScore > 0)
                     .Include(l => l.AssociationPlayer)
                     .ToListAsync();
 

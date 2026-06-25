@@ -8,20 +8,12 @@
     <h1>Manage Players</h1>
     <p>Search players across all associations and remove them everywhere when needed.</p>
 
-    <form method="get" class="form-shell">
-        <div class="form-section">
-            <div class="form-grid">
-                <div>
-                    <label for="search">Search</label>
-                    <input id="search" name="Search" value="@Model.Search" class="form-control" placeholder="Name, email, association" />
-                </div>
-            </div>
-            <div class="form-actions">
-                <button type="submit" class="btn">Apply Filters</button>
-                <a class="btn btn-secondary" href="~/Admin/Players">Reset</a>
-            </div>
-        </div>
-    </form>
+    <div class="players-section-header" style="margin-bottom:0.75rem;">
+        <input type="search" id="admin-player-search" class="form-control search-inline"
+               placeholder="&#128269; Name, email, or association&hellip;" autocomplete="off"
+               oninput="filterAdminPlayers(this)" style="max-width:340px;" />
+        <span id="admin-player-search-count" class="table-toolbar__count"></span>
+    </div>
 
     @if (TempData["SuccessMessage"] is string message)
     {
@@ -38,7 +30,7 @@
             <input type="hidden" name="Search" value="@Model.Search" />
         </form>
         <div class="table-scroll">
-            <table class="table">
+            <table class="table" id="admin-players-table">
                 <thead>
                     <tr>
                         <th><input type="checkbox" id="select-all-players" title="Select all" /></th>
@@ -57,7 +49,8 @@
                 <tbody>
                 @foreach (var player in Model.Players)
                 {
-                    <tr>
+                    var assocNames = string.Join(" ", player.Associations.Select(a => a.AssociationName)).ToLower();
+                    <tr data-name="@player.DisplayName.ToLower()" data-email="@player.Email.ToLower()" data-assoc="@assocNames">
                         <td><input type="checkbox" class="player-check" name="EmailKeys" value="@player.EmailKey" form="bulk-player-delete" /></td>
                         <td>@player.DisplayName</td>
                         <td>@player.Email</td>
@@ -94,6 +87,33 @@
 </section>
 <script>
     document.getElementById('select-all-players')?.addEventListener('change', function () {
-        document.querySelectorAll('.player-check').forEach(cb => cb.checked = this.checked);
+        document.querySelectorAll('#admin-players-table tbody tr:not([style*="display: none"]) .player-check').forEach(cb => cb.checked = this.checked);
     });
+    document.querySelectorAll('.player-check').forEach(cb => cb.addEventListener('change', function () {
+        const all = document.getElementById('select-all-players');
+        if (!all) return;
+        const checks = document.querySelectorAll('.player-check');
+        const checked = document.querySelectorAll('.player-check:checked');
+        all.indeterminate = checked.length > 0 && checked.length < checks.length;
+        all.checked = checks.length > 0 && checked.length === checks.length;
+    }));
+    function filterAdminPlayers(input) {
+        const q = input.value.trim().toLowerCase();
+        const searchCount = document.getElementById('admin-player-search-count');
+        const rows = document.querySelectorAll('#admin-players-table tbody tr');
+        let visible = 0;
+        rows.forEach(row => {
+            const match = !q ||
+                (row.dataset.name  || '').includes(q) ||
+                (row.dataset.email || '').includes(q) ||
+                (row.dataset.assoc || '').includes(q);
+            row.style.display = match ? '' : 'none';
+            if (match) visible++;
+            if (!match) {
+                const cb = row.querySelector('.player-check');
+                if (cb) cb.checked = false;
+            }
+        });
+        if (searchCount) searchCount.textContent = q ? visible + ' result' + (visible !== 1 ? 's' : '') : '';
+    }
 </script>
