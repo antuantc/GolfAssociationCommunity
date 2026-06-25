@@ -9,11 +9,8 @@
     <p>Search players across all associations and remove them everywhere when needed.</p>
 
     <div class="players-section-header" style="margin-bottom:0.75rem;">
-        <input type="search" id="admin-player-search" class="form-control search-inline"
-               placeholder="&#128269; Name, email, or association&hellip;" autocomplete="off"
-               oninput="filterAdminPlayers(this)" style="max-width:340px;" />
         <span id="admin-player-search-count" class="table-toolbar__count"></span>
-        <a href="?handler=DownloadCsv&Search=@Model.Search" class="btn btn-secondary btn-sm" style="margin-left:auto;">&#8595; Download CSV</a>
+        <a href="?handler=DownloadCsv" class="btn btn-secondary btn-sm" style="margin-left:auto;">&#8595; Download CSV</a>
     </div>
 
     @if (TempData["SuccessMessage"] is string message)
@@ -45,6 +42,13 @@
                         <th>Leaderboards</th>
                         <th>Last Updated</th>
                         <th>Actions</th>
+                    </tr>
+                    <tr>
+                        <th></th>
+                        <th><input type="search" id="col-filter-name" class="form-control" placeholder="Filter name&hellip;" autocomplete="off" oninput="filterAdminPlayers()" style="font-weight:normal;min-width:120px;" /></th>
+                        <th><input type="search" id="col-filter-email" class="form-control" placeholder="Filter email&hellip;" autocomplete="off" oninput="filterAdminPlayers()" style="font-weight:normal;min-width:150px;" /></th>
+                        <th><input type="search" id="col-filter-assoc" class="form-control" placeholder="Filter association&hellip;" autocomplete="off" oninput="filterAdminPlayers()" style="font-weight:normal;min-width:140px;" /></th>
+                        <th colspan="7"></th>
                     </tr>
                 </thead>
                 <tbody>
@@ -87,16 +91,21 @@
     }
 </section>
 <script>
-function filterAdminPlayers(input) {
-    var q = (input.value || '').trim().toLowerCase();
+function filterAdminPlayers() {
+    var qName  = (document.getElementById('col-filter-name')?.value  || '').trim().toLowerCase();
+    var qEmail = (document.getElementById('col-filter-email')?.value || '').trim().toLowerCase();
+    var qAssoc = (document.getElementById('col-filter-assoc')?.value || '').trim().toLowerCase();
     var searchCount = document.getElementById('admin-player-search-count');
     var rows = document.querySelectorAll('#admin-players-table tbody tr');
     var visible = 0;
+    var anyFilter = qName || qEmail || qAssoc;
     rows.forEach(function(row) {
-        var match = !q ||
-            (row.dataset.name  || '').toLowerCase().indexOf(q) >= 0 ||
-            (row.dataset.email || '').toLowerCase().indexOf(q) >= 0 ||
-            (row.dataset.assoc || '').toLowerCase().indexOf(q) >= 0;
+        var name  = (row.dataset.name  || '');
+        var email = (row.dataset.email || '');
+        var assoc = (row.dataset.assoc || '');
+        var match = (!qName  || name.indexOf(qName)   >= 0) &&
+                    (!qEmail || email.indexOf(qEmail)  >= 0) &&
+                    (!qAssoc || assoc.indexOf(qAssoc)  >= 0);
         row.style.display = match ? '' : 'none';
         if (match) visible++;
         if (!match) {
@@ -104,7 +113,7 @@ function filterAdminPlayers(input) {
             if (cb) cb.checked = false;
         }
     });
-    if (searchCount) searchCount.textContent = q ? visible + ' result' + (visible !== 1 ? 's' : '') : '';
+    if (searchCount) searchCount.textContent = anyFilter ? visible + ' result' + (visible !== 1 ? 's' : '') : '';
 }
 
 var _adminSelectAll = document.getElementById('select-all-players');
@@ -125,7 +134,8 @@ document.querySelectorAll('.player-check').forEach(function(cb) {
     });
 });
 
-// Bind search directly (belt + suspenders alongside oninput attribute)
-var _adminSearchEl = document.getElementById('admin-player-search');
-if (_adminSearchEl) { _adminSearchEl.addEventListener('input', function() { filterAdminPlayers(this); }); }
+['col-filter-name','col-filter-email','col-filter-assoc'].forEach(function(id) {
+    var el = document.getElementById(id);
+    if (el) el.addEventListener('input', filterAdminPlayers);
+});
 </script>
