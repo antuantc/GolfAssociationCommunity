@@ -78,7 +78,8 @@
         <div class="players-section-header">
             <h2 id="active-players">Active Players</h2>
             <input type="search" id="player-search" class="form-control search-inline"
-                   placeholder="Search by name or email&hellip;" autocomplete="off" />
+                   placeholder="Search by name or email&hellip;" autocomplete="off"
+                   oninput="filterAssocPlayers(this)" />
         </div>
 
         <form id="bulk-assoc-player-delete" method="post" asp-page-handler="DeleteSelected"></form>
@@ -231,15 +232,16 @@
     document.querySelectorAll('.assoc-player-check').forEach(cb => cb.addEventListener('change', updateCount));
 
     // Search / filter
-    const searchEl   = document.getElementById('player-search');
     const searchInfo = document.getElementById('player-search-count');
     const noResults  = document.getElementById('no-results-msg');
-    searchEl?.addEventListener('input', function () {
-        const q = this.value.trim().toLowerCase();
+    window.filterAssocPlayers = function (input) {
+        const q = input.value.trim().toLowerCase();
         const rows = document.querySelectorAll('#players-table tbody tr');
         let visible = 0;
         rows.forEach(row => {
-            const match = !q || row.dataset.name.includes(q) || row.dataset.email.includes(q);
+            const name  = row.dataset.name  || '';
+            const email = row.dataset.email || '';
+            const match = !q || name.includes(q) || email.includes(q);
             row.style.display = match ? '' : 'none';
             if (match) visible++;
             if (!match) {
@@ -250,5 +252,5 @@
         if (searchInfo) searchInfo.textContent = q ? visible + ' result' + (visible !== 1 ? 's' : '') : '';
         if (noResults) noResults.style.display = (q && visible === 0) ? '' : 'none';
         updateCount();
-    });
+    };
 })();
