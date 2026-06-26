@@ -1,12 +1,16 @@
 @page
 @model GolfAssociationCommunity.Pages.Admin.TransactionsModel
 @{
-    ViewData["Title"] = "Authorize.Net Transactions";
+    ViewData["Title"] = "Transactions";
 }
 
 <section class="section-panel">
-    <h1>Authorize.Net Transactions</h1>
-    <p>Review payments across all associations and open any transaction to reconcile or refund it.</p>
+    <div class="admin-page-header">
+        <div>
+            <h1>Transactions</h1>
+            <p>Review payment activity across all associations. Open any transaction to reconcile or issue a refund.</p>
+        </div>
+    </div>
 
     @if (TempData["SuccessMessage"] is string successMessage)
     {
@@ -18,24 +22,21 @@
         <div class="message error">@errorMessage</div>
     }
 
-    <form method="get" class="card-grid">
+    <form method="get" class="admin-filter-bar">
         <div>
             <label for="search">Search</label>
-            <input id="search" name="Search" value="@Model.Search" class="form-control" placeholder="Transaction, customer, association" />
+            <input id="search" name="Search" value="@Model.Search" class="form-control" placeholder="Transaction ID, customer, or association" />
         </div>
-        <div>
-            <label>&nbsp;</label>
-            <div>
-                <button type="submit" class="btn">Apply Filters</button>
-                <a class="btn btn-secondary" href="~/Admin/Transactions">Reset</a>
-            </div>
+        <div class="admin-filter-bar__actions">
+            <button type="submit" class="btn btn-sm">Apply Filters</button>
+            <a class="btn btn-secondary btn-sm" href="~/Admin/Transactions">Reset</a>
         </div>
     </form>
 
     <div class="card-grid">
         <article class="card">
             <h3>@Model.Transactions.Count</h3>
-            <p>Transactions</p>
+            <p>Transactions shown</p>
         </article>
         <article class="card">
             <h3>@Model.TotalAmount.ToString("C")</h3>
@@ -43,7 +44,7 @@
         </article>
         <article class="card">
             <h3>@Model.RefundedAmount.ToString("C")</h3>
-            <p>Refunded</p>
+            <p>Total refunded</p>
         </article>
         <article class="card">
             <h3>@Model.RefundedCount</h3>
@@ -53,7 +54,7 @@
 
     @if (Model.Transactions.Count == 0)
     {
-        <p>No transactions found.</p>
+        <p>No transactions found matching the current filters.</p>
     }
     else
     {
@@ -78,31 +79,32 @@
             {
                 <tr>
                     <td>
-                        <a class="link-button" asp-page="/Admin/Transactions/Details" asp-route-sourceType="@transaction.SourceType" asp-route-id="@transaction.SourceId">View</a>
+                        <a class="card-link" asp-page="/Admin/Transactions/Details" asp-route-sourceType="@transaction.SourceType" asp-route-id="@transaction.SourceId"
+                           title="View full transaction details and refund options">View Details</a>
                     </td>
                     <td>@transaction.AssociationName</td>
                     <td>@transaction.SourceType</td>
                     <td>
                         <strong>@transaction.CustomerName</strong><br />
-                        <span>@transaction.CustomerEmail</span>
+                        <small>@transaction.CustomerEmail</small>
                     </td>
                     <td>@transaction.SourceLabel</td>
-                    <td>@(transaction.PaidAtUtc.HasValue ? transaction.PaidAtUtc.Value.ToString("MMM d, yyyy") : "-")</td>
+                    <td>@(transaction.PaidAtUtc.HasValue ? transaction.PaidAtUtc.Value.ToString("MMM d, yyyy") : "—")</td>
                     <td>@transaction.StatusLabel</td>
                     <td>@transaction.Amount.ToString("C")</td>
-                    <td>@(string.IsNullOrWhiteSpace(transaction.CardLast4) ? "-" : $"**** {transaction.CardLast4}")</td>
+                    <td>@(string.IsNullOrWhiteSpace(transaction.CardLast4) ? "—" : $"**** {transaction.CardLast4}")</td>
                     <td>
                         @if (transaction.IsRefunded)
                         {
-                            <span>@(transaction.RefundAmount.HasValue ? transaction.RefundAmount.Value.ToString("C") : "Refunded")</span><br />
+                            <span class="status-badge status-badge--yellow">@(transaction.RefundAmount.HasValue ? transaction.RefundAmount.Value.ToString("C") : "Refunded")</span><br />
                             @if (transaction.RefundedAtUtc.HasValue)
                             {
-                                <span>@transaction.RefundedAtUtc.Value.ToString("MMM d, yyyy")</span>
+                                <small class="text-muted">@transaction.RefundedAtUtc.Value.ToString("MMM d, yyyy")</small>
                             }
                         }
                         else
                         {
-                            <span>-</span>
+                            <span class="text-muted">—</span>
                         }
                     </td>
                 </tr>
@@ -112,5 +114,7 @@
         </div>
     }
 
-    <a class="btn btn-secondary" href="~/Admin">Back to Dashboard</a>
+    <div class="admin-back-nav">
+        <a class="btn btn-secondary" href="~/Admin">&#8592; Back to Dashboard</a>
+    </div>
 </section>

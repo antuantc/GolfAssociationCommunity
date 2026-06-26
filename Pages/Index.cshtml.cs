@@ -39,7 +39,7 @@ namespace GolfAssociationCommunity.Pages
                 .OrderBy(ga => ga.Name)
                 .ToListAsync();
 
-            GlobalLeaderboard = (await _leaderboardService.GetGlobalLeaderboardAsync(10)).ToList();
+            GlobalLeaderboard = (await _leaderboardService.GetGlobalLeaderboardAsync(topN: 10, minTournaments: 2)).ToList();
             TotalAssociations = associations.Count;
 
             var now = DateTime.UtcNow;

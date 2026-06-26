@@ -6,18 +6,27 @@
 }
 
 <section class="section-panel">
-    <h1>Manage Registrations</h1>
-    <p>Manage tournament registrations and payment confirmations across the platform.</p>
+    <div class="admin-page-header">
+        <div>
+            <h1>Registrations</h1>
+            <p>Manage tournament registrations, confirm payments, and withdraw players across the platform.</p>
+        </div>
+    </div>
 
-    <form method="get" class="card-grid">
+    @if (TempData["SuccessMessage"] is string message)
+    {
+        <div class="message success">@message</div>
+    }
+
+    <form method="get" class="admin-filter-bar">
         <div>
             <label for="search">Search</label>
-            <input id="search" name="Search" value="@Model.Search" class="form-control" placeholder="Player, tournament, association" />
+            <input id="search" name="Search" value="@Model.Search" class="form-control" placeholder="Player, tournament, or association" />
         </div>
         <div>
             <label for="statusFilter">Status</label>
             <select id="statusFilter" name="StatusFilter" class="form-control">
-                <option value="">All</option>
+                <option value="">All statuses</option>
                 @foreach (var status in Enum.GetValues<RegistrationStatus>())
                 {
                     <option value="@status" selected="@(Model.StatusFilter == status)">@status</option>
@@ -27,28 +36,20 @@
         <div>
             <label for="paymentFilter">Payment</label>
             <select id="paymentFilter" name="PaymentFilter" class="form-control">
-                <option value="">All</option>
+                <option value="">All payments</option>
                 <option value="Confirmed" selected="@(Model.PaymentFilter == "Confirmed")">Confirmed</option>
                 <option value="Pending" selected="@(Model.PaymentFilter == "Pending")">Pending</option>
             </select>
         </div>
-        <div>
-            <label>&nbsp;</label>
-            <div>
-                <button type="submit" class="btn">Apply Filters</button>
-                <a class="btn btn-secondary" href="~/Admin/Registrations">Reset</a>
-            </div>
+        <div class="admin-filter-bar__actions">
+            <button type="submit" class="btn btn-sm">Apply Filters</button>
+            <a class="btn btn-secondary btn-sm" href="~/Admin/Registrations">Reset</a>
         </div>
     </form>
 
-    @if (TempData["SuccessMessage"] is string message)
-    {
-        <div class="message success">@message</div>
-    }
-
     @if (Model.Registrations.Count == 0)
     {
-        <p>No registrations found.</p>
+        <p>No registrations found matching the current filters.</p>
     }
     else
     {
@@ -58,11 +59,16 @@
             <input type="hidden" name="PaymentFilter" value="@Model.PaymentFilter" />
             <input type="hidden" name="CurrentPage" value="@Model.PageNumber" />
         </form>
+        <div class="table-toolbar">
+            <label class="table-toolbar__select-all">
+                <input type="checkbox" id="select-all-regs" /> Select all on this page
+            </label>
+        </div>
         <div class="table-scroll">
         <table class="table">
             <thead>
                 <tr>
-                    <th><input type="checkbox" id="select-all-regs" title="Select all" /></th>
+                    <th><span class="sr-only">Select</span></th>
                     <th>Actions</th>
                     <th>Player</th>
                     <th>Tournament</th>
@@ -84,13 +90,13 @@
                             <input type="hidden" name="StatusFilter" value="@Model.StatusFilter" />
                             <input type="hidden" name="PaymentFilter" value="@Model.PaymentFilter" />
                             <input type="hidden" name="CurrentPage" value="@Model.PageNumber" />
-                            <select name="status" class="form-control" aria-label="Registration status">
+                            <select name="status" class="form-control" aria-label="Change registration status" style="display:inline-block;width:auto;font-size:0.85rem;padding:0.3rem 0.5rem;">
                                 @foreach (var status in Enum.GetValues<RegistrationStatus>())
                                 {
                                     <option value="@status" selected="@(status == registration.Status)">@status</option>
                                 }
                             </select>
-                            <button type="submit" class="link-button">Update</button>
+                            <button type="submit" class="link-button" title="Save the selected status">Update Status</button>
                         </form>
                         @if (!registration.PaymentConfirmed)
                         {
@@ -99,7 +105,7 @@
                                 <input type="hidden" name="StatusFilter" value="@Model.StatusFilter" />
                                 <input type="hidden" name="PaymentFilter" value="@Model.PaymentFilter" />
                                 <input type="hidden" name="CurrentPage" value="@Model.PageNumber" />
-                                <button type="submit" class="link-button">Confirm Payment</button>
+                                <button type="submit" class="link-button" title="Mark payment as confirmed">Confirm Payment</button>
                             </form>
                         }
                         <form method="post" asp-page-handler="Withdraw" asp-route-id="@registration.Id" class="inline-form">
@@ -107,28 +113,46 @@
                             <input type="hidden" name="StatusFilter" value="@Model.StatusFilter" />
                             <input type="hidden" name="PaymentFilter" value="@Model.PaymentFilter" />
                             <input type="hidden" name="CurrentPage" value="@Model.PageNumber" />
-                            <button type="submit" class="link-button">Withdraw</button>
+                            <button type="submit" class="link-button" title="Withdraw this player from the tournament">Withdraw</button>
                         </form>
                         <form method="post" asp-page-handler="Delete" asp-route-id="@registration.Id" class="inline-form"
-                              onsubmit="return confirm('Delete this registration? This cannot be undone.')">
+                              onsubmit="return confirm('Permanently delete this registration? This cannot be undone.')">
                             <input type="hidden" name="Search" value="@Model.Search" />
                             <input type="hidden" name="StatusFilter" value="@Model.StatusFilter" />
                             <input type="hidden" name="PaymentFilter" value="@Model.PaymentFilter" />
                             <input type="hidden" name="CurrentPage" value="@Model.PageNumber" />
-                            <button type="submit" class="link-button danger">Delete</button>
+                            <button type="submit" class="link-button danger" title="Permanently delete this registration">Delete</button>
                         </form>
                     </td>
                     <td>@registration.PlayerEmail</td>
-                    <td>@registration.TournamentName</td>
+                    <td><strong>@registration.TournamentName</strong></td>
                     <td>@registration.AssociationName</td>
                     <td>@registration.RegistrationDate.ToString("MMM d, yyyy")</td>
-                    <td>@registration.Status</td>
-                    <td>@(registration.Handicap.HasValue ? registration.Handicap.Value.ToString("0.0#") : "-")</td>
                     <td>
-                        @(registration.PaymentConfirmed ? "Confirmed" : "Pending")
-                        @if (registration.PaymentConfirmed && !string.IsNullOrWhiteSpace(registration.CardLast4))
+                        @{
+                            var regBadgeClass = registration.Status switch {
+                                RegistrationStatus.Registered => "status-badge--green",
+                                RegistrationStatus.Pending    => "status-badge--yellow",
+                                RegistrationStatus.Cancelled  => "status-badge--red",
+                                RegistrationStatus.Withdrew   => "status-badge--gray",
+                                _                             => "status-badge--gray"
+                            };
+                        }
+                        <span class="status-badge @regBadgeClass">@registration.Status</span>
+                    </td>
+                    <td>@(registration.Handicap.HasValue ? registration.Handicap.Value.ToString("0.0#") : "—")</td>
+                    <td>
+                        @if (registration.PaymentConfirmed)
                         {
-                            <span> (**** @registration.CardLast4)</span>
+                            <span class="status-badge status-badge--green">Confirmed</span>
+                            @if (!string.IsNullOrWhiteSpace(registration.CardLast4))
+                            {
+                                <small class="text-muted"> **** @registration.CardLast4</small>
+                            }
+                        }
+                        else
+                        {
+                            <span class="status-badge status-badge--yellow">Pending</span>
                         }
                     </td>
                 </tr>
@@ -139,28 +163,40 @@
 
         <div class="form-actions" style="margin-top:0.75rem;">
             <button type="submit" form="bulk-reg-delete" class="btn btn-danger"
-                    onclick="return document.querySelectorAll('.reg-check:checked').length > 0 || (alert('Select at least one registration.'), false)">
+                    onclick="return document.querySelectorAll('.reg-check:checked').length > 0 || (alert('Select at least one registration first.'), false)">
                 Delete Selected
             </button>
         </div>
 
-        <div>
+        <div class="admin-pagination">
             <span>Page @Model.PageNumber of @Model.TotalPages</span>
             @if (Model.PageNumber > 1)
             {
-                <a class="btn btn-secondary" asp-page="/Admin/Registrations" asp-route-Search="@Model.Search" asp-route-StatusFilter="@Model.StatusFilter" asp-route-PaymentFilter="@Model.PaymentFilter" asp-route-CurrentPage="@(Model.PageNumber - 1)">Previous</a>
+                <a class="btn btn-secondary btn-sm" asp-page="/Admin/Registrations" asp-route-Search="@Model.Search" asp-route-StatusFilter="@Model.StatusFilter" asp-route-PaymentFilter="@Model.PaymentFilter" asp-route-CurrentPage="@(Model.PageNumber - 1)">&#8592; Previous</a>
             }
             @if (Model.PageNumber < Model.TotalPages)
             {
-                <a class="btn btn-secondary" asp-page="/Admin/Registrations" asp-route-Search="@Model.Search" asp-route-StatusFilter="@Model.StatusFilter" asp-route-PaymentFilter="@Model.PaymentFilter" asp-route-CurrentPage="@(Model.PageNumber + 1)">Next</a>
+                <a class="btn btn-secondary btn-sm" asp-page="/Admin/Registrations" asp-route-Search="@Model.Search" asp-route-StatusFilter="@Model.StatusFilter" asp-route-PaymentFilter="@Model.PaymentFilter" asp-route-CurrentPage="@(Model.PageNumber + 1)">Next &#8594;</a>
             }
         </div>
     }
 
-    <a class="btn btn-secondary" href="~/Admin">Back to Dashboard</a>
+    <div class="admin-back-nav">
+        <a class="btn btn-secondary" href="~/Admin">&#8592; Back to Dashboard</a>
+    </div>
 </section>
 <script>
     document.getElementById('select-all-regs')?.addEventListener('change', function () {
         document.querySelectorAll('.reg-check').forEach(cb => cb.checked = this.checked);
+    });
+    document.querySelectorAll('.reg-check').forEach(function (cb) {
+        cb.addEventListener('change', function () {
+            var all = document.getElementById('select-all-regs');
+            if (!all) return;
+            var checks = document.querySelectorAll('.reg-check');
+            var checked = document.querySelectorAll('.reg-check:checked');
+            all.indeterminate = checked.length > 0 && checked.length < checks.length;
+            all.checked = checks.length > 0 && checked.length === checks.length;
+        });
     });
 </script>

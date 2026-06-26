@@ -5,48 +5,93 @@
 }
 
 <section class="section-panel">
-    <h1>Manage Associations</h1>
+    <div class="admin-page-header">
+        <div>
+            <h1>Associations</h1>
+            <p>Review, edit, and manage golf associations on the platform.</p>
+        </div>
+        <div class="admin-page-header__actions">
+            <a class="btn" href="~/Admin/CreateAssociation">+ Create Association</a>
+        </div>
+    </div>
+
     @if (TempData["SuccessMessage"] is string message)
     {
         <div class="message success">@message</div>
     }
 
-    <a class="btn" href="~/Admin/CreateAssociation">Create Association</a>
-
     @if (Model.Associations.Count == 0)
     {
-        <p>No active associations found.</p>
+        <p>No associations found. <a href="~/Admin/CreateAssociation">Create the first one.</a></p>
     }
     else
     {
+        <div class="table-toolbar">
+            <input type="search" id="assoc-filter" class="form-control" placeholder="Filter by name or location&hellip;" autocomplete="off" style="max-width:320px;" />
+            <span id="assoc-filter-count" class="table-toolbar__count"></span>
+        </div>
         <div class="table-scroll">
-        <table class="table">
+        <table class="table" id="assoc-table">
             <thead>
                 <tr>
                     <th>Actions</th>
                     <th>Name</th>
                     <th>Location</th>
-                    <th>Contact</th>
+                    <th>Contact Email</th>
+                    <th>Website</th>
                 </tr>
             </thead>
             <tbody>
             @foreach (var association in Model.Associations)
             {
-                <tr>
+                <tr data-name="@association.Name.ToLower()" data-location="@($"{association.City} {association.State}".ToLower())">
                     <td>
-                        <a class="card-link" href="~/Associations/Details/@association.Id">View</a>
+                        <a class="card-link" href="~/Associations/Details/@association.Id">View Site</a>
                         <a class="card-link" href="~/Admin/EditAssociation/@association.Id">Edit</a>
-                        <form method="post" asp-page-handler="Delete" asp-route-id="@association.Id" class="inline-form" onsubmit="return confirm('Delete this association?');">
-                            <button type="submit" class="link-button">Delete</button>
+                        <form method="post" asp-page-handler="Delete" asp-route-id="@association.Id" class="inline-form"
+                              onsubmit="return confirm('Permanently delete &quot;@Html.Raw(association.Name.Replace("'","\\\'"))&quot;? This cannot be undone.');">
+                            <button type="submit" class="link-button danger">Delete</button>
                         </form>
                     </td>
-                    <td>@association.Name</td>
+                    <td><strong>@association.Name</strong></td>
                     <td>@association.City, @association.State</td>
-                    <td>@association.ContactEmail</td>
+                    <td>@(association.ContactEmail ?? "—")</td>
+                    <td>
+                        @if (!string.IsNullOrWhiteSpace(association.Website))
+                        {
+                            <a href="@association.Website" target="_blank" rel="noopener noreferrer">@association.Website</a>
+                        }
+                        else
+                        {
+                            <span class="text-muted">—</span>
+                        }
+                    </td>
                 </tr>
             }
             </tbody>
         </table>
         </div>
     }
+
+    <div class="admin-back-nav">
+        <a class="btn btn-secondary" href="~/Admin">&#8592; Back to Dashboard</a>
+    </div>
 </section>
+<script>
+(function () {
+    var input = document.getElementById('assoc-filter');
+    var countEl = document.getElementById('assoc-filter-count');
+    if (!input) return;
+    input.addEventListener('input', function () {
+        var q = this.value.trim().toLowerCase();
+        var rows = document.querySelectorAll('#assoc-table tbody tr');
+        var visible = 0;
+        rows.forEach(function (row) {
+            var match = !q || (row.dataset.name || '').indexOf(q) >= 0 || (row.dataset.location || '').indexOf(q) >= 0;
+            row.style.display = match ? '' : 'none';
+            if (match) visible++;
+        });
+        if (countEl) countEl.textContent = q ? visible + ' result' + (visible !== 1 ? 's' : '') : '';
+    });
+}());
+</script>

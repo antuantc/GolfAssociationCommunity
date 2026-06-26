@@ -112,7 +112,27 @@ else
 
             <div class="section-panel">
                 <h2 style="margin-top:0;">Overall Standings</h2>
-                <p>Ranked by tournament points, then average finish position.</p>
+                <p>Ranked by season points &mdash; earned within your flight each tournament, then most wins, then average finish.</p>
+
+                <details style="margin-bottom:1rem;">
+                    <summary style="cursor:pointer;font-size:0.88rem;font-weight:600;color:var(--brand-accent);user-select:none;">How are points calculated? &#9660;</summary>
+                    <div style="margin-top:0.6rem;padding:0.85rem 1rem;background:#f8fafd;border:1px solid var(--card-border);border-radius:0.45rem;font-size:0.88rem;line-height:1.6;">
+                        <p style="margin:0 0 0.5rem;">Each tournament awards points based on your <strong>finish position within your flight</strong>:</p>
+                        <table style="border-collapse:collapse;margin-bottom:0.6rem;">
+                            <thead><tr><th style="padding:0.2rem 1rem 0.2rem 0;text-align:left;">Finish in flight</th><th style="padding:0.2rem 0;text-align:left;">Points</th></tr></thead>
+                            <tbody>
+                                <tr><td style="padding:0.15rem 1rem 0.15rem 0;">1st</td><td>25 pts</td></tr>
+                                <tr><td style="padding:0.15rem 1rem 0.15rem 0;">2nd</td><td>24 pts</td></tr>
+                                <tr><td style="padding:0.15rem 1rem 0.15rem 0;">3rd</td><td>23 pts</td></tr>
+                                <tr><td style="padding:0.15rem 1rem 0.15rem 0;">4th</td><td>22 pts</td></tr>
+                                <tr><td style="padding:0.15rem 1rem 0.15rem 0;">5th</td><td>21 pts</td></tr>
+                                <tr><td style="padding:0.15rem 1rem 0.15rem 0;color:var(--muted-text);">6th &ndash; 24th</td><td style="color:var(--muted-text);">20 &ndash; 2 pts</td></tr>
+                                <tr><td style="padding:0.15rem 1rem 0.15rem 0;">25th or lower</td><td>1 pt (minimum)</td></tr>
+                            </tbody>
+                        </table>
+                        <p style="margin:0;">Points accumulate across every tournament you play. <strong>Switching flights between events doesn&rsquo;t hurt your standing</strong> &mdash; each tournament is scored independently within its own flights. Tiebreakers: most wins &rarr; best average finish position &rarr; lowest average score.</p>
+                    </div>
+                </details>
 
                 @if (Model.AssociationLeaderboard.Count == 0)
                 {
@@ -129,11 +149,12 @@ else
                             <thead>
                                 <tr>
                                     <th data-sort="num" data-col="0">#</th>
-                                    <th data-sort="str" data-col="1">Player</th>
-                                    <th data-sort="num" data-col="2">Tournaments</th>
-                                    <th data-sort="num" data-col="3">Wins</th>
-                                    <th data-sort="num" data-col="4">Avg Finish</th>
-                                    <th data-sort="num" data-col="5">Avg Score</th>
+                                    <th data-sort="num" data-col="1" title="Total season points — primary ranking criterion">Points</th>
+                                    <th data-sort="str" data-col="2">Player</th>
+                                    <th data-sort="num" data-col="3">Played</th>
+                                    <th data-sort="num" data-col="4">Wins</th>
+                                    <th data-sort="num" data-col="5">Avg Finish</th>
+                                    <th data-sort="num" data-col="6">Avg Score</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -141,6 +162,7 @@ else
                                 {
                                     <tr>
                                         <td>@row.OverallPosition</td>
+                                        <td><strong>@row.TournamentPoints</strong></td>
                                         <td>@row.PlayerName</td>
                                         <td>@row.TournamentsPlayed</td>
                                         <td>@row.Wins</td>

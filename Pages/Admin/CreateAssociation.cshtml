@@ -4,18 +4,18 @@
     ViewData["Title"] = "Create Association";
 }
 
-<div class="hero">
-    <div class="hero-copy">
-        <h1>Create Golf Association</h1>
-        <p>Add a new association to the platform as an admin.</p>
-    </div>
-</div>
-
 <section class="section-panel">
-    <h2>Association Details</h2>
+    <div class="admin-page-header">
+        <div>
+            <h1>Create Association</h1>
+            <p>Add a new golf association to the platform.</p>
+        </div>
+    </div>
+
     <form method="post">
         <div asp-validation-summary="ModelOnly" class="message error"></div>
 
+        <h2 class="form-section-title">Association Details</h2>
         <div class="card-grid">
             <div>
                 <label asp-for="Input.Name"></label>
@@ -84,8 +84,8 @@
             <span asp-validation-for="Input.Description" class="text-danger"></span>
         </div>
 
-        <h2>Association Admin (Optional)</h2>
-        <p>Provide these fields to create and assign an association admin account now.</p>
+        <h2 class="form-section-title">Association Admin <small class="text-muted" style="font-size:0.8rem;font-weight:400;">(Optional)</small></h2>
+        <p class="field-note">Fill in these fields to create and assign an association admin account at the same time.</p>
 
         <div class="card-grid">
             <div>
@@ -96,7 +96,7 @@
 
             <div>
                 <label asp-for="Input.AssociationAdminPassword"></label>
-                <input asp-for="Input.AssociationAdminPassword" class="form-control" />
+                <input asp-for="Input.AssociationAdminPassword" class="form-control" type="password" />
                 <span asp-validation-for="Input.AssociationAdminPassword" class="text-danger"></span>
             </div>
 
@@ -113,8 +113,10 @@
             </div>
         </div>
 
-        <button type="submit" class="btn">Create Association</button>
-        <a href="~/Admin" class="btn btn-secondary">Back to Admin</a>
+        <div class="form-actions" style="margin-top:1.5rem;">
+            <button type="submit" class="btn">Create Association</button>
+            <a href="~/Admin/Associations" class="btn btn-secondary">Cancel</a>
+        </div>
     </form>
 </section>
 

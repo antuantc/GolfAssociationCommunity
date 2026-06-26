@@ -5,12 +5,20 @@
 }
 
 <section class="section-panel">
-    <h1>Edit User</h1>
-    <p>Update user name, email, and optionally reset the password.</p>
+    <div class="admin-page-header">
+        <div>
+            <h1>Edit User</h1>
+            <p>Update the user's name, email address, or reset their password.</p>
+        </div>
+        <div class="admin-page-header__actions">
+            <a class="btn btn-secondary btn-sm" href="~/Admin/Users">&#8592; Back to Users</a>
+        </div>
+    </div>
 
     <form method="post">
         <div asp-validation-summary="ModelOnly" class="message error"></div>
 
+        <h2 class="form-section-title">Profile</h2>
         <div class="card-grid">
             <div>
                 <label asp-for="Input.Email"></label>
@@ -31,25 +39,25 @@
             </div>
         </div>
 
-        <h2>Password</h2>
-        <p>Leave password fields blank if you do not want to change it.</p>
-
+        <h2 class="form-section-title">Reset Password <small class="text-muted" style="font-size:0.8rem;font-weight:400;">(Optional — leave blank to keep current password)</small></h2>
         <div class="card-grid">
             <div>
                 <label asp-for="Input.NewPassword"></label>
-                <input asp-for="Input.NewPassword" class="form-control" />
+                <input asp-for="Input.NewPassword" class="form-control" type="password" autocomplete="new-password" />
                 <span asp-validation-for="Input.NewPassword" class="text-danger"></span>
             </div>
 
             <div>
                 <label asp-for="Input.ConfirmPassword"></label>
-                <input asp-for="Input.ConfirmPassword" class="form-control" />
+                <input asp-for="Input.ConfirmPassword" class="form-control" type="password" autocomplete="new-password" />
                 <span asp-validation-for="Input.ConfirmPassword" class="text-danger"></span>
             </div>
         </div>
 
-        <button type="submit" class="btn">Save Changes</button>
-        <a class="btn btn-secondary" href="~/Admin/Users">Back to Users</a>
+        <div class="form-actions" style="margin-top:1.5rem;">
+            <button type="submit" class="btn">Save Changes</button>
+            <a class="btn btn-secondary" href="~/Admin/Users">Cancel</a>
+        </div>
     </form>
 </section>
 

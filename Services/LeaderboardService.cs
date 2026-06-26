@@ -57,7 +57,7 @@ namespace GolfAssociationCommunity.Services
         Task<Dictionary<int, List<int>>> GetTournamentTiebreakersAsync(int tournamentId);
         Task<IEnumerable<AssociationLeaderboardRow>> GetAssociationLeaderboardAsync(int associationId);
         Task<IEnumerable<RecentTournamentLeaderboard>> GetRecentTournamentLeaderboardsAsync(int associationId, int tournamentCount = 3, int topN = 5);
-        Task<IEnumerable<GlobalLeaderboardRow>> GetGlobalLeaderboardAsync(int topN = 10);
+        Task<IEnumerable<GlobalLeaderboardRow>> GetGlobalLeaderboardAsync(int topN = 10, int minTournaments = 1);
         Task<Leaderboard?> GetPlayerLeaderboardPositionAsync(int tournamentId, int associationPlayerId);
         Task UpdateLeaderboardAsync(int tournamentId);
         Task<bool> RecalculateLeaderboardAsync(int tournamentId);
@@ -168,7 +168,8 @@ namespace GolfAssociationCommunity.Services
                         PhotoUrl = group.Select(entry => entry.AssociationPlayer?.PhotoUrl)
                                         .FirstOrDefault(p => !string.IsNullOrWhiteSpace(p))
                     })
-                    .OrderByDescending(row => row.Wins)
+                    .OrderByDescending(row => row.TournamentPoints)
+                    .ThenByDescending(row => row.Wins)
                     .ThenBy(row => row.AveragePosition)
                     .ThenBy(row => row.AverageScore)
                     .ThenBy(row => row.PlayerName)
@@ -244,7 +245,7 @@ namespace GolfAssociationCommunity.Services
             }
         }
 
-        public async Task<IEnumerable<GlobalLeaderboardRow>> GetGlobalLeaderboardAsync(int topN = 10)
+        public async Task<IEnumerable<GlobalLeaderboardRow>> GetGlobalLeaderboardAsync(int topN = 10, int minTournaments = 1)
         {
             try
             {
@@ -268,9 +269,10 @@ namespace GolfAssociationCommunity.Services
                         AveragePosition = Math.Round((decimal)group.Average(e => e.Position), 2),
                         TotalScore = group.Sum(e => e.TotalScore)
                     })
+                    .Where(r => r.TournamentsPlayed >= minTournaments)
                     .OrderByDescending(r => r.TournamentPoints)
-                    .ThenBy(r => r.AveragePosition)
                     .ThenByDescending(r => r.Wins)
+                    .ThenBy(r => r.AveragePosition)
                     .ThenBy(r => r.TotalScore)
                     .ThenBy(r => r.PlayerName)
                     .Take(topN)

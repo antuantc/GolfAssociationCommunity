@@ -5,10 +5,20 @@
 }
 
 <section class="section-panel">
-    <h1>Edit Association</h1>
+    <div class="admin-page-header">
+        <div>
+            <h1>Edit Association</h1>
+            <p>Update association details, contact information, branding, and payment settings.</p>
+        </div>
+        <div class="admin-page-header__actions">
+            <a class="btn btn-secondary btn-sm" href="~/Admin/Associations">&#8592; Back to Associations</a>
+        </div>
+    </div>
+
     <form method="post">
         <div asp-validation-summary="ModelOnly" class="message error"></div>
 
+        <h2 class="form-section-title">Association Details</h2>
         <div class="card-grid">
             <div>
                 <label asp-for="Input.Name"></label>
@@ -26,9 +36,9 @@
                 <span asp-validation-for="Input.ContactPhone" class="text-danger"></span>
             </div>
             <div>
-                <label asp-for="Input.AdminUserId"></label>
-                <input asp-for="Input.AdminUserId" class="form-control" />
-                <span asp-validation-for="Input.AdminUserId" class="text-danger"></span>
+                <label asp-for="Input.Website"></label>
+                <input asp-for="Input.Website" class="form-control" />
+                <span asp-validation-for="Input.Website" class="text-danger"></span>
             </div>
             <div>
                 <label asp-for="Input.Street"></label>
@@ -56,11 +66,6 @@
                 <span asp-validation-for="Input.Country" class="text-danger"></span>
             </div>
             <div>
-                <label asp-for="Input.Website"></label>
-                <input asp-for="Input.Website" class="form-control" />
-                <span asp-validation-for="Input.Website" class="text-danger"></span>
-            </div>
-            <div>
                 <label asp-for="Input.LogoUrl"></label>
                 <input asp-for="Input.LogoUrl" class="form-control" />
                 <span asp-validation-for="Input.LogoUrl" class="text-danger"></span>
@@ -75,6 +80,11 @@
                 </select>
                 <span asp-validation-for="Input.ThemeKey" class="text-danger"></span>
             </div>
+            <div>
+                <label asp-for="Input.AdminUserId">Association Admin User ID</label>
+                <input asp-for="Input.AdminUserId" class="form-control" />
+                <span asp-validation-for="Input.AdminUserId" class="text-danger"></span>
+            </div>
         </div>
 
         <div class="mb-3">
@@ -83,8 +93,10 @@
             <span asp-validation-for="Input.Description" class="text-danger"></span>
         </div>
 
-        <button type="submit" class="btn">Save Changes</button>
-        <a class="btn btn-secondary" href="~/Admin/Associations">Back to Associations</a>
+        <div class="form-actions" style="margin-top:1.5rem;">
+            <button type="submit" class="btn">Save Changes</button>
+            <a class="btn btn-secondary" href="~/Admin/Associations">Cancel</a>
+        </div>
     </form>
 </section>
 
