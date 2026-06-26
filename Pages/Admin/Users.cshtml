@@ -58,30 +58,22 @@
     }
     else
     {
+        <div class="table-scroll">
         <table class="table">
             <thead>
                 <tr>
+                    <th>Actions</th>
                     <th>Name</th>
                     <th>Email</th>
                     <th>Association</th>
                     <th>Roles</th>
                     <th>Status</th>
-                    <th>Actions</th>
                 </tr>
             </thead>
             <tbody>
             @foreach (var user in Model.Users)
             {
                 <tr>
-                    <td>@(string.IsNullOrWhiteSpace(user.DisplayName) ? "-" : user.DisplayName)</td>
-                    <td>@user.Email</td>
-                    <td>@user.AssociationName</td>
-                    <td>
-                        @(user.IsAdmin ? "Admin " : "")
-                        @(user.IsAssociationAdmin ? "AssociationAdmin" : "")
-                        @(!user.IsAdmin && !user.IsAssociationAdmin ? "Standard User" : "")
-                    </td>
-                    <td>@(user.IsLockedOut ? "Locked" : "Active")</td>
                     <td>
                         @if (Model.CanManageRolesAndLockout)
                         {
@@ -134,10 +126,20 @@
                             <button type="submit" class="link-button">Delete</button>
                         </form>
                     </td>
+                    <td>@(string.IsNullOrWhiteSpace(user.DisplayName) ? "-" : user.DisplayName)</td>
+                    <td>@user.Email</td>
+                    <td>@user.AssociationName</td>
+                    <td>
+                        @(user.IsAdmin ? "Admin " : "")
+                        @(user.IsAssociationAdmin ? "AssociationAdmin" : "")
+                        @(!user.IsAdmin && !user.IsAssociationAdmin ? "Standard User" : "")
+                    </td>
+                    <td>@(user.IsLockedOut ? "Locked" : "Active")</td>
                 </tr>
             }
             </tbody>
         </table>
+        </div>
 
         <div>
             <span>Page @Model.PageNumber of @Model.TotalPages</span>

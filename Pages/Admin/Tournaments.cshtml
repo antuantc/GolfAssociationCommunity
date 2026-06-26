@@ -44,26 +44,22 @@
     }
     else
     {
+        <div class="table-scroll">
         <table class="table">
             <thead>
                 <tr>
+                    <th>Actions</th>
                     <th>Name</th>
                     <th>Association</th>
                     <th>Start Date</th>
                     <th>Status</th>
                     <th>Registered</th>
-                    <th>Actions</th>
                 </tr>
             </thead>
             <tbody>
             @foreach (var tournament in Model.Tournaments)
             {
                 <tr>
-                    <td>@tournament.Name</td>
-                    <td>@tournament.AssociationName</td>
-                    <td>@tournament.StartDate.ToString("MMM d, yyyy")</td>
-                    <td>@tournament.Status</td>
-                    <td>@tournament.RegisteredCount</td>
                     <td>
                         <form method="post" asp-page-handler="SetStatus" asp-route-id="@tournament.Id" class="inline-form">
                             <input type="hidden" name="Search" value="@Model.Search" />
@@ -84,10 +80,16 @@
                             <button type="submit" class="link-button">Delete</button>
                         </form>
                     </td>
+                    <td>@tournament.Name</td>
+                    <td>@tournament.AssociationName</td>
+                    <td>@tournament.StartDate.ToString("MMM d, yyyy")</td>
+                    <td>@tournament.Status</td>
+                    <td>@tournament.RegisteredCount</td>
                 </tr>
             }
             </tbody>
         </table>
+        </div>
 
         <div>
             <span>Page @Model.PageNumber of @Model.TotalPages</span>

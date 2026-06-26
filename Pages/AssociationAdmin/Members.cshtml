@@ -88,18 +88,25 @@
             <table class="table">
                 <thead>
                     <tr>
+                        <th>Actions</th>
                         <th>Photo</th>
                         <th>Name</th>
                         <th>Role</th>
                         <th>Order</th>
                         <th>Status</th>
-                        <th>Actions</th>
                     </tr>
                 </thead>
                 <tbody>
                     @foreach (var officer in Model.Officers)
                     {
                         <tr>
+                            <td class="form-actions">
+                                <a href="~/AssociationAdmin/Members?EditId=@officer.Id" class="btn btn-secondary">Edit</a>
+                                <form method="post" asp-page-handler="Delete" asp-route-id="@officer.Id"
+                                      onsubmit="return confirm('Remove @officer.Name?')">
+                                    <button type="submit" class="btn btn-secondary">Remove</button>
+                                </form>
+                            </td>
                             <td>
                                 @if (!string.IsNullOrWhiteSpace(officer.PictureUrl))
                                 {
@@ -122,13 +129,6 @@
                                 {
                                     <span class="pill">Inactive</span>
                                 }
-                            </td>
-                            <td class="form-actions">
-                                <a href="~/AssociationAdmin/Members?EditId=@officer.Id" class="btn btn-secondary">Edit</a>
-                                <form method="post" asp-page-handler="Delete" asp-route-id="@officer.Id"
-                                      onsubmit="return confirm('Remove @officer.Name?')">
-                                    <button type="submit" class="btn btn-secondary">Remove</button>
-                                </form>
                             </td>
                         </tr>
                     }

@@ -167,10 +167,10 @@ namespace GolfAssociationCommunity.Pages.Admin
                 {
                     Id = r.Id,
                     PlayerEmail = r.AssociationPlayer != null
-                        ? (string.IsNullOrWhiteSpace(r.AssociationPlayer.Email)
+                        ? (r.AssociationPlayer.Email == null || r.AssociationPlayer.Email.Trim() == ""
                             ? r.AssociationPlayer.DisplayName
-                            : $"{r.AssociationPlayer.DisplayName} ({r.AssociationPlayer.Email})")
-                        : $"{r.GuestName} ({r.GuestEmail})",
+                            : r.AssociationPlayer.DisplayName + " (" + r.AssociationPlayer.Email + ")")
+                        : (r.GuestName + " (" + r.GuestEmail + ")"),
                     TournamentName = r.Tournament != null ? r.Tournament.Name : "-",
                     AssociationName = r.Tournament != null && r.Tournament.GolfAssociation != null
                         ? r.Tournament.GolfAssociation.Name

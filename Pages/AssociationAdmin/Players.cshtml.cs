@@ -35,6 +35,7 @@ namespace GolfAssociationCommunity.Pages.AssociationAdmin
         public List<PlayerRow> Players { get; private set; } = new();
         public List<PlayerRow> ArchivedPlayers { get; private set; } = new();
         public bool IsEditing => EditId.HasValue;
+        public bool ShowForm { get; set; }
 
         public class PlayerInput
         {
@@ -125,6 +126,7 @@ namespace GolfAssociationCommunity.Pages.AssociationAdmin
 
             if (!ModelState.IsValid)
             {
+                ShowForm = true;
                 await LoadPageDataAsync();
                 return Page();
             }
@@ -151,6 +153,7 @@ namespace GolfAssociationCommunity.Pages.AssociationAdmin
                 }
 
                 ModelState.AddModelError(nameof(Input.Email), "A player with this email already exists for the association.");
+                ShowForm = true;
                 await LoadPageDataAsync();
                 return Page();
             }

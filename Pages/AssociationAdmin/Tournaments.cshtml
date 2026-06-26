@@ -22,19 +22,16 @@
             <table class="table">
                 <thead>
                     <tr>
+                        <th>Actions</th>
                         <th>Name</th>
                         <th>Dates</th>
                         <th>Status</th>
-                        <th>Actions</th>
                     </tr>
                 </thead>
                 <tbody>
                 @foreach (var tournament in Model.Tournaments)
                 {
                     <tr>
-                        <td>@tournament.Name</td>
-                        <td>@tournament.StartDate.ToString("MMM d, yyyy") - @tournament.EndDate.ToString("MMM d, yyyy")</td>
-                        <td>@tournament.Status</td>
                         <td>
                             <a class="card-link" href="~/AssociationAdmin/EditTournament/@tournament.Id">Edit</a>
                             <a class="card-link" href="~/AssociationAdmin/Registrations?TournamentId=@tournament.Id">Registrations</a>
@@ -44,6 +41,9 @@
                                 <button type="submit" class="link-button">Delete</button>
                             </form>
                         </td>
+                        <td>@tournament.Name</td>
+                        <td>@tournament.StartDate.ToString("MMM d, yyyy") - @tournament.EndDate.ToString("MMM d, yyyy")</td>
+                        <td>@tournament.Status</td>
                     </tr>
                 }
                 </tbody>

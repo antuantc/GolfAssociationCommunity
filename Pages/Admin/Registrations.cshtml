@@ -58,11 +58,12 @@
             <input type="hidden" name="PaymentFilter" value="@Model.PaymentFilter" />
             <input type="hidden" name="CurrentPage" value="@Model.PageNumber" />
         </form>
-        <div style="overflow-x:auto;">
+        <div class="table-scroll">
         <table class="table">
             <thead>
                 <tr>
                     <th><input type="checkbox" id="select-all-regs" title="Select all" /></th>
+                    <th>Actions</th>
                     <th>Player</th>
                     <th>Tournament</th>
                     <th>Association</th>
@@ -70,7 +71,6 @@
                     <th>Status</th>
                     <th>Handicap</th>
                     <th>Payment</th>
-                    <th>Actions</th>
                 </tr>
             </thead>
             <tbody>
@@ -78,19 +78,6 @@
             {
                 <tr>
                     <td><input type="checkbox" class="reg-check" name="Ids" value="@registration.Id" form="bulk-reg-delete" /></td>
-                    <td>@registration.PlayerEmail</td>
-                    <td>@registration.TournamentName</td>
-                    <td>@registration.AssociationName</td>
-                    <td>@registration.RegistrationDate.ToString("MMM d, yyyy")</td>
-                    <td>@registration.Status</td>
-                    <td>@(registration.Handicap.HasValue ? registration.Handicap.Value.ToString("0.0#") : "-")</td>
-                    <td>
-                        @(registration.PaymentConfirmed ? "Confirmed" : "Pending")
-                        @if (registration.PaymentConfirmed && !string.IsNullOrWhiteSpace(registration.CardLast4))
-                        {
-                            <span> (**** @registration.CardLast4)</span>
-                        }
-                    </td>
                     <td>
                         <form method="post" asp-page-handler="SetStatus" asp-route-id="@registration.Id" class="inline-form">
                             <input type="hidden" name="Search" value="@Model.Search" />
@@ -130,6 +117,19 @@
                             <input type="hidden" name="CurrentPage" value="@Model.PageNumber" />
                             <button type="submit" class="link-button danger">Delete</button>
                         </form>
+                    </td>
+                    <td>@registration.PlayerEmail</td>
+                    <td>@registration.TournamentName</td>
+                    <td>@registration.AssociationName</td>
+                    <td>@registration.RegistrationDate.ToString("MMM d, yyyy")</td>
+                    <td>@registration.Status</td>
+                    <td>@(registration.Handicap.HasValue ? registration.Handicap.Value.ToString("0.0#") : "-")</td>
+                    <td>
+                        @(registration.PaymentConfirmed ? "Confirmed" : "Pending")
+                        @if (registration.PaymentConfirmed && !string.IsNullOrWhiteSpace(registration.CardLast4))
+                        {
+                            <span> (**** @registration.CardLast4)</span>
+                        }
                     </td>
                 </tr>
             }

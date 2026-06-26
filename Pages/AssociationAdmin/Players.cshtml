@@ -18,7 +18,7 @@
         <div class="message success">@success</div>
     }
 
-    <details class="collapsible-form" @(Model.IsEditing ? "open" : "")>
+    <details class="collapsible-form" @(Model.IsEditing || Model.ShowForm ? "open" : "")>
         <summary class="collapsible-form__toggle">
             <span>@(Model.IsEditing ? "Edit Player" : "Add Player")</span>
         </summary>
@@ -77,7 +77,6 @@
     {
         <div class="players-section-header">
             <h2 id="active-players">Active Players</h2>
-            <span id="player-search-count" class="table-toolbar__count"></span>
             <a href="?handler=DownloadCsv" class="btn btn-secondary btn-sm" style="margin-left:auto;">&#8595; Download CSV</a>
         </div>
 
@@ -221,11 +220,14 @@
     </details>
 </section>
 
+@section Scripts {
 <script>
 function filterAssocPlayers() {
-    var qName  = (document.getElementById('col-filter-name')?.value  || '').trim().toLowerCase();
-    var qEmail = (document.getElementById('col-filter-email')?.value || '').trim().toLowerCase();
+    var qName  = (document.getElementById('col-filter-name')  || {value:''}).value.trim().toLowerCase();
+    var qEmail = (document.getElementById('col-filter-email') || {value:''}).value.trim().toLowerCase();
     var anyFilter = qName || qEmail;
+    var searchCount = document.getElementById('player-search-count');
+    var noResults   = document.getElementById('no-results-msg');
     var rows = document.querySelectorAll('#players-table tbody tr');
     var visible = 0;
     rows.forEach(function(row) {
@@ -240,35 +242,32 @@ function filterAssocPlayers() {
             if (cb) cb.checked = false;
         }
     });
-    var searchInfo = document.getElementById('player-search-count');
-    var noResults  = document.getElementById('no-results-msg');
-    if (searchInfo) searchInfo.textContent = anyFilter ? visible + ' result' + (visible !== 1 ? 's' : '') : '';
-    if (noResults) noResults.style.display = (anyFilter && visible === 0) ? '' : 'none';
+    if (searchCount) searchCount.textContent = anyFilter ? visible + ' result' + (visible !== 1 ? 's' : '') : '';
+    if (noResults)   noResults.style.display  = (anyFilter && visible === 0) ? '' : 'none';
     var selectAll = document.getElementById('select-all-assoc-players');
     var countEl   = document.getElementById('assoc-player-selected-count');
-    if (countEl || selectAll) {
-        var checked = document.querySelectorAll('.assoc-player-check:checked').length;
-        var total   = document.querySelectorAll('.assoc-player-check').length;
-        if (countEl) countEl.textContent = checked > 0 ? checked + ' of ' + total + ' selected' : '';
-        if (selectAll) { selectAll.indeterminate = checked > 0 && checked < total; selectAll.checked = total > 0 && checked === total; }
+    var checked = document.querySelectorAll('.assoc-player-check:checked').length;
+    var total   = document.querySelectorAll('.assoc-player-check').length;
+    if (countEl)   countEl.textContent = checked > 0 ? checked + ' of ' + total + ' selected' : '';
+    if (selectAll) { selectAll.indeterminate = checked > 0 && checked < total; selectAll.checked = total > 0 && checked === total; }
+}
+
+(function() {
+    var selectAll = document.getElementById('select-all-assoc-players');
+    if (selectAll) {
+        selectAll.addEventListener('change', function() {
+            var isChecked = this.checked;
+            document.querySelectorAll('#players-table tbody tr:not([style*="display: none"]) .assoc-player-check').forEach(function(cb) { cb.checked = isChecked; });
+            filterAssocPlayers();
+        });
     }
-}
-
-var _assocSelectAll = document.getElementById('select-all-assoc-players');
-if (_assocSelectAll) {
-    _assocSelectAll.addEventListener('change', function() {
-        var isChecked = this.checked;
-        document.querySelectorAll('#players-table tbody tr:not([style*="display: none"]) .assoc-player-check').forEach(function(cb) { cb.checked = isChecked; });
-        filterAssocPlayers();
+    document.querySelectorAll('.assoc-player-check').forEach(function(cb) {
+        cb.addEventListener('change', function() { filterAssocPlayers(); });
     });
+    var nf = document.getElementById('col-filter-name');
+    var ef = document.getElementById('col-filter-email');
+    if (nf) nf.addEventListener('input', filterAssocPlayers);
+    if (ef) ef.addEventListener('input', filterAssocPlayers);
+}());
+</script>
 }
-document.querySelectorAll('.assoc-player-check').forEach(function(cb) {
-    cb.addEventListener('change', function() {
-        filterAssocPlayers();
-    });
-});
-
-['col-filter-name','col-filter-email'].forEach(function(id) {
-    var el = document.getElementById(id);
-    if (el) el.addEventListener('input', filterAssocPlayers);
-});

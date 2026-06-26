@@ -57,9 +57,11 @@
     }
     else
     {
+        <div class="table-scroll">
         <table class="table">
             <thead>
                 <tr>
+                    <th>Actions</th>
                     <th>Association</th>
                     <th>Type</th>
                     <th>Customer</th>
@@ -69,13 +71,15 @@
                     <th>Amount</th>
                     <th>Card</th>
                     <th>Refund</th>
-                    <th>Actions</th>
                 </tr>
             </thead>
             <tbody>
             @foreach (var transaction in Model.Transactions)
             {
                 <tr>
+                    <td>
+                        <a class="link-button" asp-page="/Admin/Transactions/Details" asp-route-sourceType="@transaction.SourceType" asp-route-id="@transaction.SourceId">View</a>
+                    </td>
                     <td>@transaction.AssociationName</td>
                     <td>@transaction.SourceType</td>
                     <td>
@@ -101,13 +105,11 @@
                             <span>-</span>
                         }
                     </td>
-                    <td>
-                        <a class="link-button" asp-page="/Admin/Transactions/Details" asp-route-sourceType="@transaction.SourceType" asp-route-id="@transaction.SourceId">View</a>
-                    </td>
                 </tr>
             }
             </tbody>
         </table>
+        </div>
     }
 
     <a class="btn btn-secondary" href="~/Admin">Back to Dashboard</a>

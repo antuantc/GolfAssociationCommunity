@@ -49,10 +49,10 @@ namespace GolfAssociationCommunity.Pages.AssociationAdmin
             public int? AssociationPlayerId { get; set; }
 
             [StringLength(200)]
-            public string GuestName { get; set; } = string.Empty;
+            public string? GuestName { get; set; }
 
             [StringLength(256)]
-            public string GuestEmail { get; set; } = string.Empty;
+            public string? GuestEmail { get; set; }
 
             [Range(-10, 60)]
             public decimal? Handicap { get; set; }
@@ -140,7 +140,7 @@ namespace GolfAssociationCommunity.Pages.AssociationAdmin
                 if (Input.IsGuest)
                 {
                     reg.AssociationPlayerId = null;
-                    reg.GuestName = Input.GuestName.Trim();
+                    reg.GuestName = (Input.GuestName ?? string.Empty).Trim();
                     reg.GuestEmail = (Input.GuestEmail ?? string.Empty).Trim();
                 }
                 else
@@ -179,7 +179,7 @@ namespace GolfAssociationCommunity.Pages.AssociationAdmin
                 {
                     TournamentId = TournamentId.Value,
                     AssociationPlayerId = Input.IsGuest ? null : Input.AssociationPlayerId,
-                    GuestName = Input.IsGuest ? Input.GuestName.Trim() : string.Empty,
+                    GuestName = Input.IsGuest ? (Input.GuestName ?? string.Empty).Trim() : string.Empty,
                     GuestEmail = Input.IsGuest ? (Input.GuestEmail ?? string.Empty).Trim() : string.Empty,
                     Handicap = Input.Handicap,
                     Status = Input.Status,

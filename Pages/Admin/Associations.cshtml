@@ -19,22 +19,20 @@
     }
     else
     {
+        <div class="table-scroll">
         <table class="table">
             <thead>
                 <tr>
+                    <th>Actions</th>
                     <th>Name</th>
                     <th>Location</th>
                     <th>Contact</th>
-                    <th>Actions</th>
                 </tr>
             </thead>
             <tbody>
             @foreach (var association in Model.Associations)
             {
                 <tr>
-                    <td>@association.Name</td>
-                    <td>@association.City, @association.State</td>
-                    <td>@association.ContactEmail</td>
                     <td>
                         <a class="card-link" href="~/Associations/Details/@association.Id">View</a>
                         <a class="card-link" href="~/Admin/EditAssociation/@association.Id">Edit</a>
@@ -42,9 +40,13 @@
                             <button type="submit" class="link-button">Delete</button>
                         </form>
                     </td>
+                    <td>@association.Name</td>
+                    <td>@association.City, @association.State</td>
+                    <td>@association.ContactEmail</td>
                 </tr>
             }
             </tbody>
         </table>
+        </div>
     }
 </section>

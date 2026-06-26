@@ -175,6 +175,7 @@
                 <table class="table" id="regs-table">
                     <thead>
                         <tr>
+                            <th>Actions</th>
                             <th>Player</th>
                             <th>Type</th>
                             <th>Handicap</th>
@@ -186,13 +187,47 @@
                                 <th>Flight</th>
                             }
                             <th>Registered</th>
-                            <th>Actions</th>
                         </tr>
                     </thead>
                     <tbody>
                     @foreach (var reg in Model.Registrations)
                     {
                         <tr data-name="@reg.PlayerName.ToLower()" data-email="@reg.PlayerEmail.ToLower()" data-status="@reg.Status.ToString()">
+                            <td>
+                                <div style="display:flex;gap:0.35rem;flex-wrap:wrap;">
+                                    <a class="btn btn-secondary btn-xs" href="~/AssociationAdmin/Registrations?TournamentId=@Model.TournamentId&EditId=@reg.Id">Edit</a>
+
+                                    @if (!reg.PaymentConfirmed && reg.Status != RegistrationStatus.Cancelled && reg.Status != RegistrationStatus.Withdrew)
+                                    {
+                                        <form method="post" asp-page-handler="ConfirmPayment" asp-route-registrationId="@reg.Id" class="inline-form">
+                                            <input type="hidden" name="TournamentId" value="@Model.TournamentId" />
+                                            <button type="submit" class="btn btn-secondary btn-xs">Confirm Pmt</button>
+                                        </form>
+                                    }
+
+                                    @if (reg.Status == RegistrationStatus.Cancelled || reg.Status == RegistrationStatus.Withdrew)
+                                    {
+                                        <form method="post" asp-page-handler="Restore" asp-route-registrationId="@reg.Id" class="inline-form">
+                                            <input type="hidden" name="TournamentId" value="@Model.TournamentId" />
+                                            <button type="submit" class="btn btn-secondary btn-xs">Restore</button>
+                                        </form>
+                                    }
+                                    else
+                                    {
+                                        <form method="post" asp-page-handler="CancelRegistration" asp-route-registrationId="@reg.Id" class="inline-form"
+                                              onsubmit="return confirm('Cancel this registration?');">
+                                            <input type="hidden" name="TournamentId" value="@Model.TournamentId" />
+                                            <button type="submit" class="btn btn-secondary btn-xs">Cancel</button>
+                                        </form>
+                                    }
+
+                                    <form method="post" asp-page-handler="Delete" asp-route-id="@reg.Id" class="inline-form"
+                                          onsubmit="return confirm('Permanently delete this registration?');">
+                                        <input type="hidden" name="TournamentId" value="@Model.TournamentId" />
+                                        <button type="submit" class="btn btn-danger btn-xs">Delete</button>
+                                    </form>
+                                </div>
+                            </td>
                             <td>
                                 <div><strong>@reg.PlayerName</strong></div>
                                 <div class="text-muted-sm">@reg.PlayerEmail</div>
@@ -245,41 +280,6 @@
                                 <td>@(string.IsNullOrWhiteSpace(reg.Flight) ? "—" : reg.Flight)</td>
                             }
                             <td class="text-muted-sm">@reg.RegistrationDate.ToString("MMM d, yyyy")</td>
-                            <td>
-                                <div style="display:flex;gap:0.35rem;flex-wrap:wrap;">
-                                    <a class="btn btn-secondary btn-xs" href="~/AssociationAdmin/Registrations?TournamentId=@Model.TournamentId&EditId=@reg.Id">Edit</a>
-
-                                    @if (!reg.PaymentConfirmed && reg.Status != RegistrationStatus.Cancelled && reg.Status != RegistrationStatus.Withdrew)
-                                    {
-                                        <form method="post" asp-page-handler="ConfirmPayment" asp-route-registrationId="@reg.Id" class="inline-form">
-                                            <input type="hidden" name="TournamentId" value="@Model.TournamentId" />
-                                            <button type="submit" class="btn btn-secondary btn-xs">Confirm Pmt</button>
-                                        </form>
-                                    }
-
-                                    @if (reg.Status == RegistrationStatus.Cancelled || reg.Status == RegistrationStatus.Withdrew)
-                                    {
-                                        <form method="post" asp-page-handler="Restore" asp-route-registrationId="@reg.Id" class="inline-form">
-                                            <input type="hidden" name="TournamentId" value="@Model.TournamentId" />
-                                            <button type="submit" class="btn btn-secondary btn-xs">Restore</button>
-                                        </form>
-                                    }
-                                    else
-                                    {
-                                        <form method="post" asp-page-handler="CancelRegistration" asp-route-registrationId="@reg.Id" class="inline-form"
-                                              onsubmit="return confirm('Cancel this registration?');">
-                                            <input type="hidden" name="TournamentId" value="@Model.TournamentId" />
-                                            <button type="submit" class="btn btn-secondary btn-xs">Cancel</button>
-                                        </form>
-                                    }
-
-                                    <form method="post" asp-page-handler="Delete" asp-route-id="@reg.Id" class="inline-form"
-                                          onsubmit="return confirm('Permanently delete this registration?');">
-                                        <input type="hidden" name="TournamentId" value="@Model.TournamentId" />
-                                        <button type="submit" class="btn btn-danger btn-xs">Delete</button>
-                                    </form>
-                                </div>
-                            </td>
                         </tr>
                     }
                     </tbody>
