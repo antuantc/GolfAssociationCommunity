@@ -5,16 +5,23 @@
 }
 
 <section class="section-panel">
-    <h1>Manage Sponsorship Packages</h1>
-    <p>Create and maintain sponsorship levels, pricing, and benefit details for your association.</p>
+    <div class="admin-page-header">
+        <div>
+            <h1>Sponsorship Packages</h1>
+            <p>Create and maintain sponsorship levels, pricing, and benefit details.</p>
+        </div>
+    </div>
 
     @if (TempData["SuccessMessage"] is string success)
     {
         <div class="message success">@success</div>
     }
 
-    <h2>Create Sponsorship Package</h2>
-    <form method="post" asp-page-handler="Create" autocomplete="on">
+    <details class="collapsible-form">
+        <summary class="collapsible-form__toggle">
+            <span>Create Sponsorship Package</span>
+        </summary>
+    <form method="post" asp-page-handler="Create" autocomplete="on" style="margin-top:1rem;">
         <div asp-validation-summary="ModelOnly" class="message error"></div>
         <div class="card-grid">
             <div>
@@ -45,8 +52,11 @@
             <textarea asp-for="Input.Benefits" class="form-control" rows="4" placeholder="List key sponsor benefits and inclusions."></textarea>
             <span asp-validation-for="Input.Benefits" class="text-danger"></span>
         </div>
-        <button type="submit" class="btn">Create Package</button>
+        <div class="form-actions">
+            <button type="submit" class="btn">Create Package</button>
+        </div>
     </form>
+    </details>
 </section>
 
 <section class="section-panel">
@@ -71,29 +81,44 @@
                 </tr>
             </thead>
             <tbody>
-                @foreach (var package in Model.Packages)
-                {
-                    <tr>
-                        <td>
-                            <a class="card-link" href="~/AssociationAdmin/EditSponsorship/@package.Id">Edit</a>
-                            <form method="post" asp-page-handler="ToggleActive" asp-route-id="@package.Id" class="inline-form">
-                                <button type="submit" class="link-button">@(package.IsActive ? "Deactivate" : "Activate")</button>
-                            </form>
-                            <form method="post" asp-page-handler="Delete" asp-route-id="@package.Id" class="inline-form" onsubmit="return confirm('Delete this sponsorship package?');">
-                                <button type="submit" class="link-button">Delete</button>
-                            </form>
-                        </td>
-                        <td>@package.Name</td>
-                        <td>@package.Amount.ToString("C")</td>
-                        <td>@package.DisplayOrder</td>
-                        <td>@(package.IsActive ? "Active" : "Inactive")</td>
-                        <td>@(string.IsNullOrWhiteSpace(package.Description) ? "-" : package.Description)</td>
-                    </tr>
-                }
+                    @foreach (var package in Model.Packages)
+                    {
+                        <tr>
+                            <td>
+                                <div style="display:flex;gap:0.35rem;flex-wrap:wrap;">
+                                    <a class="btn btn-secondary btn-xs" href="~/AssociationAdmin/EditSponsorship/@package.Id" title="Edit this package">Edit</a>
+                                    <form method="post" asp-page-handler="ToggleActive" asp-route-id="@package.Id" class="inline-form">
+                                        <button type="submit" class="btn btn-secondary btn-xs" title="@(package.IsActive ? "Deactivate this package" : "Activate this package")">@(package.IsActive ? "Deactivate" : "Activate")</button>
+                                    </form>
+                                    <form method="post" asp-page-handler="Delete" asp-route-id="@package.Id" class="inline-form" onsubmit="return confirm('Delete this sponsorship package?');">
+                                        <button type="submit" class="btn btn-danger btn-xs" title="Permanently delete this package">Delete</button>
+                                    </form>
+                                </div>
+                            </td>
+                            <td><strong>@package.Name</strong></td>
+                            <td>@package.Amount.ToString("C")</td>
+                            <td>@package.DisplayOrder</td>
+                            <td>
+                                @if (package.IsActive)
+                                {
+                                    <span class="status-badge status-badge--green">Active</span>
+                                }
+                                else
+                                {
+                                    <span class="status-badge status-badge--gray">Inactive</span>
+                                }
+                            </td>
+                            <td>@(string.IsNullOrWhiteSpace(package.Description) ? "-" : package.Description)</td>
+                        </tr>
+                    }
             </tbody>
         </table>
         </div>
     }
+
+    <div class="admin-back-nav">
+        <a class="btn btn-secondary" href="~/AssociationAdmin">&#8592; Back to Dashboard</a>
+    </div>
 </section>
 
 @section Scripts {

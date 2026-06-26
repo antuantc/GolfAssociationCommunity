@@ -6,23 +6,30 @@
 }
 
 <section class="section-panel">
-    <h1>Tournament Registrations</h1>
+    <div class="admin-page-header">
+        <div>
+            <h1>Tournament Registrations</h1>
+            <p>Select a tournament to view, add, and manage player registrations.</p>
+        </div>
+    </div>
 
     @if (TempData["SuccessMessage"] is string success)
     {
         <div class="message success">@success</div>
     }
 
-    <form method="get" style="margin-bottom:1.25rem;">
-        <label for="TournamentId" style="font-weight:600;">Tournament</label>
-        <div style="display:flex;gap:0.75rem;align-items:center;flex-wrap:wrap;margin-top:0.35rem;">
-            <select id="TournamentId" name="TournamentId" class="form-control" style="max-width:380px;" onchange="this.form.submit()">
-                <option value="">Select a tournament&hellip;</option>
-                @foreach (var t in Model.Tournaments)
-                {
-                    <option value="@t.Id" selected="@(Model.TournamentId == t.Id)">@t.Name (@t.StartDate.ToString("MMM d, yyyy"))</option>
-                }
-            </select>
+    <form method="get">
+        <div class="admin-filter-bar">
+            <div>
+                <label for="TournamentId">Tournament</label>
+                <select id="TournamentId" name="TournamentId" class="form-control" onchange="this.form.submit()">
+                    <option value="">Select a tournament&hellip;</option>
+                    @foreach (var t in Model.Tournaments)
+                    {
+                        <option value="@t.Id" selected="@(Model.TournamentId == t.Id)">@t.Name (@t.StartDate.ToString("MMM d, yyyy"))</option>
+                    }
+                </select>
+            </div>
         </div>
     </form>
 
@@ -247,16 +254,16 @@
                                 @switch (reg.Status)
                                 {
                                     case RegistrationStatus.Registered:
-                                        <span style="color:var(--success-text,#166534);font-weight:600;">Registered</span>
+                                        <span class="status-badge status-badge--green">Registered</span>
                                         break;
                                     case RegistrationStatus.Pending:
-                                        <span style="color:#92400e;font-weight:600;">Pending</span>
+                                        <span class="status-badge status-badge--yellow">Pending</span>
                                         break;
                                     case RegistrationStatus.Cancelled:
-                                        <span style="color:#9b1c1c;">Cancelled</span>
+                                        <span class="status-badge status-badge--red">Cancelled</span>
                                         break;
                                     case RegistrationStatus.Withdrew:
-                                        <span style="color:#9b1c1c;">Withdrew</span>
+                                        <span class="status-badge status-badge--gray">Withdrew</span>
                                         break;
                                 }
                             </td>
@@ -288,6 +295,11 @@
             <p id="reg-no-results" class="text-muted" style="display:none;margin-top:0.5rem;">No registrations match your filter.</p>
         }
     }
+
+    <div class="admin-back-nav">
+        <a class="btn btn-secondary" href="~/AssociationAdmin">&#8592; Back to Dashboard</a>
+        <a class="btn btn-secondary" href="~/AssociationAdmin/Tournaments">Tournaments</a>
+    </div>
 </section>
 
 <script>

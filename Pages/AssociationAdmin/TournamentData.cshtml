@@ -5,8 +5,12 @@
 }
 
 <section class="section-panel">
-    <h1>Tournament Data Management</h1>
-    <p class="form-text">Select a tournament to view and mass-delete its scores, registrations, and players.</p>
+    <div class="admin-page-header">
+        <div>
+            <h1>Tournament Data Management</h1>
+            <p>Select a tournament to mass-delete its scores, registrations, or players.</p>
+        </div>
+    </div>
 
     @if (TempData["SuccessMessage"] is string success)
     {
@@ -105,6 +109,11 @@
 
         </div>
     }
+
+    <div class="admin-back-nav">
+        <a class="btn btn-secondary" href="~/AssociationAdmin">&#8592; Back to Dashboard</a>
+        <a class="btn btn-secondary" href="~/AssociationAdmin/Tournaments">Tournaments</a>
+    </div>
 </section>
 
 @section Scripts {

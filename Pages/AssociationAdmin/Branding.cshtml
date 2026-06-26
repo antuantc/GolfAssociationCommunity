@@ -5,8 +5,15 @@
 }
 
 <section class="section-panel">
-    <h1>Branding Themes</h1>
-    <p>Choose a golf-themed visual style for your association's public pages.</p>
+    <div class="admin-page-header">
+        <div>
+            <h1>Branding &amp; Payment Settings</h1>
+            <p>Choose a visual theme and configure your Authorize.Net payment gateway.</p>
+        </div>
+        <div class="admin-page-header__actions">
+            <a class="btn btn-secondary" href="~/AssociationAdmin">&#8592; Back to Dashboard</a>
+        </div>
+    </div>
 
     @if (TempData["SuccessMessage"] is string success)
     {
@@ -66,8 +73,14 @@
             </div>
         </div>
 
-        <button type="submit" class="btn">Save Payment Settings</button>
+        <div class="form-actions">
+            <button type="submit" class="btn">Save Payment Settings</button>
+        </div>
     </form>
+
+    <div class="admin-back-nav">
+        <a class="btn btn-secondary" href="~/AssociationAdmin">&#8592; Back to Dashboard</a>
+    </div>
 </section>
 
 @section Scripts {

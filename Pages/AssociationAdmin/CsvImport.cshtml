@@ -4,12 +4,17 @@
     ViewData["Title"] = "CSV Import";
 }
 
-<div class="hero">
-    <div class="hero-copy">
-        <h1>CSV Import</h1>
-        <p>Bulk-import players, scores, registrations, and leaderboard entries from CSV files.</p>
+<section class="section-panel">
+    <div class="admin-page-header">
+        <div>
+            <h1>CSV Import</h1>
+            <p>Bulk-import players, scores, registrations, and leaderboard entries from CSV files.</p>
+        </div>
+        <div class="admin-page-header__actions">
+            <a class="btn btn-secondary" href="~/AssociationAdmin">&#8592; Back to Dashboard</a>
+        </div>
     </div>
-</div>
+</section>
 
 @if (!ModelState.IsValid)
 {
@@ -178,6 +183,12 @@
             <button type="submit" class="btn">Import Leaderboard</button>
         </div>
     </form>
+</section>
+
+<section class="section-panel">
+    <div class="admin-back-nav">
+        <a class="btn btn-secondary" href="~/AssociationAdmin">&#8592; Back to Dashboard</a>
+    </div>
 </section>
 
 <style>

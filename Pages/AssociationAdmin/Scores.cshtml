@@ -6,7 +6,12 @@
 }
 
 <section class="section-panel">
-    <h1>Tournament Score Management</h1>
+    <div class="admin-page-header">
+        <div>
+            <h1>Score Management</h1>
+            <p>Select a tournament and player to enter or update round scores.</p>
+        </div>
+    </div>
     @if (TempData["SuccessMessage"] is string success)
     {
         <div class="message success">@success</div>
@@ -144,3 +149,10 @@ else if (Model.TournamentId.HasValue)
         </form>
     </section>
 }
+
+<section class="section-panel">
+    <div class="admin-back-nav">
+        <a class="btn btn-secondary" href="~/AssociationAdmin">&#8592; Back to Dashboard</a>
+        <a class="btn btn-secondary" href="~/AssociationAdmin/Tournaments">Tournaments</a>
+    </div>
+</section>

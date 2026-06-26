@@ -4,14 +4,13 @@
     ViewData["Title"] = "Association Dashboard";
 }
 
-<div class="hero">
-    <div class="hero-copy">
-        <h1>@ViewData["AssociationName"]</h1>
-        <p>Your dedicated association administration portal.</p>
-    </div>
-</div>
-
 <section class="section-panel">
+    <div class="admin-page-header">
+        <div>
+            <h1>@ViewData["AssociationName"]</h1>
+            <p>Association Administration Portal</p>
+        </div>
+    </div>
     <h2>Portal Snapshot</h2>
     <div class="card-grid">
         <article class="card">
@@ -48,14 +47,18 @@
 
 <section class="section-panel">
     <h2>Quick Actions</h2>
-    <a class="btn" href="~/AssociationAdmin/Players">Manage Players</a>
-    <a class="btn" href="~/AssociationAdmin/Tournaments">Manage Tournaments</a>
-    <a class="btn btn-secondary" href="~/AssociationAdmin/Registrations">Manage Registrations</a>
-    <a class="btn btn-secondary" href="~/AssociationAdmin/Scores">Manage Scores</a>
-    <a class="btn btn-secondary" href="~/AssociationAdmin/Leaderboards">View Leaderboards</a>
-    <a class="btn btn-secondary" href="~/AssociationAdmin/Transactions">Review Transactions</a>
-    <a class="btn btn-secondary" href="~/AssociationAdmin/Sponsorships">Manage Sponsorships</a>
-    <a class="btn btn-secondary" href="~/AssociationAdmin/Branding">Manage Branding &amp; Payments</a>
-    <a class="btn btn-secondary" href="~/AssociationAdmin/CsvImport">&#8679; CSV Import</a>
-    <a class="btn btn-secondary" href="~/AssociationAdmin/TournamentData">&#128465; Tournament Data</a>
+    <div style="display:flex;flex-wrap:wrap;gap:0.5rem;margin-top:0.75rem;">
+        <a class="btn" href="~/AssociationAdmin/Players" title="View and manage association players">Players</a>
+        <a class="btn" href="~/AssociationAdmin/Tournaments" title="Create and manage tournaments">Tournaments</a>
+        <a class="btn btn-secondary" href="~/AssociationAdmin/Registrations" title="Manage player registrations">Registrations</a>
+        <a class="btn btn-secondary" href="~/AssociationAdmin/Scores" title="Enter and edit player scores">Scores</a>
+        <a class="btn btn-secondary" href="~/AssociationAdmin/Leaderboards" title="View season standings and tournament leaderboards">Leaderboards</a>
+        <a class="btn btn-secondary" href="~/AssociationAdmin/Transactions" title="Review payment transactions">Transactions</a>
+        <a class="btn btn-secondary" href="~/AssociationAdmin/Members" title="Manage officers and members listed on your public page">Officers &amp; Members</a>
+        <a class="btn btn-secondary" href="~/AssociationAdmin/Sponsorships" title="Manage sponsorship packages">Sponsorships</a>
+        <a class="btn btn-secondary" href="~/AssociationAdmin/Branding" title="Set theme and payment gateway settings">Branding &amp; Payments</a>
+        <a class="btn btn-secondary" href="~/AssociationAdmin/Homepage" title="Edit your public homepage content">Homepage Content</a>
+        <a class="btn btn-secondary" href="~/AssociationAdmin/CsvImport" title="Bulk-import data from CSV files">&#8679; CSV Import</a>
+        <a class="btn btn-secondary" href="~/AssociationAdmin/TournamentData" title="Mass-delete tournament data">&#128465; Tournament Data</a>
+    </div>
 </section>

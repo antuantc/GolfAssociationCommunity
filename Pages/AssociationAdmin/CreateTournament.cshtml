@@ -6,7 +6,15 @@
 }
 
 <section class="section-panel">
-    <h1>Create Tournament</h1>
+    <div class="admin-page-header">
+        <div>
+            <h1>Create Tournament</h1>
+            <p>Set up a new tournament for your association.</p>
+        </div>
+        <div class="admin-page-header__actions">
+            <a class="btn btn-secondary" href="~/AssociationAdmin/Tournaments">&#8592; Back to Tournaments</a>
+        </div>
+    </div>
     <form method="post">
         <div asp-validation-summary="ModelOnly" class="message error"></div>
 
@@ -74,8 +82,10 @@
             <textarea asp-for="Input.Description" class="form-control" rows="4"></textarea>
         </div>
 
-        <button type="submit" class="btn">Create Tournament</button>
-        <a class="btn btn-secondary" href="~/AssociationAdmin/Tournaments">Back</a>
+        <div class="form-actions">
+            <button type="submit" class="btn">Create Tournament</button>
+            <a class="btn btn-secondary" href="~/AssociationAdmin/Tournaments">Cancel</a>
+        </div>
     </form>
 </section>
 

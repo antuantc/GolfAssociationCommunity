@@ -5,7 +5,12 @@
 }
 
 <section class="section-panel">
-    <h1>Officers &amp; Members</h1>
+    <div class="admin-page-header">
+        <div>
+            <h1>Officers &amp; Members</h1>
+            <p>Manage the people shown on your public association page.</p>
+        </div>
+    </div>
     @if (TempData["SuccessMessage"] is string success)
     {
         <div class="message success">@success</div>
@@ -100,12 +105,14 @@
                     @foreach (var officer in Model.Officers)
                     {
                         <tr>
-                            <td class="form-actions">
-                                <a href="~/AssociationAdmin/Members?EditId=@officer.Id" class="btn btn-secondary">Edit</a>
-                                <form method="post" asp-page-handler="Delete" asp-route-id="@officer.Id"
-                                      onsubmit="return confirm('Remove @officer.Name?')">
-                                    <button type="submit" class="btn btn-secondary">Remove</button>
-                                </form>
+                            <td>
+                                <div style="display:flex;gap:0.35rem;flex-wrap:wrap;">
+                                    <a href="~/AssociationAdmin/Members?EditId=@officer.Id" class="btn btn-secondary btn-xs" title="Edit this entry">Edit</a>
+                                    <form method="post" asp-page-handler="Delete" asp-route-id="@officer.Id"
+                                          onsubmit="return confirm('Remove @officer.Name?')">
+                                        <button type="submit" class="btn btn-danger btn-xs" title="Remove from list">Remove</button>
+                                    </form>
+                                </div>
                             </td>
                             <td>
                                 @if (!string.IsNullOrWhiteSpace(officer.PictureUrl))
@@ -123,11 +130,11 @@
                             <td>
                                 @if (officer.IsActive)
                                 {
-                                    <span class="pill">Active</span>
+                                    <span class="status-badge status-badge--green">Active</span>
                                 }
                                 else
                                 {
-                                    <span class="pill">Inactive</span>
+                                    <span class="status-badge status-badge--gray">Inactive</span>
                                 }
                             </td>
                         </tr>
@@ -137,3 +144,9 @@
         </div>
     }
 </section>
+
+<div class="section-panel">
+    <div class="admin-back-nav">
+        <a class="btn btn-secondary" href="~/AssociationAdmin">&#8592; Back to Dashboard</a>
+    </div>
+</div>

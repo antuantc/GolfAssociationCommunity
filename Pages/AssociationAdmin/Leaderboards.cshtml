@@ -5,27 +5,37 @@
 }
 
 <section class="section-panel">
-    <h1>Leaderboards</h1>
+    <div class="admin-page-header">
+        <div>
+            <h1>Leaderboards</h1>
+            <p>Season standings and tournament-level results for this association.</p>
+        </div>
+        <div class="admin-page-header__actions">
+            <form method="post" asp-page-handler="RecalculateAssociation" class="inline-form">
+                <button type="submit" class="btn btn-secondary" title="Recalculate leaderboard entries from current score data">&#8635; Recalculate All</button>
+            </form>
+        </div>
+    </div>
+
     @if (TempData["SuccessMessage"] is string success)
     {
         <div class="message success">@success</div>
     }
 
-    <div class="form-actions">
-        <form method="get">
-            <label for="tournamentId">Tournament Leaderboard</label>
-            <select id="tournamentId" name="TournamentId" class="form-control" onchange="this.form.submit()">
-                <option value="">Select a tournament</option>
-                @foreach (var tournament in Model.Tournaments)
-                {
-                    <option value="@tournament.Id" selected="@(Model.TournamentId == tournament.Id)">@tournament.Name</option>
-                }
-            </select>
-        </form>
-        <form method="post" asp-page-handler="RecalculateAssociation">
-            <button type="submit" class="btn btn-secondary">Recalculate All Leaderboards</button>
-        </form>
-    </div>
+    <form method="get">
+        <div class="admin-filter-bar">
+            <div>
+                <label for="tournamentId">Tournament Leaderboard</label>
+                <select id="tournamentId" name="TournamentId" class="form-control" onchange="this.form.submit()">
+                    <option value="">Select a tournament</option>
+                    @foreach (var tournament in Model.Tournaments)
+                    {
+                        <option value="@tournament.Id" selected="@(Model.TournamentId == tournament.Id)">@tournament.Name</option>
+                    }
+                </select>
+            </div>
+        </div>
+    </form>
 </section>
 
 <section class="section-panel">
@@ -183,3 +193,10 @@
         }
     </section>
 }
+
+<section class="section-panel">
+    <div class="admin-back-nav">
+        <a class="btn btn-secondary" href="~/AssociationAdmin">&#8592; Back to Dashboard</a>
+        <a class="btn btn-secondary" href="~/AssociationAdmin/Tournaments">Tournaments</a>
+    </div>
+</section>

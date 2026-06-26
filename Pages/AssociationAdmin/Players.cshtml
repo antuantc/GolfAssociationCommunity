@@ -5,12 +5,17 @@
 }
 
 <section class="section-panel">
-    <div class="page-header-row">
-        <h1>Association Players</h1>
-        @if (Model.Players.Count > 0)
-        {
-            <span class="badge">@Model.Players.Count active</span>
-        }
+    <div class="admin-page-header">
+        <div>
+            <h1>Association Players</h1>
+            @if (Model.Players.Count > 0)
+            {
+                <p>@Model.Players.Count active player@(Model.Players.Count == 1 ? "" : "s")</p>
+            }
+        </div>
+        <div class="admin-page-header__actions">
+            <a href="?handler=DownloadCsv" class="btn btn-secondary" title="Export players to CSV">&#8595; Download CSV</a>
+        </div>
     </div>
 
     @if (TempData["SuccessMessage"] is string success)
@@ -62,7 +67,7 @@
                     <button type="submit" class="btn">@(Model.IsEditing ? "Save Player" : "Add Player")</button>
                     @if (Model.IsEditing)
                     {
-                        <a class="btn btn-secondary" href="~/AssociationAdmin/Players">Cancel</a>
+        <a class="btn btn-secondary" href="~/AssociationAdmin/Players">Cancel</a>
                     }
                 </div>
             </div>
@@ -75,9 +80,8 @@
     }
     else
     {
-        <div class="players-section-header">
+        <div class="players-section-header" style="margin-bottom:0.75rem;">
             <h2 id="active-players">Active Players</h2>
-            <a href="?handler=DownloadCsv" class="btn btn-secondary btn-sm" style="margin-left:auto;">&#8595; Download CSV</a>
         </div>
 
         <form id="bulk-assoc-player-delete" method="post" asp-page-handler="DeleteSelected"></form>
@@ -218,6 +222,10 @@
             </div>
         }
     </details>
+
+    <div class="admin-back-nav">
+        <a class="btn btn-secondary" href="~/AssociationAdmin">&#8592; Back to Dashboard</a>
+    </div>
 </section>
 
 @section Scripts {
