@@ -73,10 +73,11 @@ public class LoginModel : PageModel
                 Input.Email,
                 Input.Password,
                 Input.RememberMe,
-                lockoutOnFailure: false);
+                lockoutOnFailure: true);
 
             if (result.Succeeded)
             {
+                _logger.LogInformation("User {Email} logged in successfully.", Input.Email);
                 var user = await _userManager.FindByEmailAsync(Input.Email);
                 if (user == null)
                 {
@@ -109,6 +110,7 @@ public class LoginModel : PageModel
                 return RedirectToPage("./Lockout");
             }
 
+            _logger.LogWarning("Failed login attempt for {Email}.", Input.Email);
             ModelState.AddModelError(string.Empty, "Invalid login attempt.");
             return Page();
         }

@@ -72,6 +72,10 @@ builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
         options.Password.RequireNonAlphanumeric = false;
         options.SignIn.RequireConfirmedEmail = true;
         options.SignIn.RequireConfirmedAccount = true;
+        // Account lockout to prevent brute-force attacks (OWASP A07)
+        options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(15);
+        options.Lockout.MaxFailedAccessAttempts = 5;
+        options.Lockout.AllowedForNewUsers = true;
     })
     .AddEntityFrameworkStores<ApplicationDbContext>()
     .AddDefaultTokenProviders()
@@ -121,14 +125,19 @@ builder.Services.Configure<UploadSettings>(opts =>
 
 Log.Information("Uploads folder: {UploadsPath}", uploadPhysicalRoot);
 
-// Add CORS
+// Add CORS — restrict to same-site API calls only (OWASP A05)
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("AllowAll", builder =>
+    var allowedOrigins = builder.Configuration.GetSection("AllowedCorsOrigins").Get<string[]>() ?? [];
+    options.AddPolicy("RestrictedCors", policy =>
     {
-        builder.AllowAnyOrigin()
-            .AllowAnyMethod()
-            .AllowAnyHeader();
+        if (allowedOrigins.Length > 0)
+        {
+            policy.WithOrigins(allowedOrigins)
+                .AllowAnyMethod()
+                .AllowAnyHeader();
+        }
+        // If no origins configured, CORS is disabled for the API (Razor Pages don't need it)
     });
 });
 
@@ -138,6 +147,8 @@ builder.Services.AddSession(options =>
     options.IdleTimeout = TimeSpan.FromMinutes(30);
     options.Cookie.HttpOnly = true;
     options.Cookie.IsEssential = true;
+    options.Cookie.SecurePolicy = CookieSecurePolicy.Always; // OWASP A02: enforce HTTPS-only session cookies
+    options.Cookie.SameSite = SameSiteMode.Strict;
 });
 
 // Add Swagger
@@ -169,7 +180,35 @@ app.Use(async (context, next) =>
     await next();
 });
 
+// HSTS — tell browsers to always use HTTPS (OWASP A02)
+if (!app.Environment.IsDevelopment())
+{
+    app.UseHsts();
+}
+
 app.UseHttpsRedirection();
+
+// Security headers (OWASP A05)
+app.Use(async (context, next) =>
+{
+    context.Response.Headers["X-Content-Type-Options"] = "nosniff";
+    context.Response.Headers["X-Frame-Options"] = "DENY";
+    context.Response.Headers["Referrer-Policy"] = "strict-origin-when-cross-origin";
+    context.Response.Headers["Permissions-Policy"] = "camera=(), microphone=(), geolocation=()";
+    context.Response.Headers["X-XSS-Protection"] = "1; mode=block";
+    if (!context.Response.Headers.ContainsKey("Content-Security-Policy"))
+    {
+        context.Response.Headers["Content-Security-Policy"] =
+            "default-src 'self'; " +
+            "script-src 'self' 'unsafe-inline' https://js.stripe.com; " +
+            "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; " +
+            "font-src 'self' https://fonts.gstatic.com; " +
+            "img-src 'self' data: blob:; " +
+            "connect-src 'self'; " +
+            "frame-ancestors 'none';";
+    }
+    await next();
+});
 
 app.UseStaticFiles();
 
@@ -182,7 +221,7 @@ app.UseStaticFiles(new StaticFileOptions
 
 app.UseRouting();
 
-app.UseCors("AllowAll");
+app.UseCors("RestrictedCors");
 
 app.UseSession();
 

@@ -148,6 +148,7 @@ namespace GolfAssociationCommunity.Controllers
         /// Get all members of an association
         /// </summary>
         [HttpGet("{id}/members")]
+        [Authorize(Roles = "Admin,AssociationAdmin")]
         public async Task<ActionResult<IEnumerable<ApplicationUser>>> GetAssociationMembers(int id)
         {
             try
